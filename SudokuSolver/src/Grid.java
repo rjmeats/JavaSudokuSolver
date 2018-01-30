@@ -135,8 +135,9 @@ public class Grid {
 				}
 
 				Cell cell = m_aCells[rowNumber][columnNumber];
-				String contents = ccd.getContent(cell);
-				sb1.append(" " + contents + " ");
+				boolean highlight = (cell.isAssigned() && (cell.m_value.m_assignedAtStepNumber == stepNumber));
+				String contents = ccd.getContent(cell, highlight);
+				sb1.append(" " + contents + " ");					
 			}
 			
 			sb1.append("\r\n");

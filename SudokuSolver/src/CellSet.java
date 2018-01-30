@@ -114,6 +114,12 @@ public abstract class CellSet {
 		return assignableCell;
 	}
 
+	boolean isComplete()
+	{
+		return m_assignedSymbols.size() == m_lCells.size();
+	}
+	
+	
 	private static String cellListToString(List<Cell> l)
 	{
 		StringBuilder sb = new StringBuilder();

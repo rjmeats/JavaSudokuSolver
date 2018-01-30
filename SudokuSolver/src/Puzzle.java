@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 public class Puzzle {
 
 	
-	static String[] xs_initialValues = {
+	static String[] s_initialValues1 = {
 			
 					"2..    .4.    .6.",			
 					"74.    ..9    8.2",			
@@ -22,7 +22,7 @@ public class Puzzle {
 					".3.    .6.    ..5",			
 	};
 	
-	static String[] s_initialValues = {
+	static String[] s_initialValues2 = {
 			
 			"..6    5.8    2..",			
 			"5..    2.9    ..7",			
@@ -36,8 +36,27 @@ public class Puzzle {
 										"",
 			".3.    ...    .6.",			
 			".5.    8.1    .7.",			
-			"1..    ...    ..4",			
-};
+			"1..    ...    ..4",		
+	};
+
+	static String[] s_initialValuesLeMondeHard = {
+			
+			"8..    ..1    2..",			
+			".75    ...    ...",			
+			"...    .5.    .64",			
+										"",
+										"",
+			"..7    ...    ..6",			
+			"9..    7..    ...",			
+			"52.    ..9    .47",			
+										"",
+										"",
+			"231    ...    ...",			
+			"..6    .2.    1.9",			
+			"...    ...    ...",			
+	};
+	
+	static String[] s_initialValues = s_initialValuesLeMondeHard;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -76,15 +95,24 @@ public class Puzzle {
 			boolean complete = false;
 			boolean changed = true;
 			int stepNumber = 0;
+			
 			while(changed && !complete && stepNumber <= 1000)
 			{
 				stepNumber++;
 				L.info("Starting step " + stepNumber + " ...");
-				changed = puzzle.lookForNextAssignment(stepNumber);	
+				changed = puzzle.lookForNextAssignment(stepNumber);
+				
+				Stats stats = puzzle.getStats();
+				complete = stats.m_complete;
+
+				System.out.println("After step " + stepNumber + ": ");
+				System.out.println("- " + stats.m_assignedCells + " assigned cells out of " + stats.m_cellCount + " (" + stats.m_initialAssignedCells + " givens)");
+				System.out.println("- " + stats.m_unassignedCells + " unassigned cell" + ((stats.m_unassignedCells == 1) ? "" : "s"));
+				System.out.println();
 				
 				if(complete)
 				{
-					System.out.println("Puzzle completed");
+					System.out.println("Puzzle is complete");
 					L.info("Puzzle completed");
 				}
 				else if(stepNumber > 1000)
@@ -99,9 +127,10 @@ public class Puzzle {
 				}
 				else
 				{
-					System.out.println("Change identified, continuing puzzle ..");
-					L.info("Change identified, continuing puzzle ..");															
+					System.out.println("Progress made, continuing puzzle ..");
+					L.info("Progress made, continuing puzzle ..");															
 				}
+				System.out.println();
 			}
 		}
 		
@@ -225,7 +254,7 @@ public class Puzzle {
 				Puzzle.L.info(s);
 				System.out.println(s);
 				System.out.println();
-				a.m_cell.setAsAssigned(AssignmentMethod.AssignedSymbolToCellSet, a.m_symbol);
+				a.m_cell.setAsAssigned(AssignmentMethod.AssignedSymbolToCellSet, a.m_symbol, assignmentStep);
 				changedState = true;
 
 				m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), assignmentStep);
@@ -240,6 +269,57 @@ public class Puzzle {
 		return changedState;
 	}
 	
+	boolean checkForCompletion()
+	{
+		boolean isComplete = true;
+		
+		// All cell-sets are finished
+		for(CellSet set : m_grid.m_lCellSets)
+		{
+			if(!set.isComplete())
+			{
+				isComplete = false;
+			}
+		}
+		
+		// All cells are assigned
+		for(Cell cell : m_grid.m_lCells)
+		{
+			if(!cell.isAssigned())
+			{
+				isComplete = false;
+			}
+		}
+		
+		return isComplete;
+	}
+	
+	Stats getStats()
+	{
+		Stats stats = new Stats();
+		stats.m_complete = checkForCompletion();
+		stats.m_cellCount = m_grid.m_lCells.size();
+		stats.m_initialAssignedCells = 0;
+		stats.m_assignedCells = 0;
+		stats.m_unassignedCells = 0;
+
+		for(Cell cell : m_grid.m_lCells)
+		{
+			if(cell.isAssigned())
+			{
+				stats.m_assignedCells++;
+				if(cell.m_value.m_method == AssignmentMethod.Given)
+				{
+					stats.m_initialAssignedCells++;
+				}
+			}
+			else
+			{
+				stats.m_unassignedCells++;
+			}
+		}
+		return stats;
+	}
 	
 	class InitialGridStatus
 	{
@@ -256,6 +336,24 @@ public class Puzzle {
 		{
 			m_isOK = false;
 			m_errorMessage = message;
+		}
+	}
+		
+	class Stats
+	{
+		boolean m_complete;
+		int m_cellCount;
+		int m_initialAssignedCells;
+		int m_assignedCells;
+		int m_unassignedCells;
+		
+		Stats()
+		{
+			m_complete = false;
+			m_cellCount = -1;
+			m_initialAssignedCells = -1;
+			m_assignedCells = -1;
+			m_unassignedCells = -1;
 		}
 	}
 }

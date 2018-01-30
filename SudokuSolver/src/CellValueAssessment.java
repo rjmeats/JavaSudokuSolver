@@ -33,11 +33,11 @@ public class CellValueAssessment {
 		return m_assignment != null;
 	}
 	
-	void setAsAssigned(AssignmentMethod method, CellSymbol symbol)
+	void setAsAssigned(AssignmentMethod method, CellSymbol symbol, int assignmentStep)
 	{
 		m_method = method;
 		m_assignment = symbol;
-		m_assignedAtStepNumber = 0;
+		m_assignedAtStepNumber = assignmentStep;
 
 		for(CellSymbol otherSymbol : m_mapCouldBe.keySet())
 		{

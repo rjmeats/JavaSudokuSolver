@@ -19,17 +19,17 @@ public class Cell {
 	
 	CellAssignmentStatus setAsGiven(CellSymbol symbol)
 	{
-		return setAsAssigned(AssignmentMethod.Given, symbol);
+		return setAsAssigned(AssignmentMethod.Given, symbol, 0);
 	}
 
-	CellAssignmentStatus setAsAssigned(AssignmentMethod method, CellSymbol symbol)
+	CellAssignmentStatus setAsAssigned(AssignmentMethod method, CellSymbol symbol, int assignmentStep)
 	{
 		Puzzle.L.info("Assigning symbol " + symbol.getRepresentation() + " to cell " + m_cellNumber);
 		CellAssignmentStatus status = checkCellCanBeSet(symbol);
 		if(status == CellAssignmentStatus.CanBeAssigned)
 		{
 			Puzzle.L.info(".. assignment is possible ...");
-			m_value.setAsAssigned(AssignmentMethod.Given, symbol);
+			m_value.setAsAssigned(method, symbol, assignmentStep);
 			m_row.markAsAssigned(symbol, this);
 			m_column.markAsAssigned(symbol, this);
 			m_box.markAsAssigned(symbol, this);
@@ -80,11 +80,16 @@ public class Cell {
 		return status;
 	}
 	
+	boolean isAssigned()
+	{
+		return m_value.isAssigned();
+	}
+	
 	static class CellNumberDisplayer implements CellContentDisplayer {
 		
 		public String getHeading() { return "Cell numbering"; }
 		
-		public String getContent(Cell c)
+		public String getContent(Cell c, boolean highlight)
 		{
 			return(FormatUtils.padRight(c.m_cellNumber, 5));
 		}
@@ -95,7 +100,7 @@ public class Cell {
 		
 		public String getHeading() { return "Box numbering"; }
 		
-		public String getContent(Cell c)
+		public String getContent(Cell c, boolean highlight)
 		{
 			return(FormatUtils.padRight(c.m_box.getBoxNumber(), 5));
 		}
@@ -105,9 +110,18 @@ public class Cell {
 		
 		public String getHeading() { return "Cell 'Could-be-value' count"; }
 		
-		public String getContent(Cell c)
+		public String getContent(Cell c, boolean highlight)
 		{
-			return(FormatUtils.padRight(c.m_value.couldBeCount(), 5));
+			String representation = "" + c.m_value.couldBeCount();
+			if(!c.isAssigned() && c.m_value.couldBeCount() == 1)
+			{
+				representation += "!";
+			}
+			else if (c.isAssigned() && c.m_value.m_method == AssignmentMethod.Given)
+			{
+				representation = "[" + representation + "]";				
+			}
+			return(FormatUtils.padRight(representation, 5));
 		}
 	}
 	
@@ -115,7 +129,7 @@ public class Cell {
 		
 		public String getHeading() { return "Cell 'Could-be' values"; }
 		
-		public String getContent(Cell c)
+		public String getContent(Cell c, boolean highlight)
 		{
 			return(FormatUtils.padRight(c.m_value.couldBeValuesString(), 21));
 		}
@@ -125,10 +139,14 @@ public class Cell {
 		
 		public String getHeading() { return "Assigned-value"; }
 		
-		public String getContent(Cell c)
+		public String getContent(Cell c, boolean highlight)
 		{
 			CellSymbol symbol = c.m_value.m_assignment;
-			String representation = symbol == null ? "-" : symbol.getRepresentation(); 
+			String representation = symbol == null ? "-" : symbol.getRepresentation();
+			if(highlight)
+			{
+				representation += "*";
+			}
 			return(FormatUtils.padRight(representation, 5));
 		}
 	}
