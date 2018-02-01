@@ -6,7 +6,7 @@ import java.util.HashMap;
 public abstract class CellSet {
 
 	List<Cell> m_lCells;
-	HashMap<CellSymbol, Cell> m_assignedSymbols;
+	HashMap<CellSymbol, Assignment> m_assignedSymbols;
 	HashMap<CellSymbol, List<Cell>> m_couldBeCellsForSymbol;
 		
 	public CellSet(List<CellSymbol> lSymbols) {
@@ -36,25 +36,29 @@ public abstract class CellSet {
 	}
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
-	void markAsAssigned(CellSymbol symbol, Cell assignmentCell)
+	void markAsAssigned(Assignment assignment)
 	{
-		Puzzle.L.info(".. marking symbol " + symbol.getRepresentation() + " as assigned to cell " + assignmentCell.m_cellNumber + " in cellset " + getRepresentation());
+		CellSymbol symbol = assignment.getSymbol();
+		Cell assignmentCell = assignment.getCell();
+		
+		Puzzle.L.info(".. marking symbol " + symbol.getRepresentation() + " as assigned to cell " + assignmentCell.getCellNumber() + " in cellset " + getRepresentation());
+		
 		// Add to the list of symbols in this set which are now assigned.
-		m_assignedSymbols.put(symbol, assignmentCell);
+		m_assignedSymbols.put(symbol, assignment);
 
 		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.clear();
 		lCellsForThisSymbol.add(assignmentCell);
 
 		// And go through all the other cells sharing a cell set with this set, ruling out this symbol for their use.
-		assignmentCell.m_row.ruleOutSymbolFromOtherCells(symbol, assignmentCell);
-		assignmentCell.m_column.ruleOutSymbolFromOtherCells(symbol, assignmentCell);
-		assignmentCell.m_box.ruleOutSymbolFromOtherCells(symbol, assignmentCell);
+		assignmentCell.getRow().ruleOutSymbolFromOtherCells(symbol, assignmentCell);
+		assignmentCell.getColumn().ruleOutSymbolFromOtherCells(symbol, assignmentCell);
+		assignmentCell.getBox().ruleOutSymbolFromOtherCells(symbol, assignmentCell);
 
 		// And go through all the symbols for other cell-sets sharing a cell set with this set, ruling out this symbol for use in their other sets.
-		assignmentCell.m_row.ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
-		assignmentCell.m_column.ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
-		assignmentCell.m_box.ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
+		assignmentCell.getRow().ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
+		assignmentCell.getColumn().ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
+		assignmentCell.getBox().ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
 }
 
 	void ruleOutSymbolFromOtherCells(CellSymbol symbol, Cell assignmentCell)
@@ -63,11 +67,11 @@ public abstract class CellSet {
 		{
 			if(otherCell != assignmentCell)
 			{
-				Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + otherCell.m_cellNumber + " in cell-set " + getRepresentation());				
+				Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + otherCell.getCellNumber() + " in cell-set " + getRepresentation());				
 				otherCell.ruleOut(symbol);
-				if(this != otherCell.m_row) otherCell.m_row.ruleOutSymbolForCell(symbol, otherCell);
-				if(this != otherCell.m_column) otherCell.m_column.ruleOutSymbolForCell(symbol, otherCell);
-				if(this != otherCell.m_box) otherCell.m_box.ruleOutSymbolForCell(symbol, otherCell);
+				if(this != otherCell.getRow()) otherCell.getRow().ruleOutSymbolForCell(symbol, otherCell);
+				if(this != otherCell.getColumn()) otherCell.getColumn().ruleOutSymbolForCell(symbol, otherCell);
+				if(this != otherCell.getBox()) otherCell.getBox().ruleOutSymbolForCell(symbol, otherCell);
 			}
 		}
 		
@@ -77,7 +81,7 @@ public abstract class CellSet {
 	{
 		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.remove(cell);
-		Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + cell.m_cellNumber + " in cell-set " + getRepresentation());
+		Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + cell.getCellNumber() + " in cell-set " + getRepresentation());
   		Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 	}
 
@@ -88,14 +92,14 @@ public abstract class CellSet {
 			if(otherSymbol != symbol)
 			{				
 				List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(otherSymbol);
-				Puzzle.L.info(".. ruling out cell " + assignmentCell.m_cellNumber + " for symbol " + otherSymbol.getRepresentation() + " in cell-set " + getRepresentation());				
+				Puzzle.L.info(".. ruling out cell " + assignmentCell.getCellNumber() + " for symbol " + otherSymbol.getRepresentation() + " in cell-set " + getRepresentation());				
 				lCellsForThisSymbol.remove(assignmentCell);
 				Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 			}
 		}		
 	}
 	
-	Assignment checkForAssignableSymbol()
+	Assignment checkForAssignableSymbol(int stepNumber)
 	{
 		Assignment assignableCell = null;
 		for(CellSymbol symbol : m_couldBeCellsForSymbol.keySet())
@@ -105,7 +109,7 @@ public abstract class CellSet {
 				List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
 				if(lCells.size() == 1)
 				{
-					assignableCell = new Assignment(lCells.get(0), symbol);
+					assignableCell = new Assignment(lCells.get(0), symbol, AssignmentMethod.AssignedSymbolToCellSet, stepNumber);
 					break;
 				}
 			}
@@ -126,7 +130,7 @@ public abstract class CellSet {
 		Collections.sort(l, new Cell.SortByCellNumber());
 		for(Cell cell: l)
 		{
-			sb.append(cell.m_cellNumber).append(" ");
+			sb.append(cell.getCellNumber()).append(" ");
 		}
 		return sb.toString().trim();
 	}

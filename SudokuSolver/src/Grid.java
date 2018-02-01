@@ -96,7 +96,9 @@ public class Grid {
 	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, CellSymbol symbol)
 	{
 		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
-		CellAssignmentStatus status = m_aCells[rowNumber][columnNumber].setAsGiven(symbol);
+		Cell cell = m_aCells[rowNumber][columnNumber];
+		Assignment a = new Assignment(cell, symbol, AssignmentMethod.Given, 0);
+		CellAssignmentStatus status = cell.setAsAssigned(a);
 		return status;
 	}
 
@@ -135,7 +137,7 @@ public class Grid {
 				}
 
 				Cell cell = m_aCells[rowNumber][columnNumber];
-				boolean highlight = (cell.isAssigned() && (cell.m_value.m_assignedAtStepNumber == stepNumber));
+				boolean highlight = (cell.isAssigned() && (cell.getAssignment().getStepNumber() == stepNumber));
 				String contents = ccd.getContent(cell, highlight);
 				sb1.append(" " + contents + " ");					
 			}

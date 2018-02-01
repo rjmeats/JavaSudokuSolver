@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public enum CellSymbol {
 
@@ -31,5 +35,28 @@ public enum CellSymbol {
 	static CellSymbol toCellSymbol(char c)
 	{
 		return toCellSymbol(c + "");
+	}
+	
+	public static String symbolMapToString(HashMap<CellSymbol, CellSymbol> map)
+	{
+		List<CellSymbol> l = new ArrayList<>();
+		for(CellSymbol symbol: map.keySet())
+		{
+			l.add(symbol);
+		}
+
+		return(symbolListToString(l));
+	}
+
+	public static String symbolListToString(List<CellSymbol> l)
+	{
+		StringBuilder sb = new StringBuilder();
+		List<CellSymbol> lSorted = new ArrayList<>(l);
+		Collections.sort(lSorted);
+		for(CellSymbol symbol: lSorted)
+		{
+			sb.append(symbol.getRepresentation()).append(" ");
+		}
+		return sb.toString().trim();
 	}
 }

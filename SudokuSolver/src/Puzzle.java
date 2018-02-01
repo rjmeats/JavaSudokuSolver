@@ -56,7 +56,24 @@ public class Puzzle {
 			"...    ...    ...",			
 	};
 	
-	static String[] s_initialValues = s_initialValuesLeMondeHard;
+	static String[] s_initialValuesLeMondeHard2 = {
+			
+			"...    76.    ..8",			
+			"9..    ...    ...",			
+			"...    2.9    ...",			
+										"",
+										"",
+			".5.    912    .46",			
+			".9.    .4.    2.5",			
+			"..6    .8.    .1.",			
+										"",
+										"",
+			"...    .95    ..1",			
+			".7.    ..6    ...",			
+			"3.9    8..    4..",			
+	};
+	
+	static String[] s_initialValues = s_initialValues1;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -235,32 +252,32 @@ public class Puzzle {
 		return realRows;
 	}
 
-	boolean lookForNextAssignment(int assignmentStep)
+	boolean lookForNextAssignment(int stepNumber)
 	{
 		boolean changedState = false;
 		
 		System.out.println("======================================================================");
-		System.out.println("Assignment step: " + assignmentStep);
-		Puzzle.L.info("Starting assignment step: " + assignmentStep + " ..");
+		System.out.println("Assignment step: " + stepNumber);
+		Puzzle.L.info("Starting assignment step: " + stepNumber + " ..");
 		
 		// Look through each row, column, box for an unassigned symbol which can only go in one cell
 		Assignment a = null;
 		for(CellSet set : m_grid.m_lCellSets)
 		{
-			a = set.checkForAssignableSymbol();
+			a = set.checkForAssignableSymbol(stepNumber);
 			if(a != null)
 			{
-				String s = "Assigned symbol " + a.m_symbol.getRepresentation() + " to cell " + a.m_cell.m_cellNumber + " from cell set " + set.getRepresentation();
+				String s = "Assigned symbol " + a.getSymbol().getRepresentation() + " to cell " + a.getCell().getCellNumber() + " from cell set " + set.getRepresentation();
 				Puzzle.L.info(s);
 				System.out.println(s);
 				System.out.println();
-				a.m_cell.setAsAssigned(AssignmentMethod.AssignedSymbolToCellSet, a.m_symbol, assignmentStep);
+				a.getCell().setAsAssigned(a);
 				changedState = true;
 
-				m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), assignmentStep);
-				m_grid.printGrid(new Cell.CouldBeValueDisplay(), assignmentStep);
-				m_grid.printGrid(new Cell.AssignedValueDisplay(), assignmentStep);
-				m_grid.printCellSets(assignmentStep);
+				m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), stepNumber);
+				m_grid.printGrid(new Cell.CouldBeValueDisplay(), stepNumber);
+				m_grid.printGrid(new Cell.AssignedValueDisplay(), stepNumber);
+				m_grid.printCellSets(stepNumber);
 				
 				break;
 			}
@@ -308,7 +325,7 @@ public class Puzzle {
 			if(cell.isAssigned())
 			{
 				stats.m_assignedCells++;
-				if(cell.m_value.m_method == AssignmentMethod.Given)
+				if(cell.getAssignment().getMethod() == AssignmentMethod.Given)
 				{
 					stats.m_initialAssignedCells++;
 				}

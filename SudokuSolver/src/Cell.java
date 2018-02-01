@@ -1,66 +1,92 @@
 import java.util.List;
 import java.util.Comparator;
+import java.util.HashMap;
 
 public class Cell {
 
-	int m_cellNumber;
-	Row m_row;
-	Column m_column;
-	Box m_box;
-	CellValueAssessment m_value;
-	
-	Cell(int cellNumber, Row row, Column column, Box box, List<CellSymbol> lSymbols) {
+	private int m_cellNumber;
+	private Row m_row;
+	private Column m_column;
+	private Box m_box;
+
+	private Assignment m_assignment;
+	private HashMap<CellSymbol, CellSymbol> m_mapCouldBeSymbols;
+	private HashMap<CellSymbol, CellSymbol> m_mapRuledOutSymbols;
+
+	Cell(int cellNumber, Row row, Column column, Box box, List<CellSymbol> lAllSymbols) {
 		m_cellNumber = cellNumber;
 		m_row = row;
 		m_column = column;
 		m_box = box;
-		m_value = new CellValueAssessment(this, lSymbols);
+		
+		m_assignment = null;		
+		m_mapCouldBeSymbols = new HashMap<>();
+		m_mapRuledOutSymbols = new HashMap<>();
+		
+		for(CellSymbol symbol : lAllSymbols)
+		{
+			m_mapCouldBeSymbols.put(symbol, symbol);
+		}
 	}
 	
-	CellAssignmentStatus setAsGiven(CellSymbol symbol)
+	public Row getRow() { return m_row; }
+	public Column getColumn() { return m_column; }
+	public Box getBox() { return m_box; }
+	
+	public String identifyLocation()
 	{
-		return setAsAssigned(AssignmentMethod.Given, symbol, 0);
+		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
 	}
-
-	CellAssignmentStatus setAsAssigned(AssignmentMethod method, CellSymbol symbol, int assignmentStep)
+	
+	CellAssignmentStatus setAsAssigned(Assignment assignment)
 	{
-		Puzzle.L.info("Assigning symbol " + symbol.getRepresentation() + " to cell " + m_cellNumber);
-		CellAssignmentStatus status = checkCellCanBeSet(symbol);
+		Puzzle.L.info("Trying assignment " + assignment.toString());
+		CellAssignmentStatus status = checkCellCanBeAssigned(assignment);
 		if(status == CellAssignmentStatus.CanBeAssigned)
 		{
 			Puzzle.L.info(".. assignment is possible ...");
-			m_value.setAsAssigned(method, symbol, assignmentStep);
-			m_row.markAsAssigned(symbol, this);
-			m_column.markAsAssigned(symbol, this);
-			m_box.markAsAssigned(symbol, this);
-			Puzzle.L.info(".. assignment of symbol " + symbol.getRepresentation() + " to cell " + m_cellNumber + " complete");
+			
+			m_assignment = assignment;
+
+			// Tidy up map of which symbols this cell could/could-not be
+			for(CellSymbol couldBeSymbol : m_mapCouldBeSymbols.keySet())
+			{
+				if(assignment.getSymbol() != couldBeSymbol)
+				{
+					m_mapRuledOutSymbols.put(couldBeSymbol, couldBeSymbol);
+				}
+			}
+			m_mapCouldBeSymbols.clear();
+			m_mapCouldBeSymbols.put(assignment.getSymbol(), assignment.getSymbol());
+
+			m_row.markAsAssigned(assignment);
+			m_column.markAsAssigned(assignment);
+			m_box.markAsAssigned(assignment);
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().getRepresentation() + " to cell " + m_cellNumber + " complete");
 		}
 		else
 		{
-			Puzzle.L.info(".. assignment of symbol " + symbol.getRepresentation() + " to cell " + m_cellNumber + " not possible: " + status.name());			
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().getRepresentation() + " to cell " + m_cellNumber + " not possible: " + status.name());			
 		}
 		
 		return status;		
 	}
 	
-	void ruleOut(CellSymbol symbol)
+	CellAssignmentStatus checkCellCanBeAssigned(Assignment assignment)
 	{
-		m_value.ruleOut(symbol);
-	}
-	
-	CellAssignmentStatus checkCellCanBeSet(CellSymbol symbol)
-	{
+		CellSymbol symbol = assignment.getSymbol();
+		
 		CellAssignmentStatus status = CellAssignmentStatus.CanBeAssigned;
 		
-		if(m_value.isAssigned())
+		if(isAssigned())
 		{
 			status = CellAssignmentStatus.CellAlreadyAssigned;
 		}
-		else if(!m_value.couldBe(symbol))
+		else if(!couldBe(symbol))
 		{
 			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
 		}
-		else if(m_value.isRuledOut(symbol))
+		else if(isRuledOut(symbol))
 		{
 			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
 		}
@@ -82,7 +108,60 @@ public class Cell {
 	
 	boolean isAssigned()
 	{
-		return m_value.isAssigned();
+		return m_assignment != null;
+	}
+	
+	Assignment getAssignment()
+	{
+		return m_assignment;
+	}
+	
+	boolean couldBe(CellSymbol symbol)
+	{
+		return m_mapCouldBeSymbols.containsKey(symbol);
+	}
+
+	boolean isRuledOut(CellSymbol symbol)
+	{
+		return m_mapRuledOutSymbols.containsKey(symbol);
+	}
+	
+	boolean ruleOut(CellSymbol symbol)
+	{
+		boolean changed = false;
+		if(!isRuledOut(symbol))
+		{
+			if(couldBe(symbol))
+			{
+				m_mapRuledOutSymbols.put(symbol,symbol);
+				m_mapCouldBeSymbols.remove(symbol);
+				changed = true;
+				Puzzle.L.info(".. ruled out cell " + getCellNumber() + " : " + symbol.getRepresentation());				
+			}
+			else
+			{
+				// ???? Don't expect to hit this, means our maps have got out of alignment with each other.
+			}
+		}
+		
+		Puzzle.L.info(".. for cell " + getCellNumber() + " symbol-could-be list = " + CellSymbol.symbolMapToString(m_mapCouldBeSymbols) + ":  ruled-out list = " + CellSymbol.symbolMapToString(m_mapRuledOutSymbols));
+		
+		return changed;
+	}
+	
+	int couldBeCount()
+	{
+		return m_mapCouldBeSymbols.size();
+	}
+	
+	String toCouldBeValuesString()
+	{
+		return CellSymbol.symbolMapToString(m_mapCouldBeSymbols);
+	}	
+	
+	int getCellNumber()
+	{
+		return m_cellNumber;
 	}
 	
 	static class CellNumberDisplayer implements CellContentDisplayer {
@@ -94,7 +173,6 @@ public class Cell {
 			return(FormatUtils.padRight(c.m_cellNumber, 5));
 		}
 	}
-
 
 	static class BoxNumberDisplayer implements CellContentDisplayer {
 		
@@ -112,12 +190,12 @@ public class Cell {
 		
 		public String getContent(Cell c, boolean highlight)
 		{
-			String representation = "" + c.m_value.couldBeCount();
-			if(!c.isAssigned() && c.m_value.couldBeCount() == 1)
+			String representation = "" + c.couldBeCount();
+			if(!c.isAssigned() && c.couldBeCount() == 1)
 			{
 				representation += "!";
 			}
-			else if (c.isAssigned() && c.m_value.m_method == AssignmentMethod.Given)
+			else if (c.isAssigned() && c.getAssignment().getMethod() == AssignmentMethod.Given)
 			{
 				representation = "[" + representation + "]";				
 			}
@@ -131,7 +209,7 @@ public class Cell {
 		
 		public String getContent(Cell c, boolean highlight)
 		{
-			return(FormatUtils.padRight(c.m_value.couldBeValuesString(), 21));
+			return(FormatUtils.padRight(c.toCouldBeValuesString(), 21));
 		}
 	}
 	
@@ -141,11 +219,15 @@ public class Cell {
 		
 		public String getContent(Cell c, boolean highlight)
 		{
-			CellSymbol symbol = c.m_value.m_assignment;
-			String representation = symbol == null ? "-" : symbol.getRepresentation();
-			if(highlight)
+			String representation = "-";
+			if(c.isAssigned())
 			{
-				representation += "*";
+				CellSymbol symbol = c.getAssignment().getSymbol();
+				representation = symbol.getRepresentation();
+				if(highlight)
+				{
+					representation += "*";
+				}
 			}
 			return(FormatUtils.padRight(representation, 5));
 		}
