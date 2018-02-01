@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.List;
 
 public class Puzzle {
 
@@ -73,7 +74,7 @@ public class Puzzle {
 			"3.9    8..    4..",			
 	};
 	
-	static String[] s_initialValues = s_initialValues1;
+	static String[] s_initialValues = s_initialValuesLeMondeHard;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -117,8 +118,19 @@ public class Puzzle {
 			{
 				stepNumber++;
 				L.info("Starting step " + stepNumber + " ...");
+				
+				System.out.println("==================================================================================================");
+				System.out.println("==================================================================================================");
+				System.out.println();
+				System.out.println("Assignment step: " + stepNumber);
+
 				changed = puzzle.lookForNextAssignment(stepNumber);
 				
+				puzzle.m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), stepNumber);
+				puzzle.m_grid.printGrid(new Cell.CouldBeValueDisplay(), stepNumber);
+				puzzle.m_grid.printCellSets(stepNumber);
+				puzzle.m_grid.printGrid(new Cell.AssignedValueDisplay(), stepNumber);
+
 				Stats stats = puzzle.getStats();
 				complete = stats.m_complete;
 
@@ -131,6 +143,7 @@ public class Puzzle {
 				{
 					System.out.println("Puzzle is complete");
 					L.info("Puzzle completed");
+					puzzle.m_grid.printGrid(new Cell.AssignedValueDisplay());
 				}
 				else if(stepNumber > 1000)
 				{
@@ -224,8 +237,8 @@ public class Puzzle {
 		{
 			m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), 0);
 			m_grid.printGrid(new Cell.CouldBeValueDisplay(), 0);
-			m_grid.printGrid(new Cell.AssignedValueDisplay(), 0);
 			m_grid.printCellSets();
+			m_grid.printGrid(new Cell.AssignedValueDisplay(), 0);
 		}
 
 		return status;
@@ -256,31 +269,71 @@ public class Puzzle {
 	{
 		boolean changedState = false;
 		
-		System.out.println("======================================================================");
-		System.out.println("Assignment step: " + stepNumber);
 		Puzzle.L.info("Starting assignment step: " + stepNumber + " ..");
 		
-		// Look through each row, column, box for an unassigned symbol which can only go in one cell
-		Assignment a = null;
-		for(CellSet set : m_grid.m_lCellSets)
+		if(!changedState)
 		{
-			a = set.checkForAssignableSymbol(stepNumber);
-			if(a != null)
+			// Look through unassigned cell for cases where only one symbol is a possible assignment.
+			for(Cell cell : m_grid.m_lCells)
 			{
-				String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getCellNumber() + " from cell set " + set.getRepresentation();
-				Puzzle.L.info(s);
-				System.out.println(s);
-				System.out.println();
-				a.getCell().setAsAssigned(a);
-				changedState = true;
-
-				m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), stepNumber);
-				m_grid.printGrid(new Cell.CouldBeValueDisplay(), stepNumber);
-				m_grid.printGrid(new Cell.AssignedValueDisplay(), stepNumber);
-				m_grid.printCellSets(stepNumber);
-				
-				break;
+				if(!cell.isAssigned())
+				{
+					Assignment a = cell.checkForAssignableSymbol(stepNumber);
+					if(a != null)
+					{
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.getColumnAndRowLocationString();
+						Puzzle.L.info(s);
+						System.out.println(s);
+						System.out.println();
+						a.getCell().setAsAssigned(a);
+						changedState = true;
+						break;
+					}
+				}
+			}			
+		}
+		
+		if(!changedState)
+		{
+			// Look through each row, column, box for an unassigned symbol which can only go in one cell
+			for(CellSet set : m_grid.m_lCellSets)
+			{
+				Assignment a = set.checkForAssignableSymbol(stepNumber);
+				if(a != null)
+				{
+					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getColumnAndRowLocationString() + " from cell set " + set.getRepresentation();
+					Puzzle.L.info(s);
+					System.out.println(s);
+					System.out.println();
+					a.getCell().setAsAssigned(a);
+					changedState = true;
+					break;
+				}
 			}
+		}
+		
+		if(!changedState)
+		{
+			// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
+			// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
+			int stateChanges = 0;
+			for(Box box : m_grid.m_lBoxes)
+			{
+				List<SymbolRestriction> lRestrictions = box.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_rowOrColumn.ruleOutSymbolOutsideBox(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
 		}
 		
 		return changedState;
@@ -374,3 +427,26 @@ public class Puzzle {
 		}
 	}
 }
+
+
+/*
+Cell 'Could-be' values - step 5
+
+
+~8                 4 9                3 4 9                  3 6 9              3 6 7 9            ~1                     ~2                 3 5 7 9            3 5               
+=6                 ~7                 ~5                     2 3 4 8 9          3 4 8 9            2 3 4 8                3 8 9              1 3 8 9            1 3 8             
+1 3                1 9                =2                     3 8 9              ~5                 3 7 8                  3 7 8 9            ~6                 ~4                
+
+
+1 3 4              1 4 8              ~7                     2 3 4 5 8          3 4 8              2 3 4 5 8              3 5 8 9            2 3 5 8 9          ~6                
+~9                 =6                 3 4 8                  ~7                 1 3 4 8            2 3 4 5 8              3 5 8              1 2 3 5 8          1 2 3 5 8         
+~5                 ~2                 3 8                    1 3 6 8            1 3 6 8            ~9                     3 8                ~4                 ~7                
+
+
+~2                 ~3                 ~1                     4 5 6 8 9          4 6 7 8 9          4 5 6 7 8              4 5 6 7 8          5 7 8              5 8               
+4 7                4 5 8              ~6                     3 4 5 8            ~2                 3 4 5 7 8              ~1                 3 5 7 8            ~9                
+4 7                4 5 8 9            4 8 9                  1 3 4 5 6 8        1 3 4 6 7 8        3 4 5 6 7 8            3 4 5 6 7 8        2 3 5 7 8          2 3 5 8           
+
+For column 5, can see that the 6 must be in a cell in box 7. So none of the cells in box 7 outside this column can be a 6. Inverse of box-based test already implemented ?
+
+*/

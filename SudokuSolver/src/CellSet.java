@@ -123,6 +123,30 @@ public abstract class CellSet {
 		return m_assignedSymbols.size() == m_lCells.size();
 	}
 	
+	boolean containsCell(Cell cell)
+	{
+		return m_lCells.contains(cell);	
+	}
+	
+	boolean ruleOutSymbolOutsideBox(SymbolRestriction restriction)
+	{
+		boolean changedState = false;
+		// For cells not in the restriction box, rule out the symbol.
+		for(Cell cell : m_lCells)
+		{
+			if(!restriction.m_box.containsCell(cell))
+			{
+				if(!cell.isRuledOut(restriction.m_symbol))
+				{
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getColumnAndRowLocationString());				
+					cell.ruleOut(restriction.m_symbol);
+					changedState = true;
+				}
+			}
+		}
+		
+		return changedState;
+	}
 	
 	private static String cellListToString(List<Cell> l)
 	{
@@ -137,7 +161,8 @@ public abstract class CellSet {
 
 	String getSymbolAssignmentSummary()
 	{
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sbSingleCell = new StringBuilder();
+		StringBuilder sbMultiCell = new StringBuilder();
 		List<Symbol> lSymbols = new ArrayList<>(m_couldBeCellsForSymbol.keySet());
 		Collections.sort(lSymbols);
 				
@@ -146,10 +171,23 @@ public abstract class CellSet {
 			List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
 			String cellListString = cellListToString(lCells);
 			
-			sb.append(symbol.getGridRepresentation() + ":[" + cellListString + "] ");
+			if(lCells.size() == 1)
+			{
+				String markAsUnassigned = "";
+				if(!m_assignedSymbols.containsKey(symbol))
+				{
+					markAsUnassigned = "*";
+				}
+				sbSingleCell.append(symbol.getGridRepresentation() + ":" + cellListString + markAsUnassigned + " ");
+			}
+			else
+			{
+				sbMultiCell.append(symbol.getGridRepresentation() + ":[" + cellListString + "] ");				
+			}
 		}
 		
-		return sb.toString().trim();
+		
+		return "Unresolved: " + sbMultiCell.toString().trim() + "   Resolved: " + sbSingleCell.toString().trim();
 	}
 	
 }

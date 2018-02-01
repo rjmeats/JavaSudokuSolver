@@ -102,7 +102,7 @@ public class Grid {
 		return status;
 	}
 
-	private static String s_divider = "=============================================================================================";
+	private static String s_divider = "-----------------------------------";
 	
 	void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
 	
@@ -114,7 +114,7 @@ public class Grid {
 		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
 		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
 		sb1.append(ccd.getHeading() + stepInfo);
 		sb1.append("\r\n");
 		
@@ -158,7 +158,7 @@ public class Grid {
 		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
 		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append("\r\n\r\n").append(s_divider).append("\r\n\r\n");
 		sb1.append("Cell sets "  + stepInfo);
 		sb1.append("\r\n");
 		

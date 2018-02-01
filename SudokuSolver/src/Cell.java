@@ -40,6 +40,21 @@ public class Cell {
 		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
 	}
 	
+	Assignment checkForAssignableSymbol(int stepNumber)
+	{
+		Assignment a = null;
+		if(!isAssigned() && m_mapCouldBeSymbols.size() == 1)
+		{
+			for(Symbol symbol: m_mapCouldBeSymbols.keySet())
+			{
+				a = new Assignment(this, symbol, AssignmentMethod.AssignedSymbolToCell, stepNumber);
+			}
+		}
+		
+		return a;
+	}
+
+	
 	CellAssignmentStatus setAsAssigned(Assignment assignment)
 	{
 		Puzzle.L.info("Trying assignment " + assignment.toString());
@@ -188,18 +203,22 @@ public class Cell {
 	
 	static class CouldBeValueCountDisplay implements CellContentDisplayer {
 		
-		public String getHeading() { return "Cell 'Could-be-value' count"; }
+		public String getHeading() { return "Cell 'Could-be-value' count: ~ => Given  = => Assigned  * => Could be assigned"; }
 		
 		public String getContent(Cell c, boolean highlight)
 		{
 			String representation = "" + c.couldBeCount();
 			if(!c.isAssigned() && c.couldBeCount() == 1)
 			{
-				representation += "!";
+				representation = "*"+ representation;
 			}
 			else if (c.isAssigned() && c.getAssignment().getMethod() == AssignmentMethod.Given)
 			{
-				representation = "[" + representation + "]";				
+				representation = "~" + representation;				
+			}
+			else if(c.isAssigned())
+			{
+				representation = "=" + representation;								
 			}
 			return(FormatUtils.padRight(representation, 5));
 		}
@@ -211,7 +230,20 @@ public class Cell {
 		
 		public String getContent(Cell c, boolean highlight)
 		{
-			return(FormatUtils.padRight(c.toCouldBeValuesString(), 21));
+			String representation = "" + c.toCouldBeValuesString();
+			if(!c.isAssigned() && c.couldBeCount() == 1)
+			{
+				representation = "*"+ representation;
+			}
+			else if (c.isAssigned() && c.getAssignment().getMethod() == AssignmentMethod.Given)
+			{
+				representation = "~" + representation;				
+			}
+			else if(c.isAssigned())
+			{
+				representation = "=" + representation;								
+			}
+			return(FormatUtils.padRight(representation, 17));
 		}
 	}
 	
