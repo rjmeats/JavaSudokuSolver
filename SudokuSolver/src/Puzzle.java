@@ -198,18 +198,18 @@ public class Puzzle {
 						}
 						else
 						{
-							CellSymbol symbol = CellSymbol.toCellSymbol(c);
+							Symbol symbol = Symbol.toSymbol(c);
 							if(symbol != null)
 							{
 								CellAssignmentStatus assignmentStatus = m_grid.applyGivenValueToCell(rowNumber, columnNumber, symbol);
 								if(assignmentStatus != CellAssignmentStatus.CanBeAssigned)
 								{
-									status.setError("Unable to assign " + symbol.getRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
+									status.setError("Unable to assign " + symbol.getGridRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
 								}
 							}
 							else
 							{
-								status.setError("Unexpected symbol: " + c);
+								status.setError("Unknown symbol: " + c);
 							}
 						}
 					}
@@ -267,7 +267,7 @@ public class Puzzle {
 			a = set.checkForAssignableSymbol(stepNumber);
 			if(a != null)
 			{
-				String s = "Assigned symbol " + a.getSymbol().getRepresentation() + " to cell " + a.getCell().getCellNumber() + " from cell set " + set.getRepresentation();
+				String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getCellNumber() + " from cell set " + set.getRepresentation();
 				Puzzle.L.info(s);
 				System.out.println(s);
 				System.out.println();

@@ -15,7 +15,7 @@ public class Grid {
 	static int s_columns = 9;
 	static int s_boxes = 9;
 	
-	List<CellSymbol> m_lSymbols;
+	List<Symbol> m_lSymbols;
 	
 	Grid() {
 		m_lRows = new ArrayList<>();
@@ -64,11 +64,11 @@ public class Grid {
 		}		
 	}
 	
-	static List<CellSymbol> getListOfSymbols(int n)
+	static List<Symbol> getListOfSymbols(int n)
 	{
 		// Need to check n ????
-		List<CellSymbol> l = new ArrayList<>();
-		for(CellSymbol cs : CellSymbol.values())
+		List<Symbol> l = new ArrayList<>();
+		for(Symbol cs : Symbol.values())
 		{
 			l.add(cs);
 		}
@@ -93,9 +93,9 @@ public class Grid {
 	}
 	
 	
-	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, CellSymbol symbol)
+	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
 	{
-		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
+		Puzzle.L.info("Applying given value : " + symbol.getGridRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
 		Cell cell = m_aCells[rowNumber][columnNumber];
 		Assignment a = new Assignment(cell, symbol, AssignmentMethod.Given, 0);
 		CellAssignmentStatus status = cell.setAsAssigned(a);

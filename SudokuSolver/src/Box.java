@@ -4,7 +4,7 @@ public class Box extends CellSet {
 
 	private int m_boxNumber;
 	
-	public Box(int boxNumber, List<CellSymbol> lSymbols) {
+	public Box(int boxNumber, List<Symbol> lSymbols) {
 		super(lSymbols);
 		m_boxNumber = boxNumber;
 	}

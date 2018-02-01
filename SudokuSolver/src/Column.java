@@ -4,7 +4,7 @@ public class Column extends CellSet {
 
 	private int m_columnNumber;
 	
-	public Column(int columnNumber, List<CellSymbol> lSymbols) {
+	public Column(int columnNumber, List<Symbol> lSymbols) {
 		super(lSymbols);
 		m_columnNumber = columnNumber;
 	}

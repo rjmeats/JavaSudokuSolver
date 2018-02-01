@@ -6,15 +6,15 @@ import java.util.HashMap;
 public abstract class CellSet {
 
 	List<Cell> m_lCells;
-	HashMap<CellSymbol, Assignment> m_assignedSymbols;
-	HashMap<CellSymbol, List<Cell>> m_couldBeCellsForSymbol;
+	HashMap<Symbol, Assignment> m_assignedSymbols;
+	HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
 		
-	public CellSet(List<CellSymbol> lSymbols) {
+	public CellSet(List<Symbol> lSymbols) {
 		m_lCells = new ArrayList<>();
 		m_assignedSymbols = new HashMap<>();
 		
 		m_couldBeCellsForSymbol = new HashMap<>();		
-		for(CellSymbol symbol : lSymbols)
+		for(Symbol symbol : lSymbols)
 		{
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<Cell>());
 		}
@@ -30,7 +30,7 @@ public abstract class CellSet {
 		}
 	}
 
-	boolean symbolAlreadyAssigned(CellSymbol symbol)
+	boolean symbolAlreadyAssigned(Symbol symbol)
 	{
 		return m_assignedSymbols.containsKey(symbol);
 	}
@@ -38,10 +38,10 @@ public abstract class CellSet {
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
 	void markAsAssigned(Assignment assignment)
 	{
-		CellSymbol symbol = assignment.getSymbol();
+		Symbol symbol = assignment.getSymbol();
 		Cell assignmentCell = assignment.getCell();
 		
-		Puzzle.L.info(".. marking symbol " + symbol.getRepresentation() + " as assigned to cell " + assignmentCell.getCellNumber() + " in cellset " + getRepresentation());
+		Puzzle.L.info(".. marking symbol " + symbol.toString() + " as assigned to cell " + assignmentCell.getCellNumber() + " in cellset " + getRepresentation());
 		
 		// Add to the list of symbols in this set which are now assigned.
 		m_assignedSymbols.put(symbol, assignment);
@@ -61,13 +61,13 @@ public abstract class CellSet {
 		assignmentCell.getBox().ruleOutCouldBeCellsForSymbol(symbol, assignmentCell);
 }
 
-	void ruleOutSymbolFromOtherCells(CellSymbol symbol, Cell assignmentCell)
+	void ruleOutSymbolFromOtherCells(Symbol symbol, Cell assignmentCell)
 	{
 		for(Cell otherCell : m_lCells)
 		{
 			if(otherCell != assignmentCell)
 			{
-				Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + otherCell.getCellNumber() + " in cell-set " + getRepresentation());				
+				Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + otherCell.getCellNumber() + " in cell-set " + getRepresentation());				
 				otherCell.ruleOut(symbol);
 				if(this != otherCell.getRow()) otherCell.getRow().ruleOutSymbolForCell(symbol, otherCell);
 				if(this != otherCell.getColumn()) otherCell.getColumn().ruleOutSymbolForCell(symbol, otherCell);
@@ -77,22 +77,22 @@ public abstract class CellSet {
 		
 	}
 
-	void ruleOutSymbolForCell(CellSymbol symbol, Cell cell)
+	void ruleOutSymbolForCell(Symbol symbol, Cell cell)
 	{
 		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.remove(cell);
-		Puzzle.L.info(".. ruling out " + symbol.getRepresentation() + " for cell " + cell.getCellNumber() + " in cell-set " + getRepresentation());
+		Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + cell.getCellNumber() + " in cell-set " + getRepresentation());
   		Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 	}
 
-	void ruleOutCouldBeCellsForSymbol(CellSymbol symbol, Cell assignmentCell)
+	void ruleOutCouldBeCellsForSymbol(Symbol symbol, Cell assignmentCell)
 	{
-		for(CellSymbol otherSymbol : m_couldBeCellsForSymbol.keySet())
+		for(Symbol otherSymbol : m_couldBeCellsForSymbol.keySet())
 		{
 			if(otherSymbol != symbol)
 			{				
 				List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(otherSymbol);
-				Puzzle.L.info(".. ruling out cell " + assignmentCell.getCellNumber() + " for symbol " + otherSymbol.getRepresentation() + " in cell-set " + getRepresentation());				
+				Puzzle.L.info(".. ruling out cell " + assignmentCell.getCellNumber() + " for symbol " + otherSymbol.toString() + " in cell-set " + getRepresentation());				
 				lCellsForThisSymbol.remove(assignmentCell);
 				Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 			}
@@ -102,7 +102,7 @@ public abstract class CellSet {
 	Assignment checkForAssignableSymbol(int stepNumber)
 	{
 		Assignment assignableCell = null;
-		for(CellSymbol symbol : m_couldBeCellsForSymbol.keySet())
+		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
 		{
 			if(!m_assignedSymbols.containsKey(symbol))
 			{
@@ -138,15 +138,15 @@ public abstract class CellSet {
 	String getSymbolAssignmentSummary()
 	{
 		StringBuilder sb = new StringBuilder();
-		List<CellSymbol> lSymbols = new ArrayList<>(m_couldBeCellsForSymbol.keySet());
+		List<Symbol> lSymbols = new ArrayList<>(m_couldBeCellsForSymbol.keySet());
 		Collections.sort(lSymbols);
 				
-		for(CellSymbol symbol : lSymbols)
+		for(Symbol symbol : lSymbols)
 		{
 			List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
 			String cellListString = cellListToString(lCells);
 			
-			sb.append(symbol.getRepresentation() + ":[" + cellListString + "] ");
+			sb.append(symbol.getGridRepresentation() + ":[" + cellListString + "] ");
 		}
 		
 		return sb.toString().trim();

@@ -4,16 +4,18 @@ import java.util.HashMap;
 
 public class Cell {
 
+	// Where the cell is in its grid
 	private int m_cellNumber;
 	private Row m_row;
 	private Column m_column;
 	private Box m_box;
 
+	// Items relating to assigning a symbol to the cell
 	private Assignment m_assignment;
-	private HashMap<CellSymbol, CellSymbol> m_mapCouldBeSymbols;
-	private HashMap<CellSymbol, CellSymbol> m_mapRuledOutSymbols;
+	private HashMap<Symbol, Symbol> m_mapCouldBeSymbols;
+	private HashMap<Symbol, Symbol> m_mapRuledOutSymbols;
 
-	Cell(int cellNumber, Row row, Column column, Box box, List<CellSymbol> lAllSymbols) {
+	Cell(int cellNumber, Row row, Column column, Box box, List<Symbol> lAllSymbols) {
 		m_cellNumber = cellNumber;
 		m_row = row;
 		m_column = column;
@@ -23,7 +25,7 @@ public class Cell {
 		m_mapCouldBeSymbols = new HashMap<>();
 		m_mapRuledOutSymbols = new HashMap<>();
 		
-		for(CellSymbol symbol : lAllSymbols)
+		for(Symbol symbol : lAllSymbols)
 		{
 			m_mapCouldBeSymbols.put(symbol, symbol);
 		}
@@ -33,7 +35,7 @@ public class Cell {
 	public Column getColumn() { return m_column; }
 	public Box getBox() { return m_box; }
 	
-	public String identifyLocation()
+	public String getColumnAndRowLocationString()
 	{
 		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
 	}
@@ -49,7 +51,7 @@ public class Cell {
 			m_assignment = assignment;
 
 			// Tidy up map of which symbols this cell could/could-not be
-			for(CellSymbol couldBeSymbol : m_mapCouldBeSymbols.keySet())
+			for(Symbol couldBeSymbol : m_mapCouldBeSymbols.keySet())
 			{
 				if(assignment.getSymbol() != couldBeSymbol)
 				{
@@ -62,11 +64,11 @@ public class Cell {
 			m_row.markAsAssigned(assignment);
 			m_column.markAsAssigned(assignment);
 			m_box.markAsAssigned(assignment);
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().getRepresentation() + " to cell " + m_cellNumber + " complete");
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cellNumber + " complete");
 		}
 		else
 		{
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().getRepresentation() + " to cell " + m_cellNumber + " not possible: " + status.name());			
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cellNumber + " not possible: " + status.name());			
 		}
 		
 		return status;		
@@ -74,7 +76,7 @@ public class Cell {
 	
 	CellAssignmentStatus checkCellCanBeAssigned(Assignment assignment)
 	{
-		CellSymbol symbol = assignment.getSymbol();
+		Symbol symbol = assignment.getSymbol();
 		
 		CellAssignmentStatus status = CellAssignmentStatus.CanBeAssigned;
 		
@@ -116,17 +118,17 @@ public class Cell {
 		return m_assignment;
 	}
 	
-	boolean couldBe(CellSymbol symbol)
+	boolean couldBe(Symbol symbol)
 	{
 		return m_mapCouldBeSymbols.containsKey(symbol);
 	}
 
-	boolean isRuledOut(CellSymbol symbol)
+	boolean isRuledOut(Symbol symbol)
 	{
 		return m_mapRuledOutSymbols.containsKey(symbol);
 	}
 	
-	boolean ruleOut(CellSymbol symbol)
+	boolean ruleOut(Symbol symbol)
 	{
 		boolean changed = false;
 		if(!isRuledOut(symbol))
@@ -136,7 +138,7 @@ public class Cell {
 				m_mapRuledOutSymbols.put(symbol,symbol);
 				m_mapCouldBeSymbols.remove(symbol);
 				changed = true;
-				Puzzle.L.info(".. ruled out cell " + getCellNumber() + " : " + symbol.getRepresentation());				
+				Puzzle.L.info(".. ruled out cell " + getCellNumber() + " : " + symbol.toString());				
 			}
 			else
 			{
@@ -144,7 +146,7 @@ public class Cell {
 			}
 		}
 		
-		Puzzle.L.info(".. for cell " + getCellNumber() + " symbol-could-be list = " + CellSymbol.symbolMapToString(m_mapCouldBeSymbols) + ":  ruled-out list = " + CellSymbol.symbolMapToString(m_mapRuledOutSymbols));
+		Puzzle.L.info(".. for cell " + getCellNumber() + " symbol-could-be list = " + Symbol.symbolMapToString(m_mapCouldBeSymbols) + ":  ruled-out list = " + Symbol.symbolMapToString(m_mapRuledOutSymbols));
 		
 		return changed;
 	}
@@ -156,7 +158,7 @@ public class Cell {
 	
 	String toCouldBeValuesString()
 	{
-		return CellSymbol.symbolMapToString(m_mapCouldBeSymbols);
+		return Symbol.symbolMapToString(m_mapCouldBeSymbols);
 	}	
 	
 	int getCellNumber()
@@ -222,8 +224,8 @@ public class Cell {
 			String representation = "-";
 			if(c.isAssigned())
 			{
-				CellSymbol symbol = c.getAssignment().getSymbol();
-				representation = symbol.getRepresentation();
+				Symbol symbol = c.getAssignment().getSymbol();
+				representation = symbol.getGridRepresentation();
 				if(highlight)
 				{
 					representation += "*";

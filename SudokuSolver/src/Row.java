@@ -4,7 +4,7 @@ public class Row extends CellSet {
 
 	private int m_rowNumber;
 	
-	public Row(int rowNumber, List<CellSymbol> lSymbols) {
+	public Row(int rowNumber, List<Symbol> lSymbols) {
 		super(lSymbols);
 		m_rowNumber = rowNumber;
 	}
