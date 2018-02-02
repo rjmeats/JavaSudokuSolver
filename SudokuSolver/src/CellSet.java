@@ -148,6 +148,26 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return changedState;
 	}
 	
+	boolean ruleOutSymbolOutsideRowOrColumn(SymbolRestriction restriction)
+	{
+		boolean changedState = false;
+		// For cells not in the restriction row/column, rule out the symbol.
+		for(Cell cell : m_lCells)
+		{
+			if(!restriction.m_rowOrColumn.containsCell(cell))
+			{
+				if(!cell.isRuledOut(restriction.m_symbol))
+				{
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getColumnAndRowLocationString());				
+					cell.ruleOut(restriction.m_symbol);
+					changedState = true;
+				}
+			}
+		}
+		
+		return changedState;
+	}
+	
 	private static String cellListToString(List<Cell> l)
 	{
 		StringBuilder sb = new StringBuilder();

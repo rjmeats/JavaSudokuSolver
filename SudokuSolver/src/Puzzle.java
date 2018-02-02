@@ -74,7 +74,7 @@ public class Puzzle {
 			"3.9    8..    4..",			
 	};
 	
-	static String[] s_initialValues = s_initialValuesLeMondeHard;
+	static String[] s_initialValues = s_initialValuesLeMondeHard2;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -336,6 +336,54 @@ public class Puzzle {
 			changedState = (stateChanges > 0);
 		}
 		
+		if(!changedState)
+		{
+			// Look through each column box to see where a particular unresolved symbol can only appear in a specific box.
+			// Where this arises, we can rule-out the symbol from the other cells in the box which are not in the column.
+			int stateChanges = 0;
+			for(Column column : m_grid.m_lColumns)
+			{
+				List<SymbolRestriction> lRestrictions = column.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
+		
+		if(!changedState)
+		{
+			// And the same again for rows ...
+			int stateChanges = 0;
+			for(Row row : m_grid.m_lRows)
+			{
+				List<SymbolRestriction> lRestrictions = row.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
+		
+		
 		return changedState;
 	}
 	
@@ -427,26 +475,3 @@ public class Puzzle {
 		}
 	}
 }
-
-
-/*
-Cell 'Could-be' values - step 5
-
-
-~8                 4 9                3 4 9                  3 6 9              3 6 7 9            ~1                     ~2                 3 5 7 9            3 5               
-=6                 ~7                 ~5                     2 3 4 8 9          3 4 8 9            2 3 4 8                3 8 9              1 3 8 9            1 3 8             
-1 3                1 9                =2                     3 8 9              ~5                 3 7 8                  3 7 8 9            ~6                 ~4                
-
-
-1 3 4              1 4 8              ~7                     2 3 4 5 8          3 4 8              2 3 4 5 8              3 5 8 9            2 3 5 8 9          ~6                
-~9                 =6                 3 4 8                  ~7                 1 3 4 8            2 3 4 5 8              3 5 8              1 2 3 5 8          1 2 3 5 8         
-~5                 ~2                 3 8                    1 3 6 8            1 3 6 8            ~9                     3 8                ~4                 ~7                
-
-
-~2                 ~3                 ~1                     4 5 6 8 9          4 6 7 8 9          4 5 6 7 8              4 5 6 7 8          5 7 8              5 8               
-4 7                4 5 8              ~6                     3 4 5 8            ~2                 3 4 5 7 8              ~1                 3 5 7 8            ~9                
-4 7                4 5 8 9            4 8 9                  1 3 4 5 6 8        1 3 4 6 7 8        3 4 5 6 7 8            3 4 5 6 7 8        2 3 5 7 8          2 3 5 8           
-
-For column 5, can see that the 6 must be in a cell in box 7. So none of the cells in box 7 outside this column can be a 6. Inverse of box-based test already implemented ?
-
-*/
