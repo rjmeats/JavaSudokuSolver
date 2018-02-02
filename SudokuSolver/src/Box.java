@@ -21,7 +21,12 @@ public class Box extends CellSet {
 	
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
+if(this.m_boxNumber == 8)
+{
+	int x = 199;
+}
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();
+		
 		
 		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
 		{
@@ -66,4 +71,3 @@ class SymbolRestriction {
 	Box m_box;
 	CellSet m_rowOrColumn;	
 }
-

@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -63,4 +64,15 @@ public enum Symbol {
 		}
 		return sb.toString().trim();
 	}
+	
+	static class SortBySymbol implements Comparator<Symbol>
+	{
+	    // Used for sorting in ascending order of
+	    // roll number
+	    public int compare(Symbol s1, Symbol s2)
+	    {
+	        return s1.ordinal() - s2.ordinal();
+	    }
+	}
+
 }

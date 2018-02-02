@@ -168,6 +168,190 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return changedState;
 	}
 	
+	
+	List<SymbolPairRestriction> findRestrictedSymbolPairs()
+	{
+		List<SymbolPairRestriction> l = new ArrayList<>();
+		
+		// Go through each symbol. If it has two possible cells, see whether any other symbol can only be assigned to the
+		// same two cells.
+		
+		for(Symbol symbol1 : m_couldBeCellsForSymbol.keySet())
+		{
+			List<Cell> lCells1 = m_couldBeCellsForSymbol.get(symbol1);
+			if(lCells1.size() == 2)
+			{
+				for(Symbol symbol2 : m_couldBeCellsForSymbol.keySet())
+				{
+					if(symbol1 != symbol2)
+					{
+						List<Cell> lCells2 = m_couldBeCellsForSymbol.get(symbol2);
+						if(lCells2.size() == 2)
+						{
+							System.err.println("Comparing symbol lists for " + symbol1.toString() + " and " + symbol2.toString() + " for set " + getRepresentation());							
+							boolean same = compareCellLists(lCells1, lCells2);
+							if(same)
+							{
+								System.err.println(".. lists are the same");
+								if(symbol1.ordinal() < symbol2.ordinal())
+								{
+									System.err.println(".. keeping this one");
+									SymbolPairRestriction restriction = new SymbolPairRestriction();
+									restriction.m_cellSet = this;
+									restriction.m_lCells = lCells1;
+									restriction.m_lSymbols = new ArrayList<>();
+									restriction.m_lSymbols.add(symbol1);
+									restriction.m_lSymbols.add(symbol2);
+									l.add(restriction);
+								}
+							}
+						}						
+					}
+				}				
+			}
+		}
+
+		
+		// And do the same from a cell-based perspective		
+		for(Cell cell1 : m_lCells)
+		{
+			List<Symbol> lSymbols1 = cell1.getCouldBeSymbolsList();
+			if(lSymbols1.size() == 2)
+			{
+				for(Cell cell2 : m_lCells)
+				{
+					if(cell1 != cell2)
+					{
+						List<Symbol> lSymbols2 = cell2.getCouldBeSymbolsList();
+						if(lSymbols2.size() == 2)
+						{
+							System.err.println("Comparing cell lists for " + cell1.getColumnAndRowLocationString() + " and " + cell2.getColumnAndRowLocationString() + " for set " + getRepresentation());							
+							boolean same = compareSymbolLists(lSymbols1, lSymbols2);
+							if(same)
+							{
+								System.err.println(".. lists are the same");
+								if(cell1.getCellNumber() < cell2.getCellNumber())
+								{
+									System.err.println(".. keeping this one");
+									SymbolPairRestriction restriction = new SymbolPairRestriction();
+									restriction.m_cellSet = this;
+									restriction.m_lSymbols = lSymbols1;
+									restriction.m_lCells = new ArrayList<>();
+									restriction.m_lCells.add(cell1);
+									restriction.m_lCells.add(cell2);
+									l.add(restriction);
+								}
+							}
+						}						
+					}
+				}				
+			}
+		}
+
+		return l;
+	}
+	
+	boolean ruleOutAllCellsBut(Symbol symbol, List<Cell> lCells)
+	{		
+		
+if(this instanceof Box && ((Box)this).getBoxNumber() == 8)
+{
+	int n = 199;
+}
+		boolean changed = false;
+		
+		List<Cell> lUnwantedCells = new ArrayList<>();
+		List<Cell> lCouldBeCellsForSymbol = m_couldBeCellsForSymbol.get(symbol);
+		for(Cell couldBeCell : lCouldBeCellsForSymbol)
+		{
+			if(!lCells.contains(couldBeCell))
+			{
+				lUnwantedCells.add(couldBeCell);
+			}
+		}
+		
+		for(Cell unwantedCell : lUnwantedCells)
+		{
+			if(lCouldBeCellsForSymbol.contains(unwantedCell))
+			{
+				lCouldBeCellsForSymbol.remove(unwantedCell);
+				changed = true;
+			}
+		}
+		
+		return changed;
+	}
+
+	boolean ruleOutCellFromOtherSymbols(Cell cell, List<Symbol> lSymbols)
+	{
+		boolean changed = false;
+		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
+		{
+			if(!lSymbols.contains(symbol))
+			{
+				// Can't be assigned to this cell
+				List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
+				if(lCells.contains(cell))
+				{
+					lCells.remove(cell);
+					System.err.println("Also remove cell " + cell.toString() + " from cell for symbol " + symbol.toString());					
+					changed = true;
+				}
+			}
+		}
+		return changed;
+	}
+
+	
+	
+	static boolean compareCellLists(List<Cell> lCells1, List<Cell> lCells2)
+	{
+		boolean same = true;
+
+		if(lCells1.size() != lCells2.size()) return false;
+		
+		List<Cell> l1 = new ArrayList<>(lCells1);
+		List<Cell> l2 = new ArrayList<>(lCells2);
+		
+		Collections.sort(l1, new Cell.SortByCellNumber());
+		Collections.sort(l2, new Cell.SortByCellNumber());
+
+		for(int n=0; n < l1.size(); n++)
+		{
+			if(l1.get(n) != l2.get(n))
+			{
+				same = false;
+				break;
+			}
+		}
+		
+		return same;
+	}
+
+	static boolean compareSymbolLists(List<Symbol> lSymbols1, List<Symbol> lSymbols2)
+	{
+		boolean same = true;
+
+		if(lSymbols1.size() != lSymbols2.size()) return false;
+		
+		List<Symbol> l1 = new ArrayList<>(lSymbols1);
+		List<Symbol> l2 = new ArrayList<>(lSymbols2);
+		
+		Collections.sort(l1, new Symbol.SortBySymbol());
+		Collections.sort(l2, new Symbol.SortBySymbol());
+
+		for(int n=0; n < l1.size(); n++)
+		{
+			if(l1.get(n) != l2.get(n))
+			{
+				same = false;
+				break;
+			}
+		}
+		
+		return same;
+	}
+
 	private static String cellListToString(List<Cell> l)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -210,4 +394,11 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return "Unresolved: " + sbMultiCell.toString().trim() + "   Resolved: " + sbSingleCell.toString().trim();
 	}
 	
+}
+
+//Paired symbols in a cell set which can only exist in a subset of cells. The two lists will be the same length.  
+class SymbolPairRestriction {
+	CellSet m_cellSet;	
+	List<Symbol> m_lSymbols;
+	List<Cell> m_lCells;
 }

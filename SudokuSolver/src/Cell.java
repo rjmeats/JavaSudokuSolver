@@ -1,4 +1,6 @@
 import java.util.List;
+import java.util.ArrayList;
+
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -35,6 +37,11 @@ public class Cell {
 	public Column getColumn() { return m_column; }
 	public Box getBox() { return m_box; }
 	
+	List<Symbol> getCouldBeSymbolsList()
+	{
+		return new ArrayList<>(m_mapCouldBeSymbols.keySet());
+	}
+	
 	public String getColumnAndRowLocationString()
 	{
 		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
@@ -54,6 +61,11 @@ public class Cell {
 		return a;
 	}
 
+	public String toString()
+	{
+		return "Cell no=" + getCellNumber();
+	}
+	
 	
 	CellAssignmentStatus setAsAssigned(Assignment assignment)
 	{
@@ -165,6 +177,33 @@ public class Cell {
 		
 		return changed;
 	}
+	
+	boolean ruleOutAllBut(List<Symbol> lSymbols)
+	{
+		boolean changed = false;
+		
+		List<Symbol> lUnwantedSymbols = new ArrayList<>();
+		for(Symbol couldBeSymbol : m_mapCouldBeSymbols.values())
+		{
+			if(!lSymbols.contains(couldBeSymbol))
+			{
+				lUnwantedSymbols.add(couldBeSymbol);
+			}
+		}
+		
+		for(Symbol unwantedSymbol : lUnwantedSymbols)
+		{
+			boolean causedChange = ruleOut(unwantedSymbol);
+			if(causedChange)
+			{
+				changed = true;
+			}
+		}
+		
+		return changed;
+	}
+
+	
 	
 	int couldBeCount()
 	{

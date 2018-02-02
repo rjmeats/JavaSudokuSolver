@@ -3,6 +3,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.List;
 
+// http://www.sudokuwiki.org
+
 public class Puzzle {
 
 	
@@ -40,6 +42,7 @@ public class Puzzle {
 			"1..    ...    ..4",		
 	};
 
+	// www.sudokuwiki.org gets a bit further with some advanced strategies, but then stops. Apparently there are 149 solutions!
 	static String[] s_initialValuesLeMondeHard = {
 			
 			"8..    ..1    2..",			
@@ -74,7 +77,42 @@ public class Puzzle {
 			"3.9    8..    4..",			
 	};
 	
-	static String[] s_initialValues = s_initialValuesLeMondeHard2;
+	// https://puzzling.stackexchange.com/questions/37804/non-brute-force-sudoku
+	static String[] s_initialValuesStackOverflow = {
+			
+			"3..    .72    596",			
+			"...    4..    ..2",			
+			"..7    ...    3.4",			
+										"",
+										"",
+			"...    ...    .4.",			
+			"...    ...    ...",			
+			".9.    ...    ...",			
+										"",
+										"",
+			"8.4    ...    2..",			
+			"9..    ..7    ...",			
+			"736    24.    ..9",			
+	};
+	
+	static String[] s_initialValuesStackOverflow2 = {
+			
+			"3..    .72    596",			
+			"1..    4..    ..2",			
+			"..7    ...    3.4",			
+										"",
+										"",
+			"...    ...    .4.",			
+			"...    .8.    .5.",			
+			".9.    ...    ...",			
+										"",
+										"",
+			"8.4    ...    2..",			
+			"9..    ..7    ...",			
+			"736    24.    ..9",			
+	};
+
+	static String[] s_initialValues = s_initialValuesLeMondeHard;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -383,6 +421,54 @@ public class Puzzle {
 			changedState = (stateChanges > 0);
 		}
 		
+		if(!changedState)
+		{
+			// Where two symbols in a row/column/box can only be assigned to the same two cells, then these cells can't be assigned to any other symbols.
+			int stateChanges = 0;
+			for(CellSet set : m_grid.m_lCellSets)
+			{
+				List<SymbolPairRestriction> lRestrictedSymbolPairs = set.findRestrictedSymbolPairs();
+				if(lRestrictedSymbolPairs != null)
+				{
+					for(SymbolPairRestriction symbolPairRestriction : lRestrictedSymbolPairs)
+					{						
+						for(Cell cell : symbolPairRestriction.m_lCells)
+						{
+							boolean causedStateChange = cell.ruleOutAllBut(symbolPairRestriction.m_lSymbols);
+							if(causedStateChange)
+							{
+								stateChanges++;
+							}
+						}
+					}
+
+					for(SymbolPairRestriction symbolPairRestriction : lRestrictedSymbolPairs)
+					{						
+						for(Symbol symbol : symbolPairRestriction.m_lSymbols)
+						{
+							boolean causedStateChange = symbolPairRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolPairRestriction.m_lCells);
+							if(causedStateChange)
+							{
+								stateChanges++;
+							}
+						}
+						
+						for(Cell cell : symbolPairRestriction.m_lCells)
+						{
+							boolean causedStateChange = symbolPairRestriction.m_cellSet.ruleOutCellFromOtherSymbols(cell, symbolPairRestriction.m_lSymbols);
+							if(causedStateChange)
+							{
+								stateChanges++;
+							}
+						}
+					}
+
+				
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
 		
 		return changedState;
 	}
