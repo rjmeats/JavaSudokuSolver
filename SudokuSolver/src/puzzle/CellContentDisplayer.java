@@ -1,3 +1,5 @@
+package puzzle;
+import grid.CellAssessment;
 
 public interface CellContentDisplayer {
 

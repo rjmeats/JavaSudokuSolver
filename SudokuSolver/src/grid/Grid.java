@@ -1,4 +1,8 @@
+package grid;
 import java.util.List;
+
+import puzzle.Symbol;
+
 import java.util.ArrayList;
 
 public class Grid {

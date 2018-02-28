@@ -1,6 +1,20 @@
+package puzzle;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import grid.BoxAssessment;
+import grid.Cell;
+import grid.CellAssessment;
+import grid.CellAssignmentStatus;
+import grid.CellContentDisplayer;
+import grid.CellSetAssessment;
+import grid.ColumnAssessment;
+import grid.Grid;
+import grid.RowAssessment;
+import grid.SymbolRestriction;
+import grid.SymbolSetRestriction;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;

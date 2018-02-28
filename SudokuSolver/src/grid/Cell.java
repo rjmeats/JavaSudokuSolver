@@ -1,4 +1,13 @@
+package grid;
 import java.util.List;
+
+import puzzle.Assignment;
+import puzzle.AssignmentMethod;
+import puzzle.CellContentDisplayer;
+import puzzle.FormatUtils;
+import puzzle.Puzzle;
+import puzzle.Symbol;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;

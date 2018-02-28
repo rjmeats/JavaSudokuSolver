@@ -1,33 +1,36 @@
+package grid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Row extends CellSet {
+import puzzle.Symbol;
 
-	private int m_rowNumber;
+public class Column extends CellSet {
+
+	private int m_columnNumber;
 	
-	public Row(int rowNumber, List<Symbol> lSymbols) {
+	public Column(int columnNumber, List<Symbol> lSymbols) {
 		super(lSymbols);
-		m_rowNumber = rowNumber;
+		m_columnNumber = columnNumber;
 	}
 	
-	public int getRowNumber() {
-		return m_rowNumber;
+	public int getColumnNumber() {
+		return m_columnNumber;
 	}
-
+	
 	public String getRepresentation() {
-		return "Row " + m_rowNumber; 
+		return "Column " + m_columnNumber; 
 	}
 	
 }
 
-class RowAssessment extends CellSetAssessment {
+class ColumnAssessment extends CellSetAssessment {
 
-	Row m_row;
+	Column m_column;
 	
-	public RowAssessment(Row row, List<Symbol> lSymbols) {
-		super(row, lSymbols);
-		m_row = row;
+	public ColumnAssessment(Column column, List<Symbol> lSymbols) {
+		super(column, lSymbols);
+		m_column = column;
 	}
 
 	public List<SymbolRestriction> findRestrictedSymbols() {
@@ -47,7 +50,7 @@ class RowAssessment extends CellSetAssessment {
 				
 				if(boxMap.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in row " + m_row.getRowNumber() + " and box " + lCells.get(0).getBox().m_box.getRepresentation());
+					System.err.println("Found restricted symbol " + symbol.toString() + " in column " + m_column.getColumnNumber() + " and box " + lCells.get(0).getBox().m_box.getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction();
 					restriction.m_box = lCells.get(0).getBox();
 					restriction.m_symbol = symbol;
@@ -59,5 +62,6 @@ class RowAssessment extends CellSetAssessment {
 		
 		return lRestrictions;
 	}	
+
 }
 

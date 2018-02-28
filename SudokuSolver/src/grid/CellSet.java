@@ -1,8 +1,16 @@
+package grid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.TreeSet;
+
+import puzzle.Assignment;
+import puzzle.AssignmentMethod;
+import puzzle.Puzzle;
+import puzzle.Symbol;
+import puzzle.Symbol.SortBySymbol;
+
 import java.util.Set;
 
 public abstract class CellSet {

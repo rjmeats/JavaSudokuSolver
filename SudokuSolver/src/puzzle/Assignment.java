@@ -1,3 +1,5 @@
+package puzzle;
+import grid.Cell;
 
 public class Assignment {
 

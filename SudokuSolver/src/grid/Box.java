@@ -1,7 +1,11 @@
+package grid;
 import java.util.List;
 
 import java.util.ArrayList;
 import java.util.Set;
+
+import puzzle.Symbol;
+
 import java.util.HashSet;
 
 public class Box extends CellSet {
