@@ -112,7 +112,131 @@ public class Puzzle {
 			"736    24.    ..9",			
 	};
 
-	static String[] s_initialValues = s_initialValuesLeMondeHard;
+	static String[] s_1 = {
+			
+			"...    .4.    .52",			
+			"..2    1.5    8.7",			
+			"...    ...    .4.",			
+										"",
+										"",
+			"6.8    4..    .9.",			
+			"3.5    ...    ..8",			
+			"...    ..9    .1.",			
+										"",
+										"",
+			"57.    .23    .8.",			
+			"..9    ...    ...",			
+			"..6    .17    ...",			
+	};
+
+
+	// https://www.youtube.com/watch?v=myy7ldfgTnQ
+	static String[] s_times9636 = {
+			
+			"...    ..9    ...",			
+			"...    .4.    ...",			
+			"234    58.    ...",			
+										"",
+										"",
+			"...    ...    ..1",			
+			"76.    .9.    48.",			
+			"39.    ...    5..",			
+										"",
+										"",
+			".5.    ...    7..",			
+			"..9    17.    8..",			
+			"4..    93.    2..",			
+	};
+
+	// https://www.youtube.com/watch?v=4FlfjmmcjPs
+	static String[] s_times9633 = {
+			
+			"...    ..7   35.",			
+			"...    .2.    19.",			
+			"...    ..1    .2.",			
+										"",
+										"",
+			"..6    .5.    ..3",			
+			".83    ...    67.",			
+			"7..    .6.    4..",			
+										"",
+										"",
+			".6.    3..    ...",			
+			".92    .8.    ...",			
+			".54    6..    ...",			
+	};
+
+	// https://www.youtube.com/watch?v=o3PQrNecoag
+	// Needs combinations to get going ...
+	static String[] s_hard = {
+			
+			"9..    ...    7..",			
+			"..8    4.5    ...",			
+			".5.    ..2    ..3",			
+										"",
+										"",
+			"8..    .9.    ...",			
+			"..4    ...    6..",			
+			"...    .1.    ..2",			
+										"",
+										"",
+			"5..    8..    .4.",			
+			"...    7.9    8..",			
+			"..2    ...    ..7",			
+	};
+	
+	static String[] s_times9656 = {
+			
+			"...    ..2    .9.",			
+			".9.    ...    .5.",			
+			"...    13.    ..4",			
+										"",
+										"",
+			"..3    ...    .7.",			
+			"..6    ..4    9.5",			
+			"2..    .7.    8..",			
+										"",
+										"",
+			"...    .18    ..7",			
+			"65.    7..    ..9",			
+			"..7    .4.    28.",			
+	};
+
+	static String[] s_times9688 = {
+			
+			"...    ...    .6.",			
+			"...    3..    28.",			
+			"...    .15    ..9",			
+										"",
+										"",
+			".5.    .7.    .1.",			
+			"..1    4..    ..7",			
+			"..4    ...    8.6",			
+										"",
+										"",
+			".8.    ..2    .7.",			
+			"34.    6..    9..",			
+			"..5    .47    ...",			
+	};
+
+	static String[] s_empty = {
+			
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+										"",
+										"",
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+										"",
+										"",
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+	};
+
+	static String[] s_initialValues = s_times9688;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -423,18 +547,18 @@ public class Puzzle {
 		
 		if(!changedState)
 		{
-			// Where two symbols in a row/column/box can only be assigned to the same two cells, then these cells can't be assigned to any other symbols.
+			// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
 			int stateChanges = 0;
 			for(CellSet set : m_grid.m_lCellSets)
 			{
-				List<SymbolPairRestriction> lRestrictedSymbolPairs = set.findRestrictedSymbolPairs();
-				if(lRestrictedSymbolPairs != null)
+				List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
+				if(lRestrictedSymbolSets != null)
 				{
-					for(SymbolPairRestriction symbolPairRestriction : lRestrictedSymbolPairs)
+					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
 					{						
-						for(Cell cell : symbolPairRestriction.m_lCells)
+						for(Cell cell : symbolSetRestriction.m_lCells)
 						{
-							boolean causedStateChange = cell.ruleOutAllBut(symbolPairRestriction.m_lSymbols);
+							boolean causedStateChange = cell.ruleOutAllBut(symbolSetRestriction.m_lSymbols);
 							if(causedStateChange)
 							{
 								stateChanges++;
@@ -442,23 +566,27 @@ public class Puzzle {
 						}
 					}
 
-					for(SymbolPairRestriction symbolPairRestriction : lRestrictedSymbolPairs)
-					{						
-						for(Symbol symbol : symbolPairRestriction.m_lSymbols)
+					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
+					{
+						for(Symbol symbol : symbolSetRestriction.m_lSymbols)
 						{
-							boolean causedStateChange = symbolPairRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolPairRestriction.m_lCells);
+							boolean causedStateChange = symbolSetRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolSetRestriction.m_lCells);
 							if(causedStateChange)
 							{
 								stateChanges++;
 							}
 						}
 						
-						for(Cell cell : symbolPairRestriction.m_lCells)
+						List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
+						for(CellSet cset : lAffectedCellSets)
 						{
-							boolean causedStateChange = symbolPairRestriction.m_cellSet.ruleOutCellFromOtherSymbols(cell, symbolPairRestriction.m_lSymbols);
-							if(causedStateChange)
+							for(Cell cell : symbolSetRestriction.m_lCells)
 							{
-								stateChanges++;
+								boolean causedStateChange = cset.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols);
+								if(causedStateChange)
+								{
+									stateChanges++;
+								}
 							}
 						}
 					}

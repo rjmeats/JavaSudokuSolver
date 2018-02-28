@@ -2,15 +2,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
+import java.util.TreeSet;
+import java.util.Set;
 
 public abstract class CellSet {
 
-	List<Cell> m_lCells;
+	Set<Cell> m_lCells;
 	HashMap<Symbol, Assignment> m_assignedSymbols;
 	HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
 		
 	public CellSet(List<Symbol> lSymbols) {
-		m_lCells = new ArrayList<>();
+		m_lCells = new TreeSet<>();
 		m_assignedSymbols = new HashMap<>();
 		
 		m_couldBeCellsForSymbol = new HashMap<>();		
@@ -167,97 +169,104 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		
 		return changedState;
 	}
-	
-	
-	List<SymbolPairRestriction> findRestrictedSymbolPairs()
+
+	// Goes up to combinations of 4 - how to generalise to n ?
+	List<SymbolSetRestriction> findRestrictedSymbolSets()
 	{
-		List<SymbolPairRestriction> l = new ArrayList<>();
+		List<SymbolSetRestriction> l = new ArrayList<>();
+		// Generate combinations of 2, 3 and 4 unassigned symbols. If the combination has n symbols and between them these can only
+		// be placed in n cells, then we have a restricted symbol set.
 		
-		// Go through each symbol. If it has two possible cells, see whether any other symbol can only be assigned to the
-		// same two cells.
+		List<List<Symbol>> lCombinations = new ArrayList<>();
 		
 		for(Symbol symbol1 : m_couldBeCellsForSymbol.keySet())
 		{
 			List<Cell> lCells1 = m_couldBeCellsForSymbol.get(symbol1);
-			if(lCells1.size() == 2)
+			if(lCells1.size() > 1)
 			{
 				for(Symbol symbol2 : m_couldBeCellsForSymbol.keySet())
 				{
-					if(symbol1 != symbol2)
+					if(symbol2.ordinal() > symbol1.ordinal())
 					{
 						List<Cell> lCells2 = m_couldBeCellsForSymbol.get(symbol2);
-						if(lCells2.size() == 2)
+						if(lCells2.size() > 1)
 						{
-							System.err.println("Comparing symbol lists for " + symbol1.toString() + " and " + symbol2.toString() + " for set " + getRepresentation());							
-							boolean same = compareCellLists(lCells1, lCells2);
-							if(same)
+							// We have a combination of two symbols to investigate ...
+							List<Symbol> l2 = new ArrayList<>();
+							l2.add(symbol1); l2.add(symbol2);
+							lCombinations.add(l2);
+							
+							for(Symbol symbol3 : m_couldBeCellsForSymbol.keySet())
 							{
-								System.err.println(".. lists are the same");
-								if(symbol1.ordinal() < symbol2.ordinal())
+								if(symbol3.ordinal() > symbol2.ordinal())
 								{
-									System.err.println(".. keeping this one");
-									SymbolPairRestriction restriction = new SymbolPairRestriction();
-									restriction.m_cellSet = this;
-									restriction.m_lCells = lCells1;
-									restriction.m_lSymbols = new ArrayList<>();
-									restriction.m_lSymbols.add(symbol1);
-									restriction.m_lSymbols.add(symbol2);
-									l.add(restriction);
+									List<Cell> lCells3 = m_couldBeCellsForSymbol.get(symbol3);
+									if(lCells3.size() > 1)
+									{
+										// We have a combination of three symbols to investigate ...
+										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
+										lCombinations.add(l3);
+										for(Symbol symbol4 : m_couldBeCellsForSymbol.keySet())
+										{
+											if(symbol4.ordinal() > symbol3.ordinal())
+											{
+												List<Cell> lCells4 = m_couldBeCellsForSymbol.get(symbol4);
+												if(lCells4.size() > 1)
+												{
+													// We have a combination of four symbols to investigate ...
+													List<Symbol> l4 = new ArrayList<>(l3); l4.add(symbol4); 
+													lCombinations.add(l4);													
+												}
+											}
+										}
+										
+									}
 								}
 							}
-						}						
+						}
 					}
-				}				
-			}
+				}
+				
+			}			
 		}
 
-		
-		// And do the same from a cell-based perspective		
-		for(Cell cell1 : m_lCells)
+		System.err.println("Found " + lCombinations.size() + " symbol combinations for set " + getRepresentation());
+		for(List<Symbol> lCombination : lCombinations)
 		{
-			List<Symbol> lSymbols1 = cell1.getCouldBeSymbolsList();
-			if(lSymbols1.size() == 2)
+			List<Cell> lCellsForCombination = getSymbolCombinationCells(lCombination);
+			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
+			if(foundSet)
 			{
-				for(Cell cell2 : m_lCells)
-				{
-					if(cell1 != cell2)
-					{
-						List<Symbol> lSymbols2 = cell2.getCouldBeSymbolsList();
-						if(lSymbols2.size() == 2)
-						{
-							System.err.println("Comparing cell lists for " + cell1.getColumnAndRowLocationString() + " and " + cell2.getColumnAndRowLocationString() + " for set " + getRepresentation());							
-							boolean same = compareSymbolLists(lSymbols1, lSymbols2);
-							if(same)
-							{
-								System.err.println(".. lists are the same");
-								if(cell1.getCellNumber() < cell2.getCellNumber())
-								{
-									System.err.println(".. keeping this one");
-									SymbolPairRestriction restriction = new SymbolPairRestriction();
-									restriction.m_cellSet = this;
-									restriction.m_lSymbols = lSymbols1;
-									restriction.m_lCells = new ArrayList<>();
-									restriction.m_lCells.add(cell1);
-									restriction.m_lCells.add(cell2);
-									l.add(restriction);
-								}
-							}
-						}						
-					}
-				}				
+				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolListToString(lCombination) + " covers cells " +  CellSet.cellListToString(lCellsForCombination));
+				
+				SymbolSetRestriction restriction = new SymbolSetRestriction();
+				restriction.m_cellSet = this;
+				restriction.m_lCells = lCellsForCombination;
+				restriction.m_lSymbols = lCombination;
+				l.add(restriction);
 			}
-		}
-
+		}		
+		
 		return l;
 	}
-	
+
+	List<Cell> getSymbolCombinationCells(List<Symbol> lCombination)
+	{
+		Set<Cell> cells = new TreeSet<>();
+		for(Symbol symbol : lCombination)
+		{
+			List<Cell> l = this.m_couldBeCellsForSymbol.get(symbol);
+			for(Cell cell : l)
+			{
+				cells.add(cell);
+			}
+		}
+				
+		return new ArrayList<Cell>(cells);
+	}
+
 	boolean ruleOutAllCellsBut(Symbol symbol, List<Cell> lCells)
 	{		
-		
-if(this instanceof Box && ((Box)this).getBoxNumber() == 8)
-{
-	int n = 199;
-}
 		boolean changed = false;
 		
 		List<Cell> lUnwantedCells = new ArrayList<>();
@@ -352,7 +361,7 @@ if(this instanceof Box && ((Box)this).getBoxNumber() == 8)
 		return same;
 	}
 
-	private static String cellListToString(List<Cell> l)
+	public static String cellListToString(List<Cell> l)
 	{
 		StringBuilder sb = new StringBuilder();
 		Collections.sort(l, new Cell.SortByCellNumber());
@@ -397,8 +406,21 @@ if(this instanceof Box && ((Box)this).getBoxNumber() == 8)
 }
 
 //Paired symbols in a cell set which can only exist in a subset of cells. The two lists will be the same length.  
-class SymbolPairRestriction {
+class SymbolSetRestriction {
 	CellSet m_cellSet;	
 	List<Symbol> m_lSymbols;
 	List<Cell> m_lCells;
+	
+	List<CellSet> getAffectedCellSets()
+	{
+		Set<CellSet> set = new TreeSet<>();
+		
+		for(Cell cell : m_lCells)
+		{
+			set.add(cell.getBox());
+			set.add(cell.getRow());
+			set.add(cell.getColumn());
+		}
+		return new ArrayList<CellSet>(set);		
+	}
 }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 
-public class Cell {
+public class Cell implements Comparable {
 
 	// Where the cell is in its grid
 	private int m_cellNumber;
@@ -12,7 +12,7 @@ public class Cell {
 	private Column m_column;
 	private Box m_box;
 
-	// Items relating to assigning a symbol to the cell
+	// Items relating to assigning a symbol to the cell by the solver program.
 	private Assignment m_assignment;
 	private HashMap<Symbol, Symbol> m_mapCouldBeSymbols;
 	private HashMap<Symbol, Symbol> m_mapRuledOutSymbols;
@@ -306,6 +306,7 @@ public class Cell {
 		}
 	}
 
+	// Different sort options, are they needed ???? How do they differ ?
 	static class SortByCellNumber implements Comparator<Cell>
 	{
 	    // Used for sorting in ascending order of
@@ -314,6 +315,11 @@ public class Cell {
 	    {
 	        return c1.m_cellNumber - c2.m_cellNumber;
 	    }
+	}
+
+	@Override
+	public int compareTo(Object arg0) {
+		return m_cellNumber - ((Cell)arg0).m_cellNumber;
 	}
 }
 
