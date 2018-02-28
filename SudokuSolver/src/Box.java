@@ -1,10 +1,14 @@
 import java.util.List;
 
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+
 public class Box extends CellSet {
 
-	private int m_boxNumber;
+	private int m_boxNumber; 
 	
-	public Box(int boxNumber, List<CellSymbol> lSymbols) {
+	public Box(int boxNumber, List<Symbol> lSymbols) {
 		super(lSymbols);
 		m_boxNumber = boxNumber;
 	}
@@ -16,5 +20,51 @@ public class Box extends CellSet {
 	public String getRepresentation() {
 		return "Box " + m_boxNumber; 
 	}
+	
+	public List<SymbolRestriction> findRestrictedSymbols() {
+		
+		List<SymbolRestriction> lRestrictions = new ArrayList<>();		
+		
+		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
+		{
+			List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
+			if(lCells.size() == 2 || lCells.size() == 3)
+			{
+				Set<Row> rowSet = new HashSet<>();
+				Set<Column> columnSet = new HashSet<>();
+				for(Cell cell : lCells)
+				{
+					rowSet.add(cell.getRow());
+					columnSet.add(cell.getColumn());
+				}
+				
+				if(rowSet.size() == 1)
+				{
+					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_boxNumber + " and row " + lCells.get(0).getRow().getRepresentation());
+					SymbolRestriction restriction = new SymbolRestriction();
+					restriction.m_rowOrColumn = lCells.get(0).getRow();
+					restriction.m_symbol = symbol;
+					restriction.m_box = this;
+					lRestrictions.add(restriction);
+				}
+				else if(columnSet.size() == 1)
+				{
+					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_boxNumber + " and column " + lCells.get(0).getColumn().getRepresentation());
+					SymbolRestriction restriction = new SymbolRestriction(); 
+					restriction.m_rowOrColumn = lCells.get(0).getColumn();
+					restriction.m_symbol = symbol;
+					restriction.m_box = this;
+					lRestrictions.add(restriction);
+				}
+			}			
+		}
+		
+		return lRestrictions;
+	}	
 }
 
+class SymbolRestriction {
+	Symbol m_symbol;
+	Box m_box;
+	CellSet m_rowOrColumn;	
+}

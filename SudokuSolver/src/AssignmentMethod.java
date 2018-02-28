@@ -1,5 +1,5 @@
 
 public enum AssignmentMethod {
 
-	NotAssigned, Given, AssignedSymbolToCellSet;
+	NotAssigned, Given, AssignedSymbolToCellSet, AssignedSymbolToCell;
 }

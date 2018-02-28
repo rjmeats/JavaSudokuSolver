@@ -15,7 +15,7 @@ public class Grid {
 	static int s_columns = 9;
 	static int s_boxes = 9;
 	
-	List<CellSymbol> m_lSymbols;
+	List<Symbol> m_lSymbols;
 	
 	Grid() {
 		m_lRows = new ArrayList<>();
@@ -64,11 +64,11 @@ public class Grid {
 		}		
 	}
 	
-	static List<CellSymbol> getListOfSymbols(int n)
+	static List<Symbol> getListOfSymbols(int n)
 	{
 		// Need to check n ????
-		List<CellSymbol> l = new ArrayList<>();
-		for(CellSymbol cs : CellSymbol.values())
+		List<Symbol> l = new ArrayList<>();
+		for(Symbol cs : Symbol.values())
 		{
 			l.add(cs);
 		}
@@ -93,14 +93,16 @@ public class Grid {
 	}
 	
 	
-	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, CellSymbol symbol)
+	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
 	{
-		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
-		CellAssignmentStatus status = m_aCells[rowNumber][columnNumber].setAsGiven(symbol);
+		Puzzle.L.info("Applying given value : " + symbol.getGridRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
+		Cell cell = m_aCells[rowNumber][columnNumber];
+		Assignment a = new Assignment(cell, symbol, AssignmentMethod.Given, 0);
+		CellAssignmentStatus status = cell.setAsAssigned(a);
 		return status;
 	}
 
-	private static String s_divider = "=============================================================================================";
+	private static String s_divider = "-----------------------------------";
 	
 	void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
 	
@@ -112,7 +114,7 @@ public class Grid {
 		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
 		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
 		sb1.append(ccd.getHeading() + stepInfo);
 		sb1.append("\r\n");
 		
@@ -135,7 +137,7 @@ public class Grid {
 				}
 
 				Cell cell = m_aCells[rowNumber][columnNumber];
-				boolean highlight = (cell.isAssigned() && (cell.m_value.m_assignedAtStepNumber == stepNumber));
+				boolean highlight = (cell.isAssigned() && (cell.getAssignment().getStepNumber() == stepNumber));
 				String contents = ccd.getContent(cell, highlight);
 				sb1.append(" " + contents + " ");					
 			}
@@ -156,7 +158,7 @@ public class Grid {
 		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
 		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append("\r\n\r\n").append(s_divider).append("\r\n\r\n");
 		sb1.append("Cell sets "  + stepInfo);
 		sb1.append("\r\n");
 		

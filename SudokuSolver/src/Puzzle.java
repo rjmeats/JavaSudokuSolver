@@ -1,6 +1,9 @@
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.List;
+
+// http://www.sudokuwiki.org
 
 public class Puzzle {
 
@@ -39,6 +42,7 @@ public class Puzzle {
 			"1..    ...    ..4",		
 	};
 
+	// www.sudokuwiki.org gets a bit further with some advanced strategies, but then stops. Apparently there are 149 solutions!
 	static String[] s_initialValuesLeMondeHard = {
 			
 			"8..    ..1    2..",			
@@ -56,7 +60,183 @@ public class Puzzle {
 			"...    ...    ...",			
 	};
 	
-	static String[] s_initialValues = s_initialValuesLeMondeHard;
+	static String[] s_initialValuesLeMondeHard2 = {
+			
+			"...    76.    ..8",			
+			"9..    ...    ...",			
+			"...    2.9    ...",			
+										"",
+										"",
+			".5.    912    .46",			
+			".9.    .4.    2.5",			
+			"..6    .8.    .1.",			
+										"",
+										"",
+			"...    .95    ..1",			
+			".7.    ..6    ...",			
+			"3.9    8..    4..",			
+	};
+	
+	// https://puzzling.stackexchange.com/questions/37804/non-brute-force-sudoku
+	static String[] s_initialValuesStackOverflow = {
+			
+			"3..    .72    596",			
+			"...    4..    ..2",			
+			"..7    ...    3.4",			
+										"",
+										"",
+			"...    ...    .4.",			
+			"...    ...    ...",			
+			".9.    ...    ...",			
+										"",
+										"",
+			"8.4    ...    2..",			
+			"9..    ..7    ...",			
+			"736    24.    ..9",			
+	};
+	
+	static String[] s_initialValuesStackOverflow2 = {
+			
+			"3..    .72    596",			
+			"1..    4..    ..2",			
+			"..7    ...    3.4",			
+										"",
+										"",
+			"...    ...    .4.",			
+			"...    .8.    .5.",			
+			".9.    ...    ...",			
+										"",
+										"",
+			"8.4    ...    2..",			
+			"9..    ..7    ...",			
+			"736    24.    ..9",			
+	};
+
+	static String[] s_1 = {
+			
+			"...    .4.    .52",			
+			"..2    1.5    8.7",			
+			"...    ...    .4.",			
+										"",
+										"",
+			"6.8    4..    .9.",			
+			"3.5    ...    ..8",			
+			"...    ..9    .1.",			
+										"",
+										"",
+			"57.    .23    .8.",			
+			"..9    ...    ...",			
+			"..6    .17    ...",			
+	};
+
+
+	// https://www.youtube.com/watch?v=myy7ldfgTnQ
+	static String[] s_times9636 = {
+			
+			"...    ..9    ...",			
+			"...    .4.    ...",			
+			"234    58.    ...",			
+										"",
+										"",
+			"...    ...    ..1",			
+			"76.    .9.    48.",			
+			"39.    ...    5..",			
+										"",
+										"",
+			".5.    ...    7..",			
+			"..9    17.    8..",			
+			"4..    93.    2..",			
+	};
+
+	// https://www.youtube.com/watch?v=4FlfjmmcjPs
+	static String[] s_times9633 = {
+			
+			"...    ..7   35.",			
+			"...    .2.    19.",			
+			"...    ..1    .2.",			
+										"",
+										"",
+			"..6    .5.    ..3",			
+			".83    ...    67.",			
+			"7..    .6.    4..",			
+										"",
+										"",
+			".6.    3..    ...",			
+			".92    .8.    ...",			
+			".54    6..    ...",			
+	};
+
+	// https://www.youtube.com/watch?v=o3PQrNecoag
+	// Needs combinations to get going ...
+	static String[] s_hard = {
+			
+			"9..    ...    7..",			
+			"..8    4.5    ...",			
+			".5.    ..2    ..3",			
+										"",
+										"",
+			"8..    .9.    ...",			
+			"..4    ...    6..",			
+			"...    .1.    ..2",			
+										"",
+										"",
+			"5..    8..    .4.",			
+			"...    7.9    8..",			
+			"..2    ...    ..7",			
+	};
+	
+	static String[] s_times9656 = {
+			
+			"...    ..2    .9.",			
+			".9.    ...    .5.",			
+			"...    13.    ..4",			
+										"",
+										"",
+			"..3    ...    .7.",			
+			"..6    ..4    9.5",			
+			"2..    .7.    8..",			
+										"",
+										"",
+			"...    .18    ..7",			
+			"65.    7..    ..9",			
+			"..7    .4.    28.",			
+	};
+
+	static String[] s_times9688 = {
+			
+			"...    ...    .6.",			
+			"...    3..    28.",			
+			"...    .15    ..9",			
+										"",
+										"",
+			".5.    .7.    .1.",			
+			"..1    4..    ..7",			
+			"..4    ...    8.6",			
+										"",
+										"",
+			".8.    ..2    .7.",			
+			"34.    6..    9..",			
+			"..5    .47    ...",			
+	};
+
+	static String[] s_empty = {
+			
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+										"",
+										"",
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+										"",
+										"",
+			"...    ...    ...",			
+			"...    ...    ...",			
+			"...    ...    ...",			
+	};
+
+	static String[] s_initialValues = s_times9688;
 	
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
@@ -100,8 +280,19 @@ public class Puzzle {
 			{
 				stepNumber++;
 				L.info("Starting step " + stepNumber + " ...");
+				
+				System.out.println("==================================================================================================");
+				System.out.println("==================================================================================================");
+				System.out.println();
+				System.out.println("Assignment step: " + stepNumber);
+
 				changed = puzzle.lookForNextAssignment(stepNumber);
 				
+				puzzle.m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), stepNumber);
+				puzzle.m_grid.printGrid(new Cell.CouldBeValueDisplay(), stepNumber);
+				puzzle.m_grid.printCellSets(stepNumber);
+				puzzle.m_grid.printGrid(new Cell.AssignedValueDisplay(), stepNumber);
+
 				Stats stats = puzzle.getStats();
 				complete = stats.m_complete;
 
@@ -114,6 +305,7 @@ public class Puzzle {
 				{
 					System.out.println("Puzzle is complete");
 					L.info("Puzzle completed");
+					puzzle.m_grid.printGrid(new Cell.AssignedValueDisplay());
 				}
 				else if(stepNumber > 1000)
 				{
@@ -181,18 +373,18 @@ public class Puzzle {
 						}
 						else
 						{
-							CellSymbol symbol = CellSymbol.toCellSymbol(c);
+							Symbol symbol = Symbol.toSymbol(c);
 							if(symbol != null)
 							{
 								CellAssignmentStatus assignmentStatus = m_grid.applyGivenValueToCell(rowNumber, columnNumber, symbol);
 								if(assignmentStatus != CellAssignmentStatus.CanBeAssigned)
 								{
-									status.setError("Unable to assign " + symbol.getRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
+									status.setError("Unable to assign " + symbol.getGridRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
 								}
 							}
 							else
 							{
-								status.setError("Unexpected symbol: " + c);
+								status.setError("Unknown symbol: " + c);
 							}
 						}
 					}
@@ -207,8 +399,8 @@ public class Puzzle {
 		{
 			m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), 0);
 			m_grid.printGrid(new Cell.CouldBeValueDisplay(), 0);
-			m_grid.printGrid(new Cell.AssignedValueDisplay(), 0);
 			m_grid.printCellSets();
+			m_grid.printGrid(new Cell.AssignedValueDisplay(), 0);
 		}
 
 		return status;
@@ -235,35 +427,175 @@ public class Puzzle {
 		return realRows;
 	}
 
-	boolean lookForNextAssignment(int assignmentStep)
+	boolean lookForNextAssignment(int stepNumber)
 	{
 		boolean changedState = false;
 		
-		System.out.println("======================================================================");
-		System.out.println("Assignment step: " + assignmentStep);
-		Puzzle.L.info("Starting assignment step: " + assignmentStep + " ..");
+		Puzzle.L.info("Starting assignment step: " + stepNumber + " ..");
 		
-		// Look through each row, column, box for an unassigned symbol which can only go in one cell
-		Assignment a = null;
-		for(CellSet set : m_grid.m_lCellSets)
+		if(!changedState)
 		{
-			a = set.checkForAssignableSymbol();
-			if(a != null)
+			// Look through unassigned cell for cases where only one symbol is a possible assignment.
+			for(Cell cell : m_grid.m_lCells)
 			{
-				String s = "Assigned symbol " + a.m_symbol.getRepresentation() + " to cell " + a.m_cell.m_cellNumber + " from cell set " + set.getRepresentation();
-				Puzzle.L.info(s);
-				System.out.println(s);
-				System.out.println();
-				a.m_cell.setAsAssigned(AssignmentMethod.AssignedSymbolToCellSet, a.m_symbol, assignmentStep);
-				changedState = true;
-
-				m_grid.printGrid(new Cell.CouldBeValueCountDisplay(), assignmentStep);
-				m_grid.printGrid(new Cell.CouldBeValueDisplay(), assignmentStep);
-				m_grid.printGrid(new Cell.AssignedValueDisplay(), assignmentStep);
-				m_grid.printCellSets(assignmentStep);
-				
-				break;
+				if(!cell.isAssigned())
+				{
+					Assignment a = cell.checkForAssignableSymbol(stepNumber);
+					if(a != null)
+					{
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.getColumnAndRowLocationString();
+						Puzzle.L.info(s);
+						System.out.println(s);
+						System.out.println();
+						a.getCell().setAsAssigned(a);
+						changedState = true;
+						break;
+					}
+				}
+			}			
+		}
+		
+		if(!changedState)
+		{
+			// Look through each row, column, box for an unassigned symbol which can only go in one cell
+			for(CellSet set : m_grid.m_lCellSets)
+			{
+				Assignment a = set.checkForAssignableSymbol(stepNumber);
+				if(a != null)
+				{
+					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getColumnAndRowLocationString() + " from cell set " + set.getRepresentation();
+					Puzzle.L.info(s);
+					System.out.println(s);
+					System.out.println();
+					a.getCell().setAsAssigned(a);
+					changedState = true;
+					break;
+				}
 			}
+		}
+		
+		if(!changedState)
+		{
+			// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
+			// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
+			int stateChanges = 0;
+			for(Box box : m_grid.m_lBoxes)
+			{
+				List<SymbolRestriction> lRestrictions = box.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_rowOrColumn.ruleOutSymbolOutsideBox(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
+		
+		if(!changedState)
+		{
+			// Look through each column box to see where a particular unresolved symbol can only appear in a specific box.
+			// Where this arises, we can rule-out the symbol from the other cells in the box which are not in the column.
+			int stateChanges = 0;
+			for(Column column : m_grid.m_lColumns)
+			{
+				List<SymbolRestriction> lRestrictions = column.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
+		
+		if(!changedState)
+		{
+			// And the same again for rows ...
+			int stateChanges = 0;
+			for(Row row : m_grid.m_lRows)
+			{
+				List<SymbolRestriction> lRestrictions = row.findRestrictedSymbols();
+				if(lRestrictions != null)
+				{
+					for(SymbolRestriction restriction : lRestrictions)
+					{
+						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						if(causedStateChange)
+						{
+							stateChanges++;
+						}
+					}
+				}
+			}
+			
+			changedState = (stateChanges > 0);
+		}
+		
+		if(!changedState)
+		{
+			// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
+			int stateChanges = 0;
+			for(CellSet set : m_grid.m_lCellSets)
+			{
+				List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
+				if(lRestrictedSymbolSets != null)
+				{
+					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
+					{						
+						for(Cell cell : symbolSetRestriction.m_lCells)
+						{
+							boolean causedStateChange = cell.ruleOutAllBut(symbolSetRestriction.m_lSymbols);
+							if(causedStateChange)
+							{
+								stateChanges++;
+							}
+						}
+					}
+
+					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
+					{
+						for(Symbol symbol : symbolSetRestriction.m_lSymbols)
+						{
+							boolean causedStateChange = symbolSetRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolSetRestriction.m_lCells);
+							if(causedStateChange)
+							{
+								stateChanges++;
+							}
+						}
+						
+						List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
+						for(CellSet cset : lAffectedCellSets)
+						{
+							for(Cell cell : symbolSetRestriction.m_lCells)
+							{
+								boolean causedStateChange = cset.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols);
+								if(causedStateChange)
+								{
+									stateChanges++;
+								}
+							}
+						}
+					}
+
+				
+				}
+			}
+			
+			changedState = (stateChanges > 0);
 		}
 		
 		return changedState;
@@ -308,7 +640,7 @@ public class Puzzle {
 			if(cell.isAssigned())
 			{
 				stats.m_assignedCells++;
-				if(cell.m_value.m_method == AssignmentMethod.Given)
+				if(cell.getAssignment().getMethod() == AssignmentMethod.Given)
 				{
 					stats.m_initialAssignedCells++;
 				}
