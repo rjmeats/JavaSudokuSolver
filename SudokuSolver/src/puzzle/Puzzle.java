@@ -1,7 +1,12 @@
 package puzzle;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -258,10 +263,27 @@ public class Puzzle {
 		
 		L.setLevel(Level.ALL);
 		
+		List<String> initialGridValues = null;
+		
+		if(args.length > 0) {
+			String puzzleFileName = args[0];
+			System.out.println("Reading initial values from file " + puzzleFileName);
+			initialGridValues = readPuzzleFile(puzzleFileName);
+			if(initialGridValues == null) {
+				System.err.println("Failed to read puzzle from file " + puzzleFileName);
+			}
+		}
+		else {
+			System.out.println("Using hard-coded initial values");
+			initialGridValues = Arrays.asList(s_initialValues);
+		}
+		
+		if(initialGridValues == null) return;
+
+		L.info("New Puzzle run");
 		System.out.println("Initial values:");
 		System.out.println();
-		L.info("New Puzzle run");
-		for(String s : s_initialValues)
+		for(String s : initialGridValues)
 		{
 			System.out.println("  " + s);
 			L.info("Initial values:     " + s);
@@ -270,7 +292,7 @@ public class Puzzle {
 		System.out.println();
 		
 		Puzzle puzzle = new Puzzle();		
-		InitialGridStatus status = puzzle.assignInitialValues(s_initialValues);
+		InitialGridStatus status = puzzle.assignInitialValues(initialGridValues);
 		
 		if(!status.m_isOK)
 		{
@@ -335,14 +357,56 @@ public class Puzzle {
 		
 		L.info("Puzzle run ended");
 	}	
+
 	
+	static List<String> readPuzzleFile(String fileName) {
+		
+		List<String> lines = null;
+		
+		File f = new File(fileName);
+		
+		if(!(f.exists() && f.isFile() && f.canRead())) {
+			System.err.println("Unable to read file " + fileName);
+		}
+		else {
+			
+			lines = new ArrayList<>();
+			
+			try {
+				Scanner sc = new Scanner(f);
+				while(sc.hasNextLine()) {
+					lines.add(sc.nextLine());
+				}
+				sc.close();
+			} catch (FileNotFoundException e) {
+				// Shouldn't get here
+			}
+		}
+
+		return lines;
+	}
+
+	public static List<Symbol> getListOfSymbols(int n)
+	{
+		// Need to check n ????
+		List<Symbol> l = new ArrayList<>();
+		for(Symbol cs : Symbol.values())
+		{
+			l.add(cs);
+		}
+		
+		return l;
+	}
+
 	Grid m_grid;
+	List<Symbol> m_symbolsList;
 	Solver m_solver;
 	
 	Puzzle()
 	{
-		m_grid = new Grid();		
-		m_solver = new Solver(m_grid);
+		m_grid = new Grid();
+		m_symbolsList = getListOfSymbols(9);
+		m_solver = new Solver(m_grid, m_symbolsList);
 		
 		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
 		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
@@ -351,21 +415,21 @@ public class Puzzle {
 		m_solver.printCellSets();
 	}
 	
-	InitialGridStatus assignInitialValues(String[] inputValueRows)
+	InitialGridStatus assignInitialValues(List<String> inputValueRows)
 	{
 		InitialGridStatus status = new InitialGridStatus();
-		String valueRows[] = removeBlankLines(inputValueRows);
+		List<String> valueRows = removeBlankLines(inputValueRows);
 		
 		// Should be 9 rows, each with 9 characters, ignored spaces.
-		if(valueRows.length != 9)
+		if(valueRows.size() != 9)
 		{
-			status.setError("Unexpected number of rows: " + valueRows.length);
+			status.setError("Unexpected number of rows: " + valueRows.size());
 		}
 		else
 		{
-			for(int rowNumber = 0; rowNumber < valueRows.length; rowNumber ++)
+			for(int rowNumber = 0; rowNumber < valueRows.size(); rowNumber ++)
 			{
-				String rowString = valueRows[rowNumber];
+				String rowString = valueRows.get(rowNumber);
 				String despacedRowString = rowString.replaceAll("\\s+", "");
 				if(despacedRowString.length() != 9)
 				{
@@ -415,25 +479,18 @@ public class Puzzle {
 		return status;
 	}
 	
-	private static String[] removeBlankLines(String a[])
+	private static List<String> removeBlankLines(List<String> l)
 	{
-		int n=0;
-		for(String s : a)
-		{
-			if(s.trim().length() > 0) n++;
-		}
-		
-		String[] realRows = new String[n];
-		n = 0;
-		for(String s : a)
+		List<String> lOut = new ArrayList<>();
+		for(String s : l)
 		{
 			if(s.trim().length() > 0)
 			{
-				realRows[n++] = s;
+				lOut.add(s);
 			}
 		}
 		
-		return realRows;
+		return lOut;
 	}
 
 		

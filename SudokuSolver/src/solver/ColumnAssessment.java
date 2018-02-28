@@ -16,6 +16,8 @@ class ColumnAssessment extends CellSetAssessment {
 		m_column = column;
 	}
 
+	int getSetNumber() { return m_column.getColumnNumber(); }
+
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();

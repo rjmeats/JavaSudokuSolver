@@ -17,6 +17,8 @@ public class BoxAssessment extends CellSetAssessment {
 		m_box = box;
 	}
 
+	int getSetNumber() { return m_box.getBoxNumber(); }
+	
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();		

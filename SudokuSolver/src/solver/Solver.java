@@ -25,9 +25,9 @@ public class Solver {
 	
 	HashMap<Cell, CellAssessment> m_cellAssessmentsMap;
 	
-	public Solver(Grid grid) {
+	public Solver(Grid grid, List<Symbol> lSymbols) {
 		m_grid = grid;
-		m_lSymbols = new ArrayList<>(m_grid.m_lSymbols);
+		m_lSymbols = new ArrayList<>(lSymbols);
 
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();

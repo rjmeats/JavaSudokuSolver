@@ -1,8 +1,6 @@
 package grid;
+
 import java.util.List;
-
-import puzzle.Symbol;
-
 import java.util.ArrayList;
 
 public class Grid {
@@ -19,8 +17,6 @@ public class Grid {
 	static int s_columns = 9;
 	static int s_boxes = 9;
 	
-	public List<Symbol> m_lSymbols;
-	
 	public Grid() {
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
@@ -28,7 +24,6 @@ public class Grid {
 		m_lCellSets = new ArrayList<>();
 		m_lCells = new ArrayList<>();
 		m_aCells = new Cell[s_rows][s_columns];
-		m_lSymbols = getListOfSymbols(s_rows);
 		
 		for(int rowNum = 0; rowNum < s_rows; rowNum++)
 		{
@@ -68,18 +63,6 @@ public class Grid {
 		}		
 	}
 	
-	public static List<Symbol> getListOfSymbols(int n)
-	{
-		// Need to check n ????
-		List<Symbol> l = new ArrayList<>();
-		for(Symbol cs : Symbol.values())
-		{
-			l.add(cs);
-		}
-		
-		return l;
-	}
-
 	// 0  1  ... 8
 	// 9  10 ... 17
 	// ..
@@ -95,7 +78,5 @@ public class Grid {
 	public static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
 		return (rowNumber/3)*3 + columnNumber / 3;
 	}
-	
-	
 }
  

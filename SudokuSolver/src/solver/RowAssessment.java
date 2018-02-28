@@ -16,6 +16,8 @@ public class RowAssessment extends CellSetAssessment {
 		m_row = row;
 	}
 
+	int getSetNumber() { return m_row.getRowNumber(); }
+
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();

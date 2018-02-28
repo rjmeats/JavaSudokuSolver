@@ -14,7 +14,7 @@ import puzzle.AssignmentMethod;
 import puzzle.Puzzle;
 import puzzle.Symbol;
 
-abstract class CellSetAssessment {
+abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	CellSet m_cellSet;
 	Set<CellAssessment> m_lCellAssessments;
 	
@@ -31,6 +31,14 @@ abstract class CellSetAssessment {
 		{
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<CellAssessment>());
 		}
+	}
+	
+	abstract int getSetNumber();
+	
+	@Override
+	public int compareTo(CellSetAssessment o) {
+	   // comparison logic goes here
+		return this.getSetNumber() - o.getSetNumber();
 	}
 
 	void addCell(CellAssessment ca)	{
