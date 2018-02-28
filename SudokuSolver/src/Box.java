@@ -21,18 +21,35 @@ public class Box extends CellSet {
 		return "Box " + m_boxNumber; 
 	}
 	
+}
+
+class SymbolRestriction {
+	Symbol m_symbol;
+	BoxAssessment m_box;
+	CellSetAssessment m_rowOrColumn;	
+}
+
+class BoxAssessment extends CellSetAssessment {
+
+	Box m_box;
+	
+	public BoxAssessment(Box box, List<Symbol> lSymbols) {
+		super(box, lSymbols);
+		m_box = box;
+	}
+
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();		
 		
 		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
 		{
-			List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
+			List<CellAssessment> lCells = m_couldBeCellsForSymbol.get(symbol);
 			if(lCells.size() == 2 || lCells.size() == 3)
 			{
-				Set<Row> rowSet = new HashSet<>();
-				Set<Column> columnSet = new HashSet<>();
-				for(Cell cell : lCells)
+				Set<RowAssessment> rowSet = new HashSet<>();
+				Set<ColumnAssessment> columnSet = new HashSet<>();
+				for(CellAssessment cell : lCells)
 				{
 					rowSet.add(cell.getRow());
 					columnSet.add(cell.getColumn());
@@ -40,7 +57,7 @@ public class Box extends CellSet {
 				
 				if(rowSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_boxNumber + " and row " + lCells.get(0).getRow().getRepresentation());
+					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_box.getBoxNumber() + " and row " + lCells.get(0).getRow().m_row.getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction();
 					restriction.m_rowOrColumn = lCells.get(0).getRow();
 					restriction.m_symbol = symbol;
@@ -49,7 +66,7 @@ public class Box extends CellSet {
 				}
 				else if(columnSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_boxNumber + " and column " + lCells.get(0).getColumn().getRepresentation());
+					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_box.getBoxNumber() + " and column " + lCells.get(0).getColumn().m_column.getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction(); 
 					restriction.m_rowOrColumn = lCells.get(0).getColumn();
 					restriction.m_symbol = symbol;
@@ -61,10 +78,4 @@ public class Box extends CellSet {
 		
 		return lRestrictions;
 	}	
-}
-
-class SymbolRestriction {
-	Symbol m_symbol;
-	Box m_box;
-	CellSet m_rowOrColumn;	
 }

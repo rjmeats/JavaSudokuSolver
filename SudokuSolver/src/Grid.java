@@ -54,7 +54,7 @@ public class Grid {
 
 				int boxNum = getBoxNumberFromGridPosition(rowNum, columnNum);
 				Box box = m_lBoxes.get(boxNum);
-				Cell cell = new Cell(getCellNumberFromGridPosition(rowNum, columnNum), row, column, box, m_lSymbols);
+				Cell cell = new Cell(getCellNumberFromGridPosition(rowNum, columnNum), row, column, box);
 				m_aCells[rowNum][columnNum] = cell;
 				m_lCells.add(cell);
 				row.addCell(cell);
@@ -93,82 +93,5 @@ public class Grid {
 	}
 	
 	
-	CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
-	{
-		Puzzle.L.info("Applying given value : " + symbol.getGridRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
-		Cell cell = m_aCells[rowNumber][columnNumber];
-		Assignment a = new Assignment(cell, symbol, AssignmentMethod.Given, 0);
-		CellAssignmentStatus status = cell.setAsAssigned(a);
-		return status;
-	}
-
-	private static String s_divider = "-----------------------------------";
-	
-	void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
-	
-	void printGrid(CellContentDisplayer ccd, int stepNumber) {
-		StringBuilder sb1 = new StringBuilder();
-		
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
-		
-		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
-		
-		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
-		sb1.append(ccd.getHeading() + stepInfo);
-		sb1.append("\r\n");
-		
-		for(int rowNumber = 0; rowNumber < s_rows; rowNumber++)
-		{
-			int boxNumber = getBoxNumberFromGridPosition(rowNumber, 0);
-			if(boxNumber != currentVerticalBoxNumber)
-			{
-				sb1.append("\r\n\r\n");
-				currentVerticalBoxNumber = boxNumber; 
-			}
-
-			for(int columnNumber = 0; columnNumber < s_columns; columnNumber++)
-			{
-				boxNumber = getBoxNumberFromGridPosition(rowNumber, columnNumber);
-				if(boxNumber != currentHorizontalBoxNumber)
-				{
-					sb1.append("    ");
-					currentHorizontalBoxNumber = boxNumber;
-				}
-
-				Cell cell = m_aCells[rowNumber][columnNumber];
-				boolean highlight = (cell.isAssigned() && (cell.getAssignment().getStepNumber() == stepNumber));
-				String contents = ccd.getContent(cell, highlight);
-				sb1.append(" " + contents + " ");					
-			}
-			
-			sb1.append("\r\n");
-		}
-		
-		System.out.println(sb1.toString());
-	}
-
-
-	void printCellSets() {
-		printCellSets(-1);
-	}
-	
-	void printCellSets(int stepNumber) {
-		StringBuilder sb1 = new StringBuilder();
-		
-		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
-		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n\r\n");
-		sb1.append("Cell sets "  + stepInfo);
-		sb1.append("\r\n");
-		
-		for(CellSet cellset : m_lCellSets)
-		{
-			sb1.append(cellset.getRepresentation() + " : " + cellset.getSymbolAssignmentSummary());
-			sb1.append("\r\n");
-		}
-		
-		System.out.println(sb1.toString());
-	}
 }
  

@@ -19,24 +19,35 @@ public class Row extends CellSet {
 		return "Row " + m_rowNumber; 
 	}
 	
+}
+
+class RowAssessment extends CellSetAssessment {
+
+	Row m_row;
+	
+	public RowAssessment(Row row, List<Symbol> lSymbols) {
+		super(row, lSymbols);
+		m_row = row;
+	}
+
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();
 		
 		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
 		{
-			List<Cell> lCells = m_couldBeCellsForSymbol.get(symbol);
+			List<CellAssessment> lCells = m_couldBeCellsForSymbol.get(symbol);
 			if(lCells.size() == 2 || lCells.size() == 3)
 			{
-				HashMap<Box, Box> boxMap = new HashMap<>();
-				for(Cell cell : lCells)
+				HashMap<BoxAssessment, BoxAssessment> boxMap = new HashMap<>();
+				for(CellAssessment cell : lCells)
 				{
 					boxMap.put(cell.getBox(), cell.getBox());
 				}
 				
 				if(boxMap.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in row " + m_rowNumber + " and box " + lCells.get(0).getBox().getRepresentation());
+					System.err.println("Found restricted symbol " + symbol.toString() + " in row " + m_row.getRowNumber() + " and box " + lCells.get(0).getBox().m_box.getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction();
 					restriction.m_box = lCells.get(0).getBox();
 					restriction.m_symbol = symbol;
@@ -48,6 +59,5 @@ public class Row extends CellSet {
 		
 		return lRestrictions;
 	}	
-
-
 }
+

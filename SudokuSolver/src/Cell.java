@@ -1,10 +1,9 @@
 import java.util.List;
 import java.util.ArrayList;
-
 import java.util.Comparator;
 import java.util.HashMap;
 
-public class Cell implements Comparable {
+public class Cell implements Comparable<Cell> {
 
 	// Where the cell is in its grid
 	private int m_cellNumber;
@@ -14,125 +13,32 @@ public class Cell implements Comparable {
 
 	// Items relating to assigning a symbol to the cell by the solver program.
 	private Assignment m_assignment;
-	private HashMap<Symbol, Symbol> m_mapCouldBeSymbols;
-	private HashMap<Symbol, Symbol> m_mapRuledOutSymbols;
 
-	Cell(int cellNumber, Row row, Column column, Box box, List<Symbol> lAllSymbols) {
+	Cell(int cellNumber, Row row, Column column, Box box) {
 		m_cellNumber = cellNumber;
 		m_row = row;
 		m_column = column;
 		m_box = box;
 		
 		m_assignment = null;		
-		m_mapCouldBeSymbols = new HashMap<>();
-		m_mapRuledOutSymbols = new HashMap<>();
-		
-		for(Symbol symbol : lAllSymbols)
-		{
-			m_mapCouldBeSymbols.put(symbol, symbol);
-		}
 	}
 	
 	public Row getRow() { return m_row; }
 	public Column getColumn() { return m_column; }
 	public Box getBox() { return m_box; }
 	
-	List<Symbol> getCouldBeSymbolsList()
-	{
-		return new ArrayList<>(m_mapCouldBeSymbols.keySet());
-	}
-	
 	public String getColumnAndRowLocationString()
 	{
 		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
 	}
 	
-	Assignment checkForAssignableSymbol(int stepNumber)
-	{
-		Assignment a = null;
-		if(!isAssigned() && m_mapCouldBeSymbols.size() == 1)
-		{
-			for(Symbol symbol: m_mapCouldBeSymbols.keySet())
-			{
-				a = new Assignment(this, symbol, AssignmentMethod.AssignedSymbolToCell, stepNumber);
-			}
-		}
-		
-		return a;
-	}
-
 	public String toString()
 	{
 		return "Cell no=" + getCellNumber();
 	}
-	
-	
-	CellAssignmentStatus setAsAssigned(Assignment assignment)
-	{
-		Puzzle.L.info("Trying assignment " + assignment.toString());
-		CellAssignmentStatus status = checkCellCanBeAssigned(assignment);
-		if(status == CellAssignmentStatus.CanBeAssigned)
-		{
-			Puzzle.L.info(".. assignment is possible ...");
-			
-			m_assignment = assignment;
 
-			// Tidy up map of which symbols this cell could/could-not be
-			for(Symbol couldBeSymbol : m_mapCouldBeSymbols.keySet())
-			{
-				if(assignment.getSymbol() != couldBeSymbol)
-				{
-					m_mapRuledOutSymbols.put(couldBeSymbol, couldBeSymbol);
-				}
-			}
-			m_mapCouldBeSymbols.clear();
-			m_mapCouldBeSymbols.put(assignment.getSymbol(), assignment.getSymbol());
-
-			m_row.markAsAssigned(assignment);
-			m_column.markAsAssigned(assignment);
-			m_box.markAsAssigned(assignment);
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cellNumber + " complete");
-		}
-		else
-		{
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cellNumber + " not possible: " + status.name());			
-		}
-		
-		return status;		
-	}
-	
-	CellAssignmentStatus checkCellCanBeAssigned(Assignment assignment)
-	{
-		Symbol symbol = assignment.getSymbol();
-		
-		CellAssignmentStatus status = CellAssignmentStatus.CanBeAssigned;
-		
-		if(isAssigned())
-		{
-			status = CellAssignmentStatus.CellAlreadyAssigned;
-		}
-		else if(!couldBe(symbol))
-		{
-			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
-		}
-		else if(isRuledOut(symbol))
-		{
-			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
-		}
-		else if(m_row.symbolAlreadyAssigned(symbol))
-		{
-			status = CellAssignmentStatus.SymbolAlreadyAssignedInRow;
-		}
-		else if(m_column.symbolAlreadyAssigned(symbol))
-		{
-			status = CellAssignmentStatus.SymbolAlreadyAssignedInColumn;			
-		}
-		else if(m_box.symbolAlreadyAssigned(symbol))
-		{
-			status = CellAssignmentStatus.SymbolAlreadyAssignedInBox;			
-		}
-
-		return status;
+	void assign(Assignment assignment) {
+		m_assignment = assignment;
 	}
 	
 	boolean isAssigned()
@@ -145,6 +51,83 @@ public class Cell implements Comparable {
 		return m_assignment;
 	}
 	
+	int getCellNumber()
+	{
+		return m_cellNumber;
+	}
+	
+	// Different sort options, are they needed ???? How do they differ ?
+	static class SortByCellNumber implements Comparator<Cell>
+	{
+	    // Used for sorting in ascending order of
+	    // roll number
+	    public int compare(Cell c1, Cell c2)
+	    {
+	        return c1.m_cellNumber - c2.m_cellNumber;
+	    }
+	}
+
+	@Override
+	public int compareTo(Cell c) {
+		return m_cellNumber - c.m_cellNumber;
+	}
+}
+
+enum CellAssignmentStatus
+{
+	CanBeAssigned, CellAlreadyAssigned, SymbolAlreadyRuledOut, SymbolAlreadyAssignedInRow, SymbolAlreadyAssignedInColumn, SymbolAlreadyAssignedInBox;
+}
+
+
+
+
+class CellAssessment implements Comparable<CellAssessment> {
+
+	Cell m_cell;
+	RowAssessment m_row;
+	ColumnAssessment m_column;
+	BoxAssessment m_box;
+	
+	private HashMap<Symbol, Symbol> m_mapCouldBeSymbols;
+	private HashMap<Symbol, Symbol> m_mapRuledOutSymbols;
+
+	CellAssessment(Cell cell, RowAssessment row, ColumnAssessment column, BoxAssessment box, List<Symbol> lAllSymbols) {
+		m_cell = cell;
+		m_row = row;
+		m_column = column;
+		m_box = box;
+		m_mapCouldBeSymbols = new HashMap<>();
+		m_mapRuledOutSymbols = new HashMap<>();
+		
+		for(Symbol symbol : lAllSymbols)
+		{
+			m_mapCouldBeSymbols.put(symbol, symbol);
+		}
+	}
+
+	RowAssessment getRow() { return m_row; }
+	ColumnAssessment getColumn() { return m_column; }
+	BoxAssessment getBox() { return m_box; }	
+	
+	List<Symbol> getCouldBeSymbolsList()
+	{
+		return new ArrayList<>(m_mapCouldBeSymbols.keySet());
+	}
+	
+	Assignment checkForAssignableSymbol(int stepNumber)
+	{
+		Assignment a = null;
+		if(!m_cell.isAssigned() && m_mapCouldBeSymbols.size() == 1)
+		{
+			for(Symbol symbol: m_mapCouldBeSymbols.keySet())
+			{
+				a = new Assignment(m_cell, symbol, AssignmentMethod.AssignedSymbolToCell, stepNumber);
+			}
+		}
+		
+		return a;
+	}
+
 	boolean couldBe(Symbol symbol)
 	{
 		return m_mapCouldBeSymbols.containsKey(symbol);
@@ -165,7 +148,7 @@ public class Cell implements Comparable {
 				m_mapRuledOutSymbols.put(symbol,symbol);
 				m_mapCouldBeSymbols.remove(symbol);
 				changed = true;
-				Puzzle.L.info(".. ruled out cell " + getCellNumber() + " : " + symbol.toString());				
+				Puzzle.L.info(".. ruled out cell " + m_cell.getCellNumber() + " : " + symbol.toString());				
 			}
 			else
 			{
@@ -173,7 +156,7 @@ public class Cell implements Comparable {
 			}
 		}
 		
-		Puzzle.L.info(".. for cell " + getCellNumber() + " symbol-could-be list = " + Symbol.symbolMapToString(m_mapCouldBeSymbols) + ":  ruled-out list = " + Symbol.symbolMapToString(m_mapRuledOutSymbols));
+		Puzzle.L.info(".. for cell " + m_cell.getCellNumber() + " symbol-could-be list = " + Symbol.symbolMapToString(m_mapCouldBeSymbols) + ":  ruled-out list = " + Symbol.symbolMapToString(m_mapRuledOutSymbols));
 		
 		return changed;
 	}
@@ -203,8 +186,6 @@ public class Cell implements Comparable {
 		return changed;
 	}
 
-	
-	
 	int couldBeCount()
 	{
 		return m_mapCouldBeSymbols.size();
@@ -215,39 +196,83 @@ public class Cell implements Comparable {
 		return Symbol.symbolMapToString(m_mapCouldBeSymbols);
 	}	
 	
-	int getCellNumber()
+	CellAssignmentStatus checkCellCanBeAssigned(Assignment assignment)
 	{
-		return m_cellNumber;
+		Symbol symbol = assignment.getSymbol();
+		
+		CellAssignmentStatus status = CellAssignmentStatus.CanBeAssigned;
+		
+		if(m_cell.isAssigned())
+		{
+			status = CellAssignmentStatus.CellAlreadyAssigned;
+		}
+		else if(!couldBe(symbol))
+		{
+			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
+		}
+		else if(isRuledOut(symbol))
+		{
+			status = CellAssignmentStatus.SymbolAlreadyRuledOut;			
+		}
+		else if(getRow().symbolAlreadyAssigned(symbol))
+		{
+			status = CellAssignmentStatus.SymbolAlreadyAssignedInRow;
+		}
+		else if(getColumn().symbolAlreadyAssigned(symbol))
+		{
+			status = CellAssignmentStatus.SymbolAlreadyAssignedInColumn;			
+		}
+		else if(getBox().symbolAlreadyAssigned(symbol))
+		{
+			status = CellAssignmentStatus.SymbolAlreadyAssignedInBox;			
+		}
+
+		return status;
 	}
 	
-	static class CellNumberDisplayer implements CellContentDisplayer {
-		
-		public String getHeading() { return "Cell numbering"; }
-		
-		public String getContent(Cell c, boolean highlight)
+	CellAssignmentStatus setAsAssigned(Assignment assignment)
+	{
+		Puzzle.L.info("Trying assignment " + assignment.toString());
+		CellAssignmentStatus status = checkCellCanBeAssigned(assignment);
+		if(status == CellAssignmentStatus.CanBeAssigned)
 		{
-			return(FormatUtils.padRight(c.m_cellNumber, 5));
-		}
-	}
+			Puzzle.L.info(".. assignment is possible ...");
+			
+			m_cell.assign(assignment);
 
-	static class BoxNumberDisplayer implements CellContentDisplayer {
-		
-		public String getHeading() { return "Box numbering"; }
-		
-		public String getContent(Cell c, boolean highlight)
-		{
-			return(FormatUtils.padRight(c.m_box.getBoxNumber(), 5));
+			// Tidy up map of which symbols this cell could/could-not be
+			for(Symbol couldBeSymbol : m_mapCouldBeSymbols.keySet())
+			{
+				if(assignment.getSymbol() != couldBeSymbol)
+				{
+					m_mapRuledOutSymbols.put(couldBeSymbol, couldBeSymbol);
+				}
+			}
+			m_mapCouldBeSymbols.clear();
+			m_mapCouldBeSymbols.put(assignment.getSymbol(), assignment.getSymbol());
+
+			getRow().markAsAssigned(assignment, this);
+			getColumn().markAsAssigned(assignment, this);
+			getBox().markAsAssigned(assignment, this);
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cell.getCellNumber() + " complete");
 		}
+		else
+		{
+			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cell.getCellNumber() + " not possible: " + status.name());			
+		}
+		
+		return status;		
 	}
 	
 	static class CouldBeValueCountDisplay implements CellContentDisplayer {
 		
 		public String getHeading() { return "Cell 'Could-be-value' count: ~ => Given  = => Assigned  * => Could be assigned"; }
 		
-		public String getContent(Cell c, boolean highlight)
+		public String getContent(CellAssessment ca, boolean highlight)
 		{
-			String representation = "" + c.couldBeCount();
-			if(!c.isAssigned() && c.couldBeCount() == 1)
+			Cell c = ca.m_cell;
+			String representation = "" + ca.couldBeCount();
+			if(!c.isAssigned() && ca.couldBeCount() == 1)
 			{
 				representation = "*"+ representation;
 			}
@@ -267,10 +292,11 @@ public class Cell implements Comparable {
 		
 		public String getHeading() { return "Cell 'Could-be' values"; }
 		
-		public String getContent(Cell c, boolean highlight)
+		public String getContent(CellAssessment ca, boolean highlight)
 		{
-			String representation = "" + c.toCouldBeValuesString();
-			if(!c.isAssigned() && c.couldBeCount() == 1)
+			Cell c = ca.m_cell;
+			String representation = "" + ca.toCouldBeValuesString();
+			if(!c.isAssigned() && ca.couldBeCount() == 1)
 			{
 				representation = "*"+ representation;
 			}
@@ -286,12 +312,35 @@ public class Cell implements Comparable {
 		}
 	}
 	
+	static class CellNumberDisplayer implements CellContentDisplayer {
+		
+		public String getHeading() { return "Cell numbering"; }
+		
+		public String getContent(CellAssessment ca, boolean highlight)
+		{
+			Cell c = ca.m_cell;
+			return(FormatUtils.padRight(c.getCellNumber(), 5));
+		}
+	}
+
+	static class BoxNumberDisplayer implements CellContentDisplayer {
+		
+		public String getHeading() { return "Box numbering"; }
+		
+		public String getContent(CellAssessment ca, boolean highlight)
+		{
+			Cell c = ca.m_cell;
+			return(FormatUtils.padRight(c.getBox().getBoxNumber(), 5));
+		}
+	}
+	
 	static class AssignedValueDisplay implements CellContentDisplayer {
 		
 		public String getHeading() { return "Assigned-value"; }
 		
-		public String getContent(Cell c, boolean highlight)
+		public String getContent(CellAssessment ca, boolean highlight)
 		{
+			Cell c = ca.m_cell;
 			String representation = "-";
 			if(c.isAssigned())
 			{
@@ -306,25 +355,19 @@ public class Cell implements Comparable {
 		}
 	}
 
-	// Different sort options, are they needed ???? How do they differ ?
-	static class SortByCellNumber implements Comparator<Cell>
+	static class SortByCellNumber implements Comparator<CellAssessment>
 	{
 	    // Used for sorting in ascending order of
 	    // roll number
-	    public int compare(Cell c1, Cell c2)
+	    public int compare(CellAssessment c1, CellAssessment c2)
 	    {
-	        return c1.m_cellNumber - c2.m_cellNumber;
+	        return c1.m_cell.getCellNumber() - c2.m_cell.getCellNumber();
 	    }
 	}
 
 	@Override
-	public int compareTo(Object arg0) {
-		return m_cellNumber - ((Cell)arg0).m_cellNumber;
+	public int compareTo(CellAssessment c) {
+		return m_cell.getCellNumber() - c.m_cell.getCellNumber();
 	}
-}
 
-enum CellAssignmentStatus
-{
-	CanBeAssigned, CellAlreadyAssigned, SymbolAlreadyRuledOut, SymbolAlreadyAssignedInRow, SymbolAlreadyAssignedInColumn, SymbolAlreadyAssignedInBox;
 }
-

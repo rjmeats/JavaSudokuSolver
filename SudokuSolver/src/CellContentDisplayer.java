@@ -1,6 +1,7 @@
 
 public interface CellContentDisplayer {
 
-	String getContent(Cell c, boolean Highlight);
+	String getContent(CellAssessment ca, boolean Highlight);
+//	String getContent(Cell c, boolean Highlight);
 	String getHeading();
 }
