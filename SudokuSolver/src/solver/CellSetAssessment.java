@@ -121,7 +121,7 @@ abstract class CellSetAssessment {
 				List<CellAssessment> lCells = m_couldBeCellsForSymbol.get(symbol);
 				if(lCells.size() == 1)
 				{
-					assignableCell = new Assignment(lCells.get(0).m_cell, symbol, AssignmentMethod.AssignedSymbolToCellSet, stepNumber);
+					assignableCell = new Assignment(lCells.get(0).m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only cell for symbol in " + m_cellSet.getRepresentation(), stepNumber);
 					break;
 				}
 			}

@@ -8,7 +8,6 @@ import grid.Cell;
 import grid.Grid;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
-import puzzle.CellContentDisplayer;
 import puzzle.Puzzle;
 import puzzle.Symbol;
 
@@ -154,7 +153,7 @@ public class Solver {
 		int cellNumber = Grid.getCellNumberFromGridPosition(rowNumber, columnNumber);
 		CellAssessment cell = m_lCells.get(cellNumber);
 //		Cell cell = m_aCells[rowNumber][columnNumber];
-		Assignment a = new Assignment(cell.m_cell, symbol, AssignmentMethod.Given, 0);
+		Assignment a = new Assignment(cell.m_cell, symbol, AssignmentMethod.Given, "", 0);
 		CellAssignmentStatus status = cell.setAsAssigned(a);
 		return status;
 	}

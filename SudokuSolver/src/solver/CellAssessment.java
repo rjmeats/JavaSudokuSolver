@@ -5,11 +5,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import diagnostics.FormatUtils;
 import grid.Cell;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
-import puzzle.CellContentDisplayer;
-import puzzle.FormatUtils;
 import puzzle.Puzzle;
 import puzzle.Symbol;
 
@@ -53,7 +52,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		{
 			for(Symbol symbol: m_mapCouldBeSymbols.keySet())
 			{
-				a = new Assignment(m_cell, symbol, AssignmentMethod.AssignedSymbolToCell, stepNumber);
+				a = new Assignment(m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only symbol for cell", stepNumber);
 			}
 		}
 		

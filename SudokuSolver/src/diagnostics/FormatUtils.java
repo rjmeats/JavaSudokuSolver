@@ -1,4 +1,4 @@
-package puzzle;
+package diagnostics;
 
 public class FormatUtils {
 

@@ -1,6 +1,4 @@
-package puzzle;
-
-import solver.*;
+package solver;
 
 public interface CellContentDisplayer {
 

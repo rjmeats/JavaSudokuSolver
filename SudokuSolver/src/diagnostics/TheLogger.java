@@ -1,4 +1,4 @@
-package puzzle;
+package diagnostics;
 import java.io.IOException;
 import java.util.logging.FileHandler; 
 import java.util.logging.ConsoleHandler; 
