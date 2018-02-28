@@ -2,7 +2,7 @@ package puzzle;
 
 public class FormatUtils {
 
-	static String padRight(String s, int width, char padChar)
+	public static String padRight(String s, int width, char padChar)
 	{	
 		StringBuilder sb = new StringBuilder();
 		sb.append((s == null) ? "" : s);
@@ -16,12 +16,12 @@ public class FormatUtils {
 	}
 
 
-	static String padRight(String s, int width)
+	public static String padRight(String s, int width)
 	{
 		return padRight(s, width, ' ');
 	}
 
-	static String padRight(int n, int width)
+	public static String padRight(int n, int width)
 	{
 		String s = Integer.toString(n);
 		return padRight(s, width, ' ');

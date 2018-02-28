@@ -1,9 +1,9 @@
 package puzzle;
-import grid.CellAssessment;
+
+import solver.*;
 
 public interface CellContentDisplayer {
 
 	String getContent(CellAssessment ca, boolean Highlight);
-//	String getContent(Cell c, boolean Highlight);
 	String getHeading();
 }

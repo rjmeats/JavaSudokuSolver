@@ -1,23 +1,13 @@
 package puzzle;
+
 import java.io.IOException;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import grid.BoxAssessment;
-import grid.Cell;
-import grid.CellAssessment;
-import grid.CellAssignmentStatus;
-import grid.CellContentDisplayer;
-import grid.CellSetAssessment;
-import grid.ColumnAssessment;
-import grid.Grid;
-import grid.RowAssessment;
-import grid.SymbolRestriction;
-import grid.SymbolSetRestriction;
+import grid.*;
+import solver.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
 
 // http://www.sudokuwiki.org
 
@@ -466,6 +456,7 @@ public class Puzzle {
 		
 }
 
+/*
 class Solver {
 
 	Grid m_grid;
@@ -616,181 +607,8 @@ class Solver {
 	CellAssessment getCellAssessmentForCell(Cell cell) {
 		return m_cellAssessmentsMap.get(cell);
 	}
-	
-	boolean lookForNextAssignment(int stepNumber)
-	{
-		boolean changedState = false;
-		
-		Puzzle.L.info("Starting assignment step: " + stepNumber + " ..");
-		
-		if(!changedState)
-		{
-			// Look through unassigned cell for cases where only one symbol is a possible assignment.
-			for(CellAssessment cell : m_lCells)
-			{
-				if(!cell.m_cell.isAssigned())
-				{
-					Assignment a = cell.checkForAssignableSymbol(stepNumber);
-					if(a != null)
-					{
-						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.m_cell.getColumnAndRowLocationString();
-						Puzzle.L.info(s);
-						System.out.println(s);
-						System.out.println();
-						getCellAssessmentForCell(a.getCell()).setAsAssigned(a);
-						changedState = true;
-						break;
-					}
-				}
-			}			
-		}
-		
-		if(!changedState)
-		{
-			// Look through each row, column, box for an unassigned symbol which can only go in one cell
-			for(CellSetAssessment set : m_lCellSets)
-			{
-				Assignment a = set.checkForAssignableSymbol(stepNumber);
-				if(a != null)
-				{
-					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getColumnAndRowLocationString() + " from cell set " + set.m_cellSet.getRepresentation();
-					Puzzle.L.info(s);
-					System.out.println(s);
-					System.out.println();
-					getCellAssessmentForCell(a.getCell()).setAsAssigned(a);
-					changedState = true;
-					break;
-				}
-			}
-		}
-		
-		if(!changedState)
-		{
-			// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
-			// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
-			int stateChanges = 0;
-			for(BoxAssessment box : m_lBoxes)
-			{
-				List<SymbolRestriction> lRestrictions = box.findRestrictedSymbols();
-				if(lRestrictions != null)
-				{
-					for(SymbolRestriction restriction : lRestrictions)
-					{
-						boolean causedStateChange = restriction.m_rowOrColumn.ruleOutSymbolOutsideBox(restriction);
-						if(causedStateChange)
-						{
-							stateChanges++;
-						}
-					}
-				}
-			}
-			
-			changedState = (stateChanges > 0);
-		}
-		
-		if(!changedState)
-		{
-			// Look through each column box to see where a particular unresolved symbol can only appear in a specific box.
-			// Where this arises, we can rule-out the symbol from the other cells in the box which are not in the column.
-			int stateChanges = 0;
-			for(ColumnAssessment column : m_lColumns)
-			{
-				List<SymbolRestriction> lRestrictions = column.findRestrictedSymbols();
-				if(lRestrictions != null)
-				{
-					for(SymbolRestriction restriction : lRestrictions)
-					{
-						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
-						if(causedStateChange)
-						{
-							stateChanges++;
-						}
-					}
-				}
-			}
-			
-			changedState = (stateChanges > 0);
-		}
-		
-		if(!changedState)
-		{
-			// And the same again for rows ...
-			int stateChanges = 0;
-			for(RowAssessment row : m_lRows)
-			{
-				List<SymbolRestriction> lRestrictions = row.findRestrictedSymbols();
-				if(lRestrictions != null)
-				{
-					for(SymbolRestriction restriction : lRestrictions)
-					{
-						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
-						if(causedStateChange)
-						{
-							stateChanges++;
-						}
-					}
-				}
-			}
-			
-			changedState = (stateChanges > 0);
-		}
-		
-		if(!changedState)
-		{
-			// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
-			int stateChanges = 0;
-			for(CellSetAssessment set : m_lCellSets)
-			{
-				List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
-				if(lRestrictedSymbolSets != null)
-				{
-					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
-					{						
-						for(CellAssessment cell : symbolSetRestriction.m_lCells)
-						{
-							boolean causedStateChange = cell.ruleOutAllBut(symbolSetRestriction.m_lSymbols);
-							if(causedStateChange)
-							{
-								stateChanges++;
-							}
-						}
-					}
-
-					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets)
-					{
-						for(Symbol symbol : symbolSetRestriction.m_lSymbols)
-						{
-							boolean causedStateChange = symbolSetRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolSetRestriction.m_lCells);
-							if(causedStateChange)
-							{
-								stateChanges++;
-							}
-						}
-						
-						List<CellSetAssessment> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
-						for(CellSetAssessment cset : lAffectedCellSets)
-						{
-							for(CellAssessment cell : symbolSetRestriction.m_lCells)
-							{
-								boolean causedStateChange = cset.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols);
-								if(causedStateChange)
-								{
-									stateChanges++;
-								}
-							}
-						}
-					}
-
-				
-				}
-			}
-			
-			changedState = (stateChanges > 0);
-		}
-		
-		return changedState;
-	}
-	
+*/	
+/*
 	boolean checkForCompletion()
 	{
 		boolean isComplete = true;
@@ -860,5 +678,5 @@ class Solver {
 			m_unassignedCells = -1;
 		}
 	}
-
 }
+*/

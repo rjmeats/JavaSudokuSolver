@@ -19,11 +19,11 @@ public enum Symbol {
 		return m_representation;
 	}
 	
-	String getGridRepresentation() {
+	public String getGridRepresentation() {
 		return m_representation;
 	}
 	
-	static Symbol toSymbol(String representation)
+	public static Symbol toSymbol(String representation)
 	{
 		Symbol symbol = null;
 		
@@ -66,7 +66,7 @@ public enum Symbol {
 		return sb.toString().trim();
 	}
 	
-	static class SortBySymbol implements Comparator<Symbol>
+	public static class SortBySymbol implements Comparator<Symbol>
 	{
 	    // Used for sorting in ascending order of
 	    // roll number

@@ -7,11 +7,11 @@ import java.util.ArrayList;
 
 public class Grid {
 
-	List<Row> m_lRows;
-	List<Column> m_lColumns;
-	List<Box> m_lBoxes;	
-	List<Cell> m_lCells;
-	List<CellSet> m_lCellSets;
+	public List<Row> m_lRows;
+	public List<Column> m_lColumns;
+	public List<Box> m_lBoxes;	
+	public List<Cell> m_lCells;
+	public List<CellSet> m_lCellSets;
 	
 	Cell m_aCells[][];
 	
@@ -19,9 +19,9 @@ public class Grid {
 	static int s_columns = 9;
 	static int s_boxes = 9;
 	
-	List<Symbol> m_lSymbols;
+	public List<Symbol> m_lSymbols;
 	
-	Grid() {
+	public Grid() {
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
 		m_lBoxes = new ArrayList<>();
@@ -32,17 +32,17 @@ public class Grid {
 		
 		for(int rowNum = 0; rowNum < s_rows; rowNum++)
 		{
-			m_lRows.add(new Row(rowNum, m_lSymbols));
+			m_lRows.add(new Row(rowNum));
 		}
 		
 		for(int columnNum = 0; columnNum < s_columns; columnNum++)
 		{
-			m_lColumns.add(new Column(columnNum, m_lSymbols));
+			m_lColumns.add(new Column(columnNum));
 		}
 			
 		for(int boxNum = 0; boxNum < s_boxes; boxNum++)
 		{
-			m_lBoxes.add(new Box(boxNum, m_lSymbols));
+			m_lBoxes.add(new Box(boxNum));
 		}
 
 		m_lCellSets = new ArrayList<>(m_lRows);
@@ -68,7 +68,7 @@ public class Grid {
 		}		
 	}
 	
-	static List<Symbol> getListOfSymbols(int n)
+	public static List<Symbol> getListOfSymbols(int n)
 	{
 		// Need to check n ????
 		List<Symbol> l = new ArrayList<>();
@@ -85,14 +85,14 @@ public class Grid {
 	// ..
 	// 72 73 ... 80
 	
-	static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
+	public static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
 		return rowNumber*9 + columnNumber % 9;
 	}
 	
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
-	static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
+	public static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
 		return (rowNumber/3)*3 + columnNumber / 3;
 	}
 	
