@@ -1,52 +1,36 @@
 package puzzle;
 import java.util.ArrayList;
+
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Set;
 import java.util.List;
 
-public enum Symbol {
+public class Symbol implements Comparable<Symbol> {
 
-	One("1"), Two("2"), Three("3"), Four("4"), Five("5"), Six("6"), Seven("7"), Eight("8"), Nine("9");
-	
 	private String m_representation;
+	private int m_ordinal;
 	
-	Symbol(String representation) {
+	Symbol(String representation, int ordinal) {
 		m_representation = representation;
+		m_ordinal = ordinal;
 	}
 
+	public String getRepresentation() {
+		return m_representation;
+	}
+
+	public int ordinal() {
+		return m_ordinal;
+	}
+	
 	public String toString() {
 		return m_representation;
 	}
 	
-	public String getGridRepresentation() {
-		return m_representation;
-	}
-	
-	public static Symbol toSymbol(String representation)
-	{
-		Symbol symbol = null;
-		
-		for(Symbol cs : Symbol.values())
-		{
-			if(cs.m_representation.equals(representation))
-			{
-				symbol = cs;
-			}
-		}
-		
-		return symbol;
-	}
-
-	static Symbol toSymbol(char charRepresentation)
-	{
-		return toSymbol(charRepresentation + "");
-	}
-	
-	public static String symbolMapToString(HashMap<Symbol, ?> map)		// Ignores values though, so not a great name. ????
+	public static String symbolSetToString(Set<Symbol> set)
 	{
 		List<Symbol> l = new ArrayList<>();
-		for(Symbol symbol: map.keySet())
+		for(Symbol symbol: set)
 		{
 			l.add(symbol);
 		}
@@ -56,24 +40,18 @@ public enum Symbol {
 
 	public static String symbolListToString(List<Symbol> l)
 	{
-		StringBuilder sb = new StringBuilder();
 		List<Symbol> lSorted = new ArrayList<>(l);
 		Collections.sort(lSorted);
+		
+		StringBuilder sb = new StringBuilder();
 		for(Symbol symbol: lSorted)
 		{
-			sb.append(symbol.getGridRepresentation()).append(" ");
+			sb.append(symbol.getRepresentation()).append(" ");
 		}
 		return sb.toString().trim();
 	}
 	
-	public static class SortBySymbol implements Comparator<Symbol>
-	{
-	    // Used for sorting in ascending order of
-	    // roll number
-	    public int compare(Symbol s1, Symbol s2)
-	    {
-	        return s1.ordinal() - s2.ordinal();
-	    }
-	}
-
+	public int compareTo(Symbol symbol) {
+		return this.m_ordinal - symbol.m_ordinal;
+	}	
 }

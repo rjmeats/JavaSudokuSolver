@@ -357,8 +357,8 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		List<Symbol> l1 = new ArrayList<>(lSymbols1);
 		List<Symbol> l2 = new ArrayList<>(lSymbols2);
 		
-		Collections.sort(l1, new Symbol.SortBySymbol());
-		Collections.sort(l2, new Symbol.SortBySymbol());
+		Collections.sort(l1);
+		Collections.sort(l2);
 
 		for(int n=0; n < l1.size(); n++)
 		{
@@ -391,11 +391,11 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 				{
 					markAsUnassigned = "*";
 				}
-				sbSingleCell.append(symbol.getGridRepresentation() + ":" + cellListString + markAsUnassigned + " ");
+				sbSingleCell.append(symbol.getRepresentation() + ":" + cellListString + markAsUnassigned + " ");
 			}
 			else
 			{
-				sbMultiCell.append(symbol.getGridRepresentation() + ":[" + cellListString + "] ");				
+				sbMultiCell.append(symbol.getRepresentation() + ":[" + cellListString + "] ");				
 			}
 		}
 		

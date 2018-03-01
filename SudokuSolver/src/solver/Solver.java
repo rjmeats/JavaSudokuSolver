@@ -1,6 +1,7 @@
 package solver;
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import puzzle.Assignment;
 import puzzle.AssignmentMethod;
 import puzzle.Puzzle;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 public class Solver {
 
@@ -25,9 +27,9 @@ public class Solver {
 	
 	HashMap<Cell, CellAssessment> m_cellAssessmentsMap;
 	
-	public Solver(Grid grid, List<Symbol> lSymbols) {
+	public Solver(Grid grid, SymbolsToUse symbolSet) {
 		m_grid = grid;
-		m_lSymbols = new ArrayList<>(lSymbols);
+		m_lSymbols = symbolSet.getSymbolList();
 
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
@@ -149,7 +151,7 @@ public class Solver {
 
 	public CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
 	{
-		Puzzle.L.info("Applying given value : " + symbol.getGridRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
+		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
 		int cellNumber = Grid.getCellNumberFromGridPosition(rowNumber, columnNumber);
 		CellAssessment cell = m_lCells.get(cellNumber);
 //		Cell cell = m_aCells[rowNumber][columnNumber];

@@ -386,27 +386,15 @@ public class Puzzle {
 		return lines;
 	}
 
-	public static List<Symbol> getListOfSymbols(int n)
-	{
-		// Need to check n ????
-		List<Symbol> l = new ArrayList<>();
-		for(Symbol cs : Symbol.values())
-		{
-			l.add(cs);
-		}
-		
-		return l;
-	}
-
 	Grid m_grid;
-	List<Symbol> m_symbolsList;
+	SymbolsToUse m_symbolsToUse;
 	Solver m_solver;
 	
 	Puzzle()
 	{
 		m_grid = new Grid();
-		m_symbolsList = getListOfSymbols(9);
-		m_solver = new Solver(m_grid, m_symbolsList);
+		m_symbolsToUse = SymbolsToUse.SET_1_TO_9;
+		m_solver = new Solver(m_grid, m_symbolsToUse);
 		
 		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
 		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
@@ -446,13 +434,14 @@ public class Puzzle {
 						}
 						else
 						{
-							Symbol symbol = Symbol.toSymbol(c);
+							String representation = c + "";
+							Symbol symbol = m_symbolsToUse.isKnownSymbol(representation);
 							if(symbol != null)
 							{
 								CellAssignmentStatus assignmentStatus = m_solver.applyGivenValueToCell(rowNumber, columnNumber, symbol);
 								if(assignmentStatus != CellAssignmentStatus.CanBeAssigned)
 								{
-									status.setError("Unable to assign " + symbol.getGridRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
+									status.setError("Unable to assign " + symbol.getRepresentation() + " to row " + rowNumber + " column " + columnNumber + ": " + assignmentStatus.toString());
 								}
 							}
 							else
@@ -511,5 +500,4 @@ public class Puzzle {
 			m_errorMessage = message;
 		}
 	}
-		
 }
