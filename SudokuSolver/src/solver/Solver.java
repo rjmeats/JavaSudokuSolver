@@ -13,7 +13,6 @@ import grid.Grid9x9;
 
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
-import puzzle.Puzzle;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -154,10 +153,8 @@ public class Solver {
 	}
 
 	public CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol) {
-		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
 		int cellNumber = Grid9x9.getCellNumberFromGridPosition(rowNumber, columnNumber);
 		CellAssessment cell = m_lCells.get(cellNumber);
-//		Cell cell = m_aCells[rowNumber][columnNumber];
 		Assignment a = new Assignment(cell.m_cell, symbol, AssignmentMethod.Given, "", 0);
 		CellAssignmentStatus status = cell.setAsAssigned(a);
 		return status;
@@ -188,8 +185,6 @@ public class Solver {
 	public boolean lookForNextAssignment(int stepNumber) {
 		boolean changedState = false;
 		
-		Puzzle.L.info("Starting assignment step: " + stepNumber + " ..");
-		
 		if(!changedState) {
 			// Look through unassigned cell for cases where only one symbol is a possible assignment.
 			for(CellAssessment cell : m_lCells) {
@@ -197,7 +192,6 @@ public class Solver {
 					Assignment a = cell.checkForAssignableSymbol(stepNumber);
 					if(a != null) {
 						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.m_cell.getLocationString();
-						Puzzle.L.info(s);
 						System.out.println(s);
 						System.out.println();
 						getCellAssessmentForCell(a.getCell()).setAsAssigned(a);
@@ -214,7 +208,6 @@ public class Solver {
 				Assignment a = set.checkForAssignableSymbol(stepNumber);
 				if(a != null) {
 					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getLocationString() + " from cell set " + set.m_cellSet.getRepresentation();
-					Puzzle.L.info(s);
 					System.out.println(s);
 					System.out.println();
 					getCellAssessmentForCell(a.getCell()).setAsAssigned(a);

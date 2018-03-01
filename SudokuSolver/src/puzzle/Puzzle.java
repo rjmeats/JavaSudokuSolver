@@ -1,11 +1,5 @@
 package puzzle;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import diagnostics.TheLogger;
-
 import java.util.Set;
 import grid.*;
 import solver.*;
@@ -13,8 +7,6 @@ import solver.*;
 // http://www.sudokuwiki.org
 
 public class Puzzle {
-	
-	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
 	public static void main(String args[]) {
 				
@@ -36,33 +28,23 @@ public class Puzzle {
 		
 		if(contentProvider == null) return;
 
-		System.out.println("Using initial grid values:");
-		System.out.println();
-		for(String s : contentProvider.m_rawLines) {
-			System.out.println("  " + s);
-		}		
-		System.out.println();
-		
 		// Only work with basic symbols 1 to 9 for now, expecting a standard 9x9 grid
 		SymbolsToUse symbolsToUse = SymbolsToUse.SET_1_TO_9;
 
+		System.out.println("Using initial grid values:");
+		System.out.println();
+		for(String s : contentProvider.m_dataLines) {
+			System.out.println("  " + s);
+		}		
+		System.out.println();		
 		System.out.println("Symbols to use: " + symbolsToUse.toString());
 		System.out.println();
 				
-		try {
-			TheLogger.setup();
-			L.setLevel(Level.ALL);
-		} catch(IOException e) {
-			System.err.println("Error setting up logger: " + e.getMessage());
-			return;
-		}
-		
 		Puzzle puzzle = new Puzzle(symbolsToUse);
 		InitialGridStatus status = puzzle.loadGivenCells(contentProvider);
 		
 		if(!status.m_isOK) {
-			System.err.println("Error in initial grid: " + status.m_errorMessage);
-			L.info("Error in initial grid: " + status.m_errorMessage);
+			System.err.println("Error in initial grid values: " + status.m_errorMessage);
 		}
 		else {
 			puzzle.solve();
@@ -106,7 +88,7 @@ public class Puzzle {
 			}
 		}
 				
-		// Now check for invalid starting positions - symbol applied more than once to a cellset
+		// Now check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
 		Set<Cell> badCells = m_grid.isValid();
 		if(badCells.size() > 0) {
 			String badCellString = "";
@@ -139,7 +121,6 @@ public class Puzzle {
 
 	public void applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
 	{
-		Puzzle.L.info("Applying given value : " + symbol.getRepresentation() + " to cell in row " + rowNumber + ", column " + columnNumber);
 		Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
 		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
 		cell.assign(assignment);
@@ -168,7 +149,6 @@ public class Puzzle {
 		while(changed && !complete && stepNumber <= 1000)
 		{
 			stepNumber++;
-			L.info("Starting step " + stepNumber + " ...");
 			
 			System.out.println("==================================================================================================");
 			System.out.println("==================================================================================================");
@@ -193,28 +173,22 @@ public class Puzzle {
 			if(complete)
 			{
 				System.out.println("Puzzle is complete");
-				L.info("Puzzle completed");
 				m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
 			}
 			else if(stepNumber > 1000)
 			{
-				System.out.println("Puzzle abandoned, too many steps");
-				L.info("Puzzle abandoned, too many steps");					
+				System.err.println("Puzzle abandoned, too many steps");
 			}
 			else if(!changed)
 			{
-				System.out.println("Puzzle abandoned, no changes identified");
-				L.info("Puzzle abandoned, , no changes identified");										
+				System.err.println("Puzzle abandoned, no more possible changes identified");
 			}
 			else
 			{
 				System.out.println("Progress made, continuing puzzle ..");
-				L.info("Progress made, continuing puzzle ..");															
 			}
 			System.out.println();
 		}
-	
-		L.info("Puzzle run ended");
 	}
 }
 

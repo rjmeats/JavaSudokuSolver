@@ -8,7 +8,6 @@ import diagnostics.FormatUtils;
 import grid.Cell;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
-import puzzle.Puzzle;
 import puzzle.Symbol;
 
 public class CellAssessment implements Comparable<CellAssessment> {
@@ -68,14 +67,11 @@ public class CellAssessment implements Comparable<CellAssessment> {
 				m_ruledOutSymbolsSet.add(symbol);
 				m_couldBeSymbolsSet.remove(symbol);
 				changed = true;
-				Puzzle.L.info(".. ruled out cell " + m_cell.getCellNumber() + " : " + symbol.toString());				
 			}
 			else {
 				// ???? Don't expect to hit this, means our maps have got out of alignment with each other.
 			}
 		}
-		
-		Puzzle.L.info(".. for cell " + m_cell.getCellNumber() + " symbol-could-be list = " + Symbol.symbolSetToString(m_couldBeSymbolsSet) + ":  ruled-out list = " + Symbol.symbolSetToString(m_ruledOutSymbolsSet));
 		
 		return changed;
 	}
@@ -135,11 +131,8 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	}
 	
 	CellAssignmentStatus setAsAssigned(Assignment assignment) {
-		Puzzle.L.info("Trying assignment " + assignment.toString());
 		CellAssignmentStatus status = checkCellCanBeAssigned(assignment);
 		if(status == CellAssignmentStatus.CanBeAssigned) {
-			Puzzle.L.info(".. assignment is possible ...");
-			
 			m_cell.assign(assignment);
 
 			// Tidy up map of which symbols this cell could/could-not be
@@ -154,10 +147,6 @@ public class CellAssessment implements Comparable<CellAssessment> {
 			getRow().markAsAssigned(assignment, this);
 			getColumn().markAsAssigned(assignment, this);
 			getBox().markAsAssigned(assignment, this);
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cell.getCellNumber() + " complete");
-		}
-		else {
-			Puzzle.L.info(".. assignment of symbol " + assignment.getSymbol().toString() + " to cell " + m_cell.getCellNumber() + " not possible: " + status.name());			
 		}
 		
 		return status;		

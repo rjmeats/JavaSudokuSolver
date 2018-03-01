@@ -11,7 +11,6 @@ import grid.Cell;
 import grid.CellSet;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
-import puzzle.Puzzle;
 import puzzle.Symbol;
 
 abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
@@ -54,16 +53,12 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
 	void markAsAssigned(Assignment assignment, CellAssessment ca) {
 		Symbol symbol = assignment.getSymbol();
-//		Cell assignmentCell = assignment.getCell();
-		
-		Puzzle.L.info(".. marking symbol " + symbol.toString() + " as assigned to cell " + ca.m_cell.getCellNumber() + " in cellset " + m_cellSet.getRepresentation());
 		
 		// Add to the list of symbols in this set which are now assigned.
 		m_assignedSymbols.put(symbol, assignment);
 
 		List<CellAssessment> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.clear();
-//		lCellsForThisSymbol.add(assignmentCell);
 		lCellsForThisSymbol.add(ca);
 
 		// And go through all the other cells sharing a cell set with this set, ruling out this symbol for their use.
@@ -80,7 +75,6 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	void ruleOutSymbolFromOtherCells(Symbol symbol, CellAssessment assignmentCell) {
 		for(CellAssessment otherCell : m_lCellAssessments) {
 			if(otherCell != assignmentCell) {
-				Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + otherCell.m_cell.getCellNumber() + " in cell-set " + m_cellSet.getRepresentation());				
 				otherCell.ruleOut(symbol);
 				if(this != otherCell.getRow()) otherCell.getRow().ruleOutSymbolForCell(symbol, otherCell);
 				if(this != otherCell.getColumn()) otherCell.getColumn().ruleOutSymbolForCell(symbol, otherCell);
@@ -93,17 +87,13 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	void ruleOutSymbolForCell(Symbol symbol, CellAssessment cell) {
 		List<CellAssessment> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.remove(cell);
-		Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + cell.m_cell.getCellNumber() + " in cell-set " + m_cellSet.getRepresentation());
-  		Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 	}
 
 	void ruleOutCouldBeCellsForSymbol(Symbol symbol, CellAssessment assignmentCell) {
 		for(Symbol otherSymbol : m_couldBeCellsForSymbol.keySet()) {
 			if(otherSymbol != symbol) {				
 				List<CellAssessment> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(otherSymbol);
-				Puzzle.L.info(".. ruling out cell " + assignmentCell.m_cell.getCellNumber() + " for symbol " + otherSymbol.toString() + " in cell-set " + m_cellSet.getRepresentation());				
 				lCellsForThisSymbol.remove(assignmentCell);
-				Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 			}
 		}		
 	}
