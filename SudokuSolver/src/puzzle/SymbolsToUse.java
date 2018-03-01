@@ -25,6 +25,10 @@ public class SymbolsToUse {
 		return new ArrayList<Symbol>(m_symbols);
 	}
 	
+	public int size() {
+		return m_symbols.size();
+	}
+	
 	public Symbol isKnownSymbol(String representation)
 	{
 		Symbol symbol = null;
@@ -39,5 +43,15 @@ public class SymbolsToUse {
 		}
 		
 		return symbol;
+	}
+	
+	public String toString() {
+		
+		String s = "Symbols (" + m_symbols.size() + ") in set: ";
+		for(Symbol symbol : m_symbols) {
+			s += symbol.getRepresentation() + " ";
+		}
+		
+		return s.trim();
 	}
 }

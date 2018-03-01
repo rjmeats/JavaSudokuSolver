@@ -2,8 +2,10 @@ package grid;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
-public class Grid {
+public class Grid9x9 {
 
 	public List<Row> m_lRows;
 	public List<Column> m_lColumns;
@@ -17,7 +19,7 @@ public class Grid {
 	static int s_columns = 9;
 	static int s_boxes = 9;
 	
-	public Grid() {
+	public Grid9x9() {
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
 		m_lBoxes = new ArrayList<>();
@@ -62,6 +64,17 @@ public class Grid {
 			}			
 		}		
 	}
+
+	public Set<Cell> isValid() {
+		Set<Cell> l = new LinkedHashSet<>();
+		
+		// Check that each Cell set uses each symbol only once.
+		for(CellSet cellSet : m_lCellSets) {
+			l.addAll(cellSet.isValid());
+		}
+		
+		return l;
+	}
 	
 	// 0  1  ... 8
 	// 9  10 ... 17
@@ -69,12 +82,18 @@ public class Grid {
 	// 72 73 ... 80
 	
 	public static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return rowNumber*9 + columnNumber % 9;
+		return rowNumber*s_columns + columnNumber;
+	}
+	
+	public Cell getCellFromGridPosition(int rowNumber, int columnNumber) {
+		return m_lCells.get(getCellNumberFromGridPosition(rowNumber, columnNumber));
 	}
 	
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
+	
+	// Where do the hard-coded 3s come from. 9x9 obviously but how ????
 	public static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
 		return (rowNumber/3)*3 + columnNumber / 3;
 	}

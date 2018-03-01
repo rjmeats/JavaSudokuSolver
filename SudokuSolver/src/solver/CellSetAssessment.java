@@ -27,8 +27,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		m_assignedSymbols = new HashMap<>();
 		
 		m_couldBeCellsForSymbol = new HashMap<>();		
-		for(Symbol symbol : lSymbols)
-		{
+		for(Symbol symbol : lSymbols) {
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<CellAssessment>());
 		}
 	}
@@ -43,20 +42,17 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 
 	void addCell(CellAssessment ca)	{
 		m_lCellAssessments.add(ca);
-		for(List<CellAssessment> lCells : m_couldBeCellsForSymbol.values())
-		{
+		for(List<CellAssessment> lCells : m_couldBeCellsForSymbol.values()) {
 			lCells.add(ca);
 		}
 	}
 
-	boolean symbolAlreadyAssigned(Symbol symbol)
-	{
+	boolean symbolAlreadyAssigned(Symbol symbol) {
 		return m_assignedSymbols.containsKey(symbol);
 	}
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
-	void markAsAssigned(Assignment assignment, CellAssessment ca)
-	{
+	void markAsAssigned(Assignment assignment, CellAssessment ca) {
 		Symbol symbol = assignment.getSymbol();
 //		Cell assignmentCell = assignment.getCell();
 		
@@ -81,12 +77,9 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		ca.getBox().ruleOutCouldBeCellsForSymbol(symbol, ca);
 	}
 
-	void ruleOutSymbolFromOtherCells(Symbol symbol, CellAssessment assignmentCell)
-	{
-		for(CellAssessment otherCell : m_lCellAssessments)
-		{
-			if(otherCell != assignmentCell)
-			{
+	void ruleOutSymbolFromOtherCells(Symbol symbol, CellAssessment assignmentCell) {
+		for(CellAssessment otherCell : m_lCellAssessments) {
+			if(otherCell != assignmentCell) {
 				Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + otherCell.m_cell.getCellNumber() + " in cell-set " + m_cellSet.getRepresentation());				
 				otherCell.ruleOut(symbol);
 				if(this != otherCell.getRow()) otherCell.getRow().ruleOutSymbolForCell(symbol, otherCell);
@@ -97,20 +90,16 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		
 	}
 
-	void ruleOutSymbolForCell(Symbol symbol, CellAssessment cell)
-	{
+	void ruleOutSymbolForCell(Symbol symbol, CellAssessment cell) {
 		List<CellAssessment> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		lCellsForThisSymbol.remove(cell);
 		Puzzle.L.info(".. ruling out " + symbol.toString() + " for cell " + cell.m_cell.getCellNumber() + " in cell-set " + m_cellSet.getRepresentation());
   		Puzzle.L.info(".. cell-could-be list for symbol = " + cellListToString(lCellsForThisSymbol));
 	}
 
-	void ruleOutCouldBeCellsForSymbol(Symbol symbol, CellAssessment assignmentCell)
-	{
-		for(Symbol otherSymbol : m_couldBeCellsForSymbol.keySet())
-		{
-			if(otherSymbol != symbol)
-			{				
+	void ruleOutCouldBeCellsForSymbol(Symbol symbol, CellAssessment assignmentCell) {
+		for(Symbol otherSymbol : m_couldBeCellsForSymbol.keySet()) {
+			if(otherSymbol != symbol) {				
 				List<CellAssessment> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(otherSymbol);
 				Puzzle.L.info(".. ruling out cell " + assignmentCell.m_cell.getCellNumber() + " for symbol " + otherSymbol.toString() + " in cell-set " + m_cellSet.getRepresentation());				
 				lCellsForThisSymbol.remove(assignmentCell);
@@ -119,16 +108,12 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		}		
 	}
 	
-	Assignment checkForAssignableSymbol(int stepNumber)
-	{
+	Assignment checkForAssignableSymbol(int stepNumber) {
 		Assignment assignableCell = null;
-		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
-		{
-			if(!m_assignedSymbols.containsKey(symbol))
-			{
+		for(Symbol symbol : m_couldBeCellsForSymbol.keySet()) {
+			if(!m_assignedSymbols.containsKey(symbol)) {
 				List<CellAssessment> lCells = m_couldBeCellsForSymbol.get(symbol);
-				if(lCells.size() == 1)
-				{
+				if(lCells.size() == 1) {
 					assignableCell = new Assignment(lCells.get(0).m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only cell for symbol in " + m_cellSet.getRepresentation(), stepNumber);
 					break;
 				}
@@ -138,22 +123,17 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return assignableCell;
 	}
 
-	boolean isComplete()
-	{
+	boolean isComplete() {
 		return m_assignedSymbols.size() == m_lCellAssessments.size();
 	}
 	
-	boolean ruleOutSymbolOutsideBox(SymbolRestriction restriction)
-	{
+	boolean ruleOutSymbolOutsideBox(SymbolRestriction restriction) {
 		boolean changedState = false;
 		// For cells not in the restriction box, rule out the symbol.
-		for(CellAssessment cell : m_lCellAssessments)
-		{
-			if(!restriction.m_box.m_cellSet.containsCell(cell.m_cell))
-			{
-				if(!cell.isRuledOut(restriction.m_symbol))
-				{
-System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getColumnAndRowLocationString());				
+		for(CellAssessment cell : m_lCellAssessments) {
+			if(!restriction.m_box.m_cellSet.containsCell(cell.m_cell)) {
+				if(!cell.isRuledOut(restriction.m_symbol)) {
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getLocationString());				
 					cell.ruleOut(restriction.m_symbol);
 					changedState = true;
 				}
@@ -163,17 +143,13 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return changedState;
 	}
 	
-	boolean ruleOutSymbolOutsideRowOrColumn(SymbolRestriction restriction)
-	{
+	boolean ruleOutSymbolOutsideRowOrColumn(SymbolRestriction restriction) {
 		boolean changedState = false;
 		// For cells not in the restriction row/column, rule out the symbol.
-		for(CellAssessment cell : m_lCellAssessments)
-		{
-			if(!restriction.m_rowOrColumn.m_cellSet.containsCell(cell.m_cell))
-			{
-				if(!cell.isRuledOut(restriction.m_symbol))
-				{
-System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getColumnAndRowLocationString());				
+		for(CellAssessment cell : m_lCellAssessments) {
+			if(!restriction.m_rowOrColumn.m_cellSet.containsCell(cell.m_cell)) {
+				if(!cell.isRuledOut(restriction.m_symbol)) {
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getLocationString());				
 					cell.ruleOut(restriction.m_symbol);
 					changedState = true;
 				}
@@ -184,72 +160,56 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 	}
 
 	// Goes up to combinations of 4 - how to generalise to n ?
-	List<SymbolSetRestriction> findRestrictedSymbolSets()
-	{
+	List<SymbolSetRestriction> findRestrictedSymbolSets() {
 		List<SymbolSetRestriction> l = new ArrayList<>();
 		// Generate combinations of 2, 3 and 4 unassigned symbols. If the combination has n symbols and between them these can only
 		// be placed in n cells, then we have a restricted symbol set.
 		
 		List<List<Symbol>> lCombinations = new ArrayList<>();
 		
-		for(Symbol symbol1 : m_couldBeCellsForSymbol.keySet())
-		{
+		for(Symbol symbol1 : m_couldBeCellsForSymbol.keySet()) {
 			List<CellAssessment> lCells1 = m_couldBeCellsForSymbol.get(symbol1);
-			if(lCells1.size() > 1)
-			{
-				for(Symbol symbol2 : m_couldBeCellsForSymbol.keySet())
-				{
-					if(symbol2.ordinal() > symbol1.ordinal())
-					{
+			if(lCells1.size() > 1) {
+				for(Symbol symbol2 : m_couldBeCellsForSymbol.keySet()) {
+					if(symbol2.ordinal() > symbol1.ordinal()) {
 						List<CellAssessment> lCells2 = m_couldBeCellsForSymbol.get(symbol2);
-						if(lCells2.size() > 1)
-						{
+						if(lCells2.size() > 1) {
 							// We have a combination of two symbols to investigate ...
 							List<Symbol> l2 = new ArrayList<>();
 							l2.add(symbol1); l2.add(symbol2);
 							lCombinations.add(l2);
 							
-							for(Symbol symbol3 : m_couldBeCellsForSymbol.keySet())
-							{
-								if(symbol3.ordinal() > symbol2.ordinal())
-								{
+							for(Symbol symbol3 : m_couldBeCellsForSymbol.keySet()) {
+								if(symbol3.ordinal() > symbol2.ordinal()) {
 									List<CellAssessment> lCells3 = m_couldBeCellsForSymbol.get(symbol3);
-									if(lCells3.size() > 1)
-									{
+									if(lCells3.size() > 1) {
 										// We have a combination of three symbols to investigate ...
 										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
 										lCombinations.add(l3);
-										for(Symbol symbol4 : m_couldBeCellsForSymbol.keySet())
-										{
-											if(symbol4.ordinal() > symbol3.ordinal())
-											{
+										for(Symbol symbol4 : m_couldBeCellsForSymbol.keySet()) {
+											if(symbol4.ordinal() > symbol3.ordinal()) {
 												List<CellAssessment> lCells4 = m_couldBeCellsForSymbol.get(symbol4);
-												if(lCells4.size() > 1)
-												{
+												if(lCells4.size() > 1) {
 													// We have a combination of four symbols to investigate ...
 													List<Symbol> l4 = new ArrayList<>(l3); l4.add(symbol4); 
 													lCombinations.add(l4);													
 												}
 											}
 										}
-										
 									}
 								}
 							}
 						}
 					}
 				}
-				
 			}			
 		}
 
 		System.err.println("Found " + lCombinations.size() + " symbol combinations for set " + m_cellSet.getRepresentation());
-		for(List<Symbol> lCombination : lCombinations)
-		{
+		for(List<Symbol> lCombination : lCombinations) {
 			List<CellAssessment> lCellsForCombination = getSymbolCombinationCells(lCombination);
 			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
-			if(foundSet)
-			{
+			if(foundSet) {
 				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolListToString(lCombination) + " covers cells " +  CellSetAssessment.cellListToString(lCellsForCombination));
 				
 				SymbolSetRestriction restriction = new SymbolSetRestriction();
@@ -263,14 +223,11 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return l;
 	}
 
-	List<CellAssessment> getSymbolCombinationCells(List<Symbol> lCombination)
-	{
+	List<CellAssessment> getSymbolCombinationCells(List<Symbol> lCombination) {
 		Set<CellAssessment> cells = new TreeSet<>();
-		for(Symbol symbol : lCombination)
-		{
+		for(Symbol symbol : lCombination) {
 			List<CellAssessment> l = m_couldBeCellsForSymbol.get(symbol);
-			for(CellAssessment cell : l)
-			{
+			for(CellAssessment cell : l) {
 				cells.add(cell);
 			}
 		}
@@ -278,24 +235,19 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return new ArrayList<CellAssessment>(cells);
 	}
 
-	boolean ruleOutAllCellsBut(Symbol symbol, List<CellAssessment> lCells)
-	{		
+	boolean ruleOutAllCellsBut(Symbol symbol, List<CellAssessment> lCells) {
 		boolean changed = false;
 		
 		List<CellAssessment> lUnwantedCells = new ArrayList<>();
 		List<CellAssessment> lCouldBeCellsForSymbol = m_couldBeCellsForSymbol.get(symbol);
-		for(CellAssessment couldBeCell : lCouldBeCellsForSymbol)
-		{
-			if(!lCells.contains(couldBeCell))
-			{
+		for(CellAssessment couldBeCell : lCouldBeCellsForSymbol) {
+			if(!lCells.contains(couldBeCell)) {
 				lUnwantedCells.add(couldBeCell);
 			}
 		}
 		
-		for(CellAssessment unwantedCell : lUnwantedCells)
-		{
-			if(lCouldBeCellsForSymbol.contains(unwantedCell))
-			{
+		for(CellAssessment unwantedCell : lUnwantedCells) {
+			if(lCouldBeCellsForSymbol.contains(unwantedCell)) {
 				lCouldBeCellsForSymbol.remove(unwantedCell);
 				changed = true;
 			}
@@ -304,17 +256,13 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return changed;
 	}
 
-	boolean ruleOutCellFromOtherSymbols(CellAssessment cell, List<Symbol> lSymbols)
-	{
+	boolean ruleOutCellFromOtherSymbols(CellAssessment cell, List<Symbol> lSymbols) {
 		boolean changed = false;
-		for(Symbol symbol : m_couldBeCellsForSymbol.keySet())
-		{
-			if(!lSymbols.contains(symbol))
-			{
+		for(Symbol symbol : m_couldBeCellsForSymbol.keySet()) {
+			if(!lSymbols.contains(symbol)) {
 				// Can't be assigned to this cell
 				List<CellAssessment> lCells = m_couldBeCellsForSymbol.get(symbol);
-				if(lCells.contains(cell))
-				{
+				if(lCells.contains(cell)) {
 					lCells.remove(cell);
 					System.err.println("Also remove cell " + cell.toString() + " from cell for symbol " + symbol.toString());					
 					changed = true;
@@ -324,8 +272,7 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return changed;
 	}
 
-	static boolean compareCellLists(List<Cell> lCells1, List<Cell> lCells2)
-	{
+	static boolean compareCellLists(List<Cell> lCells1, List<Cell> lCells2) {
 		boolean same = true;
 
 		if(lCells1.size() != lCells2.size()) return false;
@@ -333,13 +280,11 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		List<Cell> l1 = new ArrayList<>(lCells1);
 		List<Cell> l2 = new ArrayList<>(lCells2);
 		
-		Collections.sort(l1, new Cell.SortByCellNumber());
-		Collections.sort(l2, new Cell.SortByCellNumber());
+		Collections.sort(l1);
+		Collections.sort(l2);
 
-		for(int n=0; n < l1.size(); n++)
-		{
-			if(l1.get(n) != l2.get(n))
-			{
+		for(int n=0; n < l1.size(); n++) {
+			if(l1.get(n) != l2.get(n)) {
 				same = false;
 				break;
 			}
@@ -360,10 +305,8 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		Collections.sort(l1);
 		Collections.sort(l2);
 
-		for(int n=0; n < l1.size(); n++)
-		{
-			if(l1.get(n) != l2.get(n))
-			{
+		for(int n=0; n < l1.size(); n++) {
+			if(l1.get(n) != l2.get(n)) {
 				same = false;
 				break;
 			}
@@ -372,29 +315,24 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return same;
 	}
 
-	String getSymbolAssignmentSummary()
-	{
+	String getSymbolAssignmentSummary() {
 		StringBuilder sbSingleCell = new StringBuilder();
 		StringBuilder sbMultiCell = new StringBuilder();
 		List<Symbol> lSymbols = new ArrayList<>(m_couldBeCellsForSymbol.keySet());
 		Collections.sort(lSymbols);
 				
-		for(Symbol symbol : lSymbols)
-		{
+		for(Symbol symbol : lSymbols) {
 			List<CellAssessment> lCellAssessments = m_couldBeCellsForSymbol.get(symbol);
 			String cellListString = cellListToString(lCellAssessments);
 			
-			if(lCellAssessments.size() == 1)
-			{
+			if(lCellAssessments.size() == 1) {
 				String markAsUnassigned = "";
-				if(!m_assignedSymbols.containsKey(symbol))
-				{
+				if(!m_assignedSymbols.containsKey(symbol)) {
 					markAsUnassigned = "*";
 				}
 				sbSingleCell.append(symbol.getRepresentation() + ":" + cellListString + markAsUnassigned + " ");
 			}
-			else
-			{
+			else {
 				sbMultiCell.append(symbol.getRepresentation() + ":[" + cellListString + "] ");				
 			}
 		}
@@ -403,12 +341,10 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		return "Unresolved: " + sbMultiCell.toString().trim() + "   Resolved: " + sbSingleCell.toString().trim();
 	}
 	
-	public static String cellListToString(List<CellAssessment> l)
-	{
+	public static String cellListToString(List<CellAssessment> l) {
 		StringBuilder sb = new StringBuilder();
-		Collections.sort(l, new CellAssessment.SortByCellNumber());
-		for(CellAssessment cell: l)
-		{
+		Collections.sort(l);
+		for(CellAssessment cell: l) {
 			sb.append(cell.m_cell.getCellNumber()).append(" ");
 		}
 		return sb.toString().trim();
@@ -423,12 +359,9 @@ class SymbolSetRestriction {
 	List<Symbol> m_lSymbols;
 	List<CellAssessment> m_lCells;
 	
-	List<CellSetAssessment> getAffectedCellSets()
-	{
-		Set<CellSetAssessment> set = new TreeSet<>();
-		
-		for(CellAssessment cell : m_lCells)
-		{
+	List<CellSetAssessment> getAffectedCellSets() {
+		Set<CellSetAssessment> set = new TreeSet<>();	
+		for(CellAssessment cell : m_lCells) {
 			set.add(cell.getBox());
 			set.add(cell.getRow());
 			set.add(cell.getColumn());
@@ -436,4 +369,3 @@ class SymbolSetRestriction {
 		return new ArrayList<CellSetAssessment>(set);		
 	}
 }
-
