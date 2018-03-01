@@ -1,18 +1,12 @@
 package puzzle;
 
-import java.io.File;
-
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import diagnostics.TheLogger;
+
+import java.util.Set;
 import grid.*;
 import solver.*;
 
@@ -23,27 +17,28 @@ public class Puzzle {
 	public static Logger L = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
 	public static void main(String args[]) {
-		List<String> initialGridValues = null;
-
+				
+		InitialGridContentProvider contentProvider = null;
+		
 		// Read a list of initial grid entries from a file name parameter or from a static variable.
 		if(args.length > 0) {
 			String puzzleFileName = args[0];
 			System.out.println("Reading initial grid from file " + puzzleFileName);
-			initialGridValues = readInitialGridFromFile(puzzleFileName);
-			if(initialGridValues == null) {
+			contentProvider = InitialGridContentProvider.fromFile(puzzleFileName);
+			if(contentProvider == null) {
 				System.err.println("Failed to read initial grid from file " + puzzleFileName);
 			}
 		}
 		else {
 			System.out.println("Reading initial grid from hard-coded puzzle");
-			initialGridValues = Arrays.asList(SampleSudokus.s_times9688);
+			contentProvider = InitialGridContentProvider.fromArray(SampleSudokus.s_times9688);
 		}
 		
-		if(initialGridValues == null) return;
+		if(contentProvider == null) return;
 
 		System.out.println("Using initial grid values:");
 		System.out.println();
-		for(String s : initialGridValues) {
+		for(String s : contentProvider.m_rawLines) {
 			System.out.println("  " + s);
 		}		
 		System.out.println();
@@ -63,7 +58,7 @@ public class Puzzle {
 		}
 		
 		Puzzle puzzle = new Puzzle(symbolsToUse);
-		InitialGridStatus status = puzzle.loadGivenCells(initialGridValues);
+		InitialGridStatus status = puzzle.loadGivenCells(contentProvider);
 		
 		if(!status.m_isOK) {
 			System.err.println("Error in initial grid: " + status.m_errorMessage);
@@ -74,31 +69,6 @@ public class Puzzle {
 		}			
 	}	
 	
-	static List<String> readInitialGridFromFile(String fileName) {		
-		List<String> lines = null;		
-		File f = new File(fileName);
-		
-		if(!(f.exists() && f.isFile() && f.canRead())) {
-			System.err.println("Unable to read file " + fileName);
-		}
-		else {
-			
-			lines = new ArrayList<>();
-			
-			try {
-				Scanner sc = new Scanner(f);
-				while(sc.hasNextLine()) {
-					lines.add(sc.nextLine());
-				}
-				sc.close();
-			} catch (FileNotFoundException e) {
-				// Shouldn't get here
-			}
-		}
-
-		return lines;
-	}
-
 	// ================================================================================================
 	// ================================================================================================
 	
@@ -113,7 +83,7 @@ public class Puzzle {
 		m_solver = null;
 	}
 	
-	InitialGridStatus loadGivenCells(List<String> inputValueRows) {
+	InitialGridStatus loadGivenCells(InitialGridContentProvider contentProvider) {
 		InitialGridStatus status = new InitialGridStatus();
 		
 		if(m_symbolsToUse.size() != s_expectedSymbolCount) {
@@ -121,20 +91,17 @@ public class Puzzle {
 			return status;
 		}
 		
-		List<String> gridRows = removeCommentLines(removeBlankLines(inputValueRows));	// ???? Stream/filter
-		
-		if(gridRows.size() != s_expectedSymbolCount) {
-			status.setError("Unexpected number of rows in initial grid: " + gridRows.size() + " instead of " + s_expectedSymbolCount);
+		if(contentProvider.m_dataLines.size() != s_expectedSymbolCount) {
+			status.setError("Unexpected number of rows in initial grid: " + contentProvider.m_dataLines.size() + " instead of " + s_expectedSymbolCount);
 		}
 		else {
-			for(int rowNumber = 0; rowNumber < gridRows.size(); rowNumber ++) {
-				String rowString = gridRows.get(rowNumber);
-				String despacedRowString = removeSpacing(rowString);
-				if(despacedRowString.length() != 9) {
-					status.setError("Unexpected number of column values: " + despacedRowString.length() +  " instead of " + s_expectedSymbolCount + " : [" + rowString + "]");
+			for(int rowNumber = 0; rowNumber < contentProvider.m_dataLines.size(); rowNumber ++) {
+				String rowString = contentProvider.m_dataLines.get(rowNumber);
+				if(rowString.length() != 9) {
+					status.setError("Unexpected number of column values: " + rowString.length() +  " instead of " + s_expectedSymbolCount + " : [" + rowString + "]");	// Not showing the raw input
 				}
 				else {
-					processInitialGridRow(rowNumber, despacedRowString, status);
+					processInitialGridRow(rowNumber, rowString, status);
 				}
 			}
 		}
@@ -150,36 +117,6 @@ public class Puzzle {
 		}
 		
 		return status;
-	}
-	
-	// Ignore blank lines in the strings forming the initial grid
-	private static List<String> removeBlankLines(List<String> l) {
-		List<String> lOut = new ArrayList<>();
-		for(String s : l) {
-			if(s.trim().length() > 0) {
-				lOut.add(s);
-			}
-		}
-		
-		return lOut;
-	}
-
-	// Ignore comment lines in the strings forming the initial grid		
-	private static List<String> removeCommentLines(List<String> l) {
-		char commentChar = '#';		
-		List<String> lOut = new ArrayList<>();
-		for(String s : l) {
-			String trimS = s.trim();
-			if(trimS.length() > 0 && trimS.charAt(0) != commentChar) {
-				lOut.add(s);
-			}
-		}
-		
-		return lOut;
-	}
-
-	private static String removeSpacing(String rowString) {
-		return rowString.replaceAll("\\s+", "");
 	}
 	
 	void processInitialGridRow(int rowNumber, String rowString, InitialGridStatus status) {
@@ -208,7 +145,8 @@ public class Puzzle {
 		cell.assign(assignment);
 	}
 
-
+	// --------------------------------------------------------------------------------------
+	
 	void solve() {
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 				
