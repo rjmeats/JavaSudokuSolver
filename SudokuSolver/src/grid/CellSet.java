@@ -11,7 +11,7 @@ import puzzle.Symbol;
 public abstract class CellSet {
 
 	private int m_itemNumber;
-	Set<Cell> m_lCells;
+	private Set<Cell> m_lCells;
 		
 	public CellSet(int itemNumber) {
 		m_itemNumber = itemNumber;
@@ -30,17 +30,18 @@ public abstract class CellSet {
 		return m_lCells.contains(cell);	
 	}
 	
-	// Check that no symbol is used more than once in the cells in this cell set
-	public Set<Cell> isValid() {
+	// Check that no symbol is used more than once in the cells in this cell set - return the cells where there is duplication
+	public Set<Cell> getIncompatibleCells() {
 		Map<Symbol, Cell> symbols = new HashMap<>();
-		Set<Cell> badCells = new LinkedHashSet<>();
+		Set<Cell> sameSymbolCells = new LinkedHashSet<>();
 		
 		for(Cell cell : m_lCells) {
 			Symbol symbol = cell.getAssignedSymbol();
 			if(symbol != null) {
 				if(symbols.containsKey(symbol)) {
-					badCells.add(cell);
-					badCells.add(symbols.get(symbol));
+					Cell sameSymbolCell = symbols.get(symbol);
+					sameSymbolCells.add(cell);
+					sameSymbolCells.add(sameSymbolCell);
 				}
 				else {
 					symbols.put(symbol, cell);
@@ -48,6 +49,10 @@ public abstract class CellSet {
 			}
 		}
 		
-		return badCells;
+		return sameSymbolCells;
+	}
+	
+	public int compareTo(CellSet cellset) {
+		return getItemNumber() - cellset.getItemNumber();
 	}
 }

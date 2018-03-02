@@ -1,6 +1,6 @@
 package grid;
 
-public class Column extends CellSet {
+public class Column extends CellSet implements Comparable<Column> {
 
 	public Column(int columnNumber) {
 		super(columnNumber);
@@ -13,4 +13,9 @@ public class Column extends CellSet {
 	public String getRepresentation() {
 		return "Column " + getColumnNumber(); 
 	}	
+	
+	@Override
+	public int compareTo(Column column) {
+		return super.compareTo(column);
+	}
 }

@@ -11,7 +11,6 @@ import grid.Box;
 import grid.Grid9x9;
 
 import puzzle.Assignment;
-import puzzle.AssignmentMethod;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -45,19 +44,19 @@ public class Solver {
 		m_columnAssessmentsMap = new HashMap<>();
 		m_boxAssessmentsMap = new HashMap<>();
 		
-		for(Row row : m_grid.m_lRows) {
+		for(Row row : m_grid.getRows()) {
 			RowAssessment assessment = new RowAssessment(row, symbols);
 			m_lRows.add(assessment);
 			m_rowAssessmentsMap.put(row, assessment);
 		}
 		
-		for(Column column : m_grid.m_lColumns) {
+		for(Column column : m_grid.getColumns()) {
 			ColumnAssessment assessment = new ColumnAssessment(column, symbols);
 			m_lColumns.add(assessment);
 			m_columnAssessmentsMap.put(column, assessment);
 		}
 
-		for(Box box: m_grid.m_lBoxes) {
+		for(Box box: m_grid.getBoxes()) {
 			BoxAssessment assessment = new BoxAssessment(box, symbols);
 			m_lBoxes.add(assessment);
 			m_boxAssessmentsMap.put(box, assessment);
@@ -67,7 +66,7 @@ public class Solver {
 		m_lCellSets.addAll(m_lColumns);
 		m_lCellSets.addAll(m_lBoxes);
 			
-		for(Cell cell : m_grid.m_lCells) {
+		for(Cell cell : m_grid.getCells()) {
 			RowAssessment row = getRowAssessmentForCell(cell);
 			ColumnAssessment column = getColumnAssessmentForCell(cell);
 			BoxAssessment box = getBoxAssessmentForCell(cell);
@@ -80,9 +79,11 @@ public class Solver {
 		}		
 
 		// Need to go through already-assigned given cells and do equivalent of Solver.applyGivenValueToCell processing to these cells to track initial state.
-		for(Cell cell : m_grid.m_lCells) {
+		for(CellAssessment ca : m_lCells) {
+			Cell cell = ca.m_cell;
 			if(cell.isAssigned()) {
-				applyGivenValueToCell(cell);
+				Assignment assignment = cell.getAssignment();
+				spreadAssignmentImpact(ca, assignment);
 			}
 		}				
 	}
@@ -125,21 +126,21 @@ public class Solver {
 		sb1.append("\r\n");
 		
 		for(int rowNumber = 0; rowNumber < m_lRows.size(); rowNumber++) {
-			int boxNumber = Grid9x9.getBoxNumberFromGridPosition(rowNumber, 0);
+			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
 			if(boxNumber != currentVerticalBoxNumber) {
 				sb1.append("\r\n\r\n");
 				currentVerticalBoxNumber = boxNumber; 
 			}
 
 			for(int columnNumber = 0; columnNumber < m_lColumns.size(); columnNumber++) {
-				boxNumber = Grid9x9.getBoxNumberFromGridPosition(rowNumber, columnNumber);
+				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
 				if(boxNumber != currentHorizontalBoxNumber) {
 					sb1.append("    ");
 					currentHorizontalBoxNumber = boxNumber;
 				}
 
-				int cellNumber = Grid9x9.getCellNumberFromGridPosition(rowNumber, columnNumber);
-				CellAssessment cell = m_lCells.get(cellNumber);
+				Cell c = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
+				CellAssessment cell = this.getCellAssessmentForCell(c);
 				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumber));
 				String contents = ccd.getContent(cell, highlight);
 				sb1.append(" " + contents + " ");					
@@ -149,20 +150,6 @@ public class Solver {
 		}
 		
 		System.out.println(sb1.toString());
-	}
-
-	public CellAssignmentStatus applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol) {
-		int cellNumber = Grid9x9.getCellNumberFromGridPosition(rowNumber, columnNumber);
-		CellAssessment cell = m_lCells.get(cellNumber);
-		Assignment a = new Assignment(cell.m_cell, symbol, AssignmentMethod.Given, "", 0);
-		CellAssignmentStatus status = cell.setAsAssigned(a);
-		return status;
-	}
-
-	public void applyGivenValueToCell(Cell c) {
-		CellAssessment ca = getCellAssessmentForCell(c);
-		Assignment a = c.getAssignment();
-		ca.setAsAlreadyAssigned(a);
 	}
 
 	CellAssessment getCellAssessmentForCell(Cell cell) {
@@ -188,12 +175,12 @@ public class Solver {
 			// Look through unassigned cell for cases where only one symbol is a possible assignment.
 			for(CellAssessment cell : m_lCells) {
 				if(!cell.m_cell.isAssigned()) {
-					Assignment a = cell.checkForAssignableSymbol(stepNumber);
+					Assignment a = cell.hasAssignmentAvailable(stepNumber);
 					if(a != null) {
-						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.m_cell.getLocationString();
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.m_cell.getGridLocationString();
 						System.out.println(s);
 						System.out.println();
-						getCellAssessmentForCell(a.getCell()).setAsAssigned(a);
+						makeAssignment(cell, a);
 						changedState = true;
 						break;
 					}
@@ -204,12 +191,13 @@ public class Solver {
 		if(!changedState) {
 			// Look through each row, column, box for an unassigned symbol which can only go in one cell
 			for(CellSetAssessment set : m_lCellSets) {
-				Assignment a = set.checkForAssignableSymbol(stepNumber);
+				Assignment a = set.hasAssignmentAvailable(stepNumber);
 				if(a != null) {
-					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getLocationString() + " from cell set " + set.m_cellSet.getRepresentation();
+					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getGridLocationString() + " from cell set " + set.m_cellSet.getRepresentation();
 					System.out.println(s);
 					System.out.println();
-					getCellAssessmentForCell(a.getCell()).setAsAssigned(a);
+					CellAssessment ca = getCellAssessmentForCell(a.getCell());
+					makeAssignment(ca, a);
 					changedState = true;
 					break;
 				}
@@ -281,7 +269,7 @@ public class Solver {
 				if(lRestrictedSymbolSets != null) {
 					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
 						for(CellAssessment cell : symbolSetRestriction.m_lCells) {
-							boolean causedStateChange = cell.ruleOutAllBut(symbolSetRestriction.m_lSymbols);
+							boolean causedStateChange = cell.ruleOutAllExcept(symbolSetRestriction.m_lSymbols);
 							if(causedStateChange) {
 								stateChanges++;
 							}
@@ -314,63 +302,24 @@ public class Solver {
 		
 		return changedState;
 	}
-	
-	boolean checkForCompletion()
-	{
-		boolean isComplete = true;
-		
-		// All cell-sets are finished
-		for(CellSetAssessment set : m_lCellSets) {
-			if(!set.isComplete()) {
-				isComplete = false;
-			}
-		}
-		
-		// All cells are assigned
-		for(Cell cell : m_grid.m_lCells) {
-			if(!cell.isAssigned()) {
-				isComplete = false;
-			}
-		}
-		
-		return isComplete;
-	}
-	
-	public Stats getStats() {
-		Stats stats = new Stats();
-		stats.m_complete = checkForCompletion();
-		stats.m_cellCount = m_grid.m_lCells.size();
-		stats.m_initialAssignedCells = 0;
-		stats.m_assignedCells = 0;
-		stats.m_unassignedCells = 0;
 
-		for(Cell cell : m_grid.m_lCells) {
-			if(cell.isAssigned()) {
-				stats.m_assignedCells++;
-				if(cell.getAssignment().getMethod() == AssignmentMethod.Given) {
-					stats.m_initialAssignedCells++;
-				}
-			}
-			else {
-				stats.m_unassignedCells++;
-			}
+	void makeAssignment(CellAssessment ca, Assignment assignment) {
+		CellAssignmentStatus status = CellAssignmentStatus.checkCellCanBeAssigned(ca, assignment);
+		if(status == CellAssignmentStatus.CanBeAssigned) {
+			ca.m_cell.assign(assignment);
+
+			// ???? Duplicated code
+			spreadAssignmentImpact(ca, assignment);
 		}
-		return stats;
+		else {
+			System.err.println("Unexpected assignment failure : " + status.name() + " : " + assignment.toString());
+		}					
 	}
 
-	public class Stats {
-		public boolean m_complete;
-		public int m_cellCount;
-		public int m_initialAssignedCells;
-		public int m_assignedCells;
-		public int m_unassignedCells;
-		
-		Stats() {
-			m_complete = false;
-			m_cellCount = -1;
-			m_initialAssignedCells = -1;
-			m_assignedCells = -1;
-			m_unassignedCells = -1;
-		}
+	void spreadAssignmentImpact(CellAssessment ca, Assignment assignment) {
+		ca.assignmentMade(assignment.getSymbol());
+		ca.getRow().assignmentMade(assignment, ca);
+		ca.getColumn().assignmentMade(assignment, ca);
+		ca.getBox().assignmentMade(assignment, ca);
 	}
 }

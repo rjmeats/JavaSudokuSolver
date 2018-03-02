@@ -5,7 +5,6 @@ import puzzle.Symbol;
 
 public class Cell implements Comparable<Cell> {
 
-	// Where the cell is in its grid
 	private int m_cellNumber;
 	private Row m_row;
 	private Column m_column;
@@ -26,10 +25,14 @@ public class Cell implements Comparable<Cell> {
 	public Assignment getAssignment() 	{ return m_assignment; }
 	public int getCellNumber() 			{ return m_cellNumber; }
 	
-	public String getLocationString() {
+	public String getGridLocationString() {
 		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
 	}
 	
+	public String getOneBasedGridLocationString() {
+		return "[" + (m_column.getColumnNumber()+1) + "," + (m_row.getRowNumber()+1) + "]";
+	}
+
 	public String toString() {
 		return "Cell no=" + getCellNumber();
 	}

@@ -89,11 +89,11 @@ public class Puzzle {
 		}
 				
 		// Now check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
-		Set<Cell> badCells = m_grid.isValid();
+		Set<Cell> badCells = m_grid.getIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getLocationString() + " ");
+				badCellString += (cell.getGridLocationString() + " ");
 			}
 			status.setError("Invalid initial grid : see cells " + badCellString);			
 		}
@@ -131,17 +131,16 @@ public class Puzzle {
 	void solve() {
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 				
+		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
+		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
+		m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
+		
+
 		m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay(), 0);
 		m_solver.printGrid(new CellAssessment.CouldBeValueDisplay(), 0);
 		m_solver.printCellSets();
 		m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), 0);
 		
-		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
-		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
-		m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay());
-		m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
-		m_solver.printCellSets();		
-
 		boolean complete = false;
 		boolean changed = true;
 		int stepNumber = 0;
@@ -156,14 +155,13 @@ public class Puzzle {
 			System.out.println("Assignment step: " + stepNumber);
 
 			changed = m_solver.nextStep(stepNumber);
+			Grid9x9.Stats stats = m_grid.getStats();
+			complete = (stats.m_unassignedCells == 0);
 			
 			m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay(), stepNumber);
 			m_solver.printGrid(new CellAssessment.CouldBeValueDisplay(), stepNumber);
 			m_solver.printCellSets(stepNumber);
 			m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), stepNumber);
-
-			Solver.Stats stats = m_solver.getStats();
-			complete = stats.m_complete;
 
 			System.out.println("After step " + stepNumber + ": ");
 			System.out.println("- " + stats.m_assignedCells + " assigned cells out of " + stats.m_cellCount + " (" + stats.m_initialAssignedCells + " givens)");

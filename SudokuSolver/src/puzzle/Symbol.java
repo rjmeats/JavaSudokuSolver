@@ -27,15 +27,8 @@ public class Symbol implements Comparable<Symbol> {
 		return m_representation;
 	}
 	
-	public static String symbolSetToString(Set<Symbol> set)
-	{
-		List<Symbol> l = new ArrayList<>();
-		for(Symbol symbol: set)
-		{
-			l.add(symbol);
-		}
-
-		return(symbolListToString(l));
+	public static String symbolSetToString(Set<Symbol> set) {
+		return(symbolListToString(new ArrayList<Symbol>(set)));
 	}
 
 	public static String symbolListToString(List<Symbol> l)
@@ -44,8 +37,7 @@ public class Symbol implements Comparable<Symbol> {
 		Collections.sort(lSorted);
 		
 		StringBuilder sb = new StringBuilder();
-		for(Symbol symbol: lSorted)
-		{
+		for(Symbol symbol: lSorted) {
 			sb.append(symbol.getRepresentation()).append(" ");
 		}
 		return sb.toString().trim();

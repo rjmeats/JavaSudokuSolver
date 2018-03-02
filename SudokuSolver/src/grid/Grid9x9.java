@@ -2,75 +2,90 @@ package grid;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
+import puzzle.AssignmentMethod;
+
 public class Grid9x9 {
 
-	public List<Row> m_lRows;
-	public List<Column> m_lColumns;
-	public List<Box> m_lBoxes;	
-	public List<Cell> m_lCells;
-	public List<CellSet> m_lCellSets;
+	private List<Row> m_lRows;
+	private List<Column> m_lColumns;
+	private List<Box> m_lBoxes;	
 	
-	Cell m_aCells[][];
+	private List<Cell> m_lCells;	
 	
-	static int s_rows = 9;
-	static int s_columns = 9;
-	static int s_boxes = 9;
+	private static int s_rows = 9;
+	private static int s_columns = 9;
+	private static int s_boxes = 9;
 	
 	public Grid9x9() {
+
 		m_lRows = new ArrayList<>();
-		m_lColumns = new ArrayList<>();
-		m_lBoxes = new ArrayList<>();
-		m_lCellSets = new ArrayList<>();
-		m_lCells = new ArrayList<>();
-		m_aCells = new Cell[s_rows][s_columns];
-		
-		for(int rowNum = 0; rowNum < s_rows; rowNum++)
-		{
+		for(int rowNum = 0; rowNum < s_rows; rowNum++) {
 			m_lRows.add(new Row(rowNum));
 		}
 		
-		for(int columnNum = 0; columnNum < s_columns; columnNum++)
-		{
+		m_lColumns = new ArrayList<>();
+		for(int columnNum = 0; columnNum < s_columns; columnNum++) {
 			m_lColumns.add(new Column(columnNum));
 		}
 			
-		for(int boxNum = 0; boxNum < s_boxes; boxNum++)
-		{
+		m_lBoxes = new ArrayList<>();
+		for(int boxNum = 0; boxNum < s_boxes; boxNum++) {
 			m_lBoxes.add(new Box(boxNum));
 		}
 
-		m_lCellSets = new ArrayList<>(m_lRows);
-		m_lCellSets.addAll(m_lColumns);
-		m_lCellSets.addAll(m_lBoxes);
-		
-		for(int rowNum = 0; rowNum < s_rows; rowNum++)
-		{
-			Row row = m_lRows.get(rowNum);
-			for(int columnNum = 0; columnNum < s_columns; columnNum++)
-			{
-				Column column = m_lColumns.get(columnNum);
-
-				int boxNum = getBoxNumberFromGridPosition(rowNum, columnNum);
-				Box box = m_lBoxes.get(boxNum);
-				Cell cell = new Cell(getCellNumberFromGridPosition(rowNum, columnNum), row, column, box);
-				m_aCells[rowNum][columnNum] = cell;
-				m_lCells.add(cell);
-				row.addCell(cell);
-				column.addCell(cell);
-				box.addCell(cell);
+		m_lCells = new ArrayList<>();
+		int cellNumber = 0;
+		for(int rowNum = 0; rowNum < s_rows; rowNum++) {
+			for(int columnNum = 0; columnNum < s_columns; columnNum++) {
+				addCell(cellNumber++, rowNum, columnNum);
 			}			
 		}		
 	}
 
-	public Set<Cell> isValid() {
+	private void addCell(int cellNumber, int rowNum, int columnNum) {
+		Row row = m_lRows.get(rowNum);
+		Column column = m_lColumns.get(columnNum);
+		int boxNum = getBoxNumberFromGridPosition(rowNum, columnNum);
+		Box box = m_lBoxes.get(boxNum);
+		
+		Cell cell = new Cell(cellNumber, row, column, box);
+		m_lCells.add(cell);
+		
+		row.addCell(cell);
+		column.addCell(cell);
+		box.addCell(cell);		
+	}
+	
+	public List<Row> getRows() {
+		return Collections.unmodifiableList(m_lRows);
+	}
+	
+	public List<Column> getColumns() {
+		return Collections.unmodifiableList(m_lColumns);
+	}
+	
+	public List<Box> getBoxes() {
+		return Collections.unmodifiableList(m_lBoxes);
+	}
+	
+	public List<Cell> getCells() {
+		return Collections.unmodifiableList(m_lCells);
+	}
+	
+	public Set<Cell> getIncompatibleCells() {
 		Set<Cell> l = new LinkedHashSet<>();
 		
-		// Check that each Cell set uses each symbol only once.
-		for(CellSet cellSet : m_lCellSets) {
-			l.addAll(cellSet.isValid());
+		// Get cells from each CellSet that use a symbol more than once.
+		List<CellSet> lCellSets = new ArrayList<>(m_lRows);
+		lCellSets.addAll(m_lColumns);
+		lCellSets.addAll(m_lBoxes);
+		
+		for(CellSet cellSet : lCellSets) {
+			l.addAll(cellSet.getIncompatibleCells());
 		}
 		
 		return l;
@@ -94,8 +109,49 @@ public class Grid9x9 {
 	// 6 7 8
 	
 	// Where do the hard-coded 3s come from. 9x9 obviously but how ????
-	public static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
+	private static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
 		return (rowNumber/3)*3 + columnNumber / 3;
+	}
+
+	public Box getBoxFromGridPosition(int rowNumber, int columnNumber) {
+		return m_lBoxes.get(getBoxNumberFromGridPosition(rowNumber, columnNumber));
+	}
+	
+	// ---------------------------------------------------------------------
+	
+	public class Stats {
+		public int m_cellCount;
+		public int m_initialAssignedCells;
+		public int m_assignedCells;
+		public int m_unassignedCells;		
+		
+		Stats() {
+			m_cellCount = -1;
+			m_initialAssignedCells = -1;
+			m_assignedCells = -1;
+			m_unassignedCells = -1;
+		}
+	}
+	
+	public Stats getStats() {
+		Stats stats = new Stats();
+		stats.m_cellCount = m_lCells.size();
+		stats.m_initialAssignedCells = 0;
+		stats.m_assignedCells = 0;
+		stats.m_unassignedCells = 0;
+
+		for(Cell cell : m_lCells) {
+			if(cell.isAssigned()) {
+				stats.m_assignedCells++;
+				if(cell.getAssignment().getMethod() == AssignmentMethod.Given) {
+					stats.m_initialAssignedCells++;
+				}
+			}
+			else {
+				stats.m_unassignedCells++;
+			}
+		}
+		return stats;
 	}
 }
  

@@ -52,7 +52,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
-	void markAsAssigned(Assignment assignment, CellAssessment ca) {
+	void assignmentMade(Assignment assignment, CellAssessment ca) {
 		Symbol symbol = assignment.getSymbol();
 		
 		// Add to the list of symbols in this set which are now assigned.
@@ -99,7 +99,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		}		
 	}
 	
-	Assignment checkForAssignableSymbol(int stepNumber) {
+	Assignment hasAssignmentAvailable(int stepNumber) {
 		Assignment assignableCell = null;
 		for(Symbol symbol : m_couldBeCellsForSymbol.keySet()) {
 			if(!m_assignedSymbols.containsKey(symbol)) {
@@ -124,7 +124,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		for(CellAssessment cell : m_lCellAssessments) {
 			if(!restriction.m_box.m_cellSet.containsCell(cell.m_cell)) {
 				if(!cell.isRuledOut(restriction.m_symbol)) {
-System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getLocationString());				
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getGridLocationString());				
 					cell.ruleOut(restriction.m_symbol);
 					changedState = true;
 				}
@@ -140,7 +140,7 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		for(CellAssessment cell : m_lCellAssessments) {
 			if(!restriction.m_rowOrColumn.m_cellSet.containsCell(cell.m_cell)) {
 				if(!cell.isRuledOut(restriction.m_symbol)) {
-System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getLocationString());				
+System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.m_cell.getGridLocationString());				
 					cell.ruleOut(restriction.m_symbol);
 					changedState = true;
 				}
