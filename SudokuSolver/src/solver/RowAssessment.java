@@ -6,13 +6,14 @@ import java.util.HashMap;
 
 import grid.*;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 public class RowAssessment extends CellSetAssessment {
 
 	Row m_row;
 	
-	public RowAssessment(Row row, List<Symbol> lSymbols) {
-		super(row, lSymbols);
+	public RowAssessment(Row row, SymbolsToUse symbols) {
+		super(row, symbols);
 		m_row = row;
 	}
 

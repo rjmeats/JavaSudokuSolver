@@ -1,9 +1,8 @@
 package solver;
 
-import java.util.ArrayList;
-
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 
 import grid.Cell;
 import grid.Row;
@@ -19,7 +18,7 @@ import puzzle.SymbolsToUse;
 public class Solver {
 
 	Grid9x9 m_grid;	
-	List<Symbol> m_lSymbols;
+	SymbolsToUse m_symbols;
 	
 	List<RowAssessment> m_lRows;
 	List<ColumnAssessment> m_lColumns;
@@ -32,9 +31,9 @@ public class Solver {
 	HashMap<Column, ColumnAssessment> m_columnAssessmentsMap;
 	HashMap<Box, BoxAssessment> m_boxAssessmentsMap;
 	
-	public Solver(Grid9x9 grid, SymbolsToUse symbolSet) {
+	public Solver(Grid9x9 grid, SymbolsToUse symbols) {
 		m_grid = grid;
-		m_lSymbols = symbolSet.getSymbolList();
+		m_symbols = symbols;
 
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
@@ -47,19 +46,19 @@ public class Solver {
 		m_boxAssessmentsMap = new HashMap<>();
 		
 		for(Row row : m_grid.m_lRows) {
-			RowAssessment assessment = new RowAssessment(row, m_lSymbols);
+			RowAssessment assessment = new RowAssessment(row, symbols);
 			m_lRows.add(assessment);
 			m_rowAssessmentsMap.put(row, assessment);
 		}
 		
 		for(Column column : m_grid.m_lColumns) {
-			ColumnAssessment assessment = new ColumnAssessment(column, m_lSymbols);
+			ColumnAssessment assessment = new ColumnAssessment(column, symbols);
 			m_lColumns.add(assessment);
 			m_columnAssessmentsMap.put(column, assessment);
 		}
 
 		for(Box box: m_grid.m_lBoxes) {
-			BoxAssessment assessment = new BoxAssessment(box, m_lSymbols);
+			BoxAssessment assessment = new BoxAssessment(box, symbols);
 			m_lBoxes.add(assessment);
 			m_boxAssessmentsMap.put(box, assessment);
 		}
@@ -72,7 +71,7 @@ public class Solver {
 			RowAssessment row = getRowAssessmentForCell(cell);
 			ColumnAssessment column = getColumnAssessmentForCell(cell);
 			BoxAssessment box = getBoxAssessmentForCell(cell);
-			CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, m_lSymbols);				
+			CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, symbols);				
 			m_lCells.add(cellAssessment);
 			m_cellAssessmentsMap.put(cell, cellAssessment);
 			row.addCell(cellAssessment);
@@ -182,7 +181,7 @@ public class Solver {
 		return m_boxAssessmentsMap.get(cell.getBox());
 	}
 	
-	public boolean lookForNextAssignment(int stepNumber) {
+	public boolean nextStep(int stepNumber) {
 		boolean changedState = false;
 		
 		if(!changedState) {

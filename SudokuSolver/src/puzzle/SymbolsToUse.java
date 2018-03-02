@@ -1,9 +1,8 @@
 package puzzle;
 
 import java.util.Set;
-import java.util.List;
 import java.util.LinkedHashSet;
-import java.util.ArrayList;
+import java.util.Collections;
 
 public class SymbolsToUse {
 
@@ -12,17 +11,17 @@ public class SymbolsToUse {
 	
 	private Set<Symbol> m_symbols;
 	
-	SymbolsToUse(String ... symbols) {
-		m_symbols = new LinkedHashSet<>();
+	private SymbolsToUse(String ... symbols) {
+		Set<Symbol> set = new LinkedHashSet<>();
 		int ordinal = 1; 
 		for(String s : symbols) {
-			Symbol symbol = new Symbol(s, ordinal++);
-			m_symbols.add(symbol);
-		}
+			set.add(new Symbol(s, ordinal++));
+		}		
+		m_symbols = Collections.unmodifiableSet(set);
 	}
 	
-	public List<Symbol> getSymbolList() {
-		return new ArrayList<Symbol>(m_symbols);
+	public Set<Symbol> getSymbolSet() {
+		return m_symbols;
 	}
 	
 	public int size() {
@@ -33,10 +32,8 @@ public class SymbolsToUse {
 	{
 		Symbol symbol = null;
 		
-		for(Symbol trySymbol : m_symbols)
-		{
-			if(trySymbol.getRepresentation().equals(representation))
-			{
+		for(Symbol trySymbol : m_symbols) {
+			if(trySymbol.getRepresentation().equals(representation)) {
 				symbol = trySymbol;
 				break;
 			}

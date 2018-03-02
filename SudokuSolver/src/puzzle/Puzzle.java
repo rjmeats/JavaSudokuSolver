@@ -56,7 +56,7 @@ public class Puzzle {
 	
 	static int s_expectedSymbolCount = 9;	// Only handle a standard 9x9 grid
 	SymbolsToUse m_symbolsToUse;
-	Grid9x9 m_grid;
+	Grid9x9 m_grid;		// The Grid we want to solve
 	Solver m_solver;
 	
 	Puzzle(SymbolsToUse symbols) {
@@ -110,7 +110,7 @@ public class Puzzle {
 			else {
 				Symbol symbol = m_symbolsToUse.isKnownSymbol(c + "");
 				if(symbol != null) {
-					applyGivenValueToCell(rowNumber, columnNumber, symbol);
+					applyGivenValueToCell(m_grid, rowNumber, columnNumber, symbol);
 				}
 				else {
 					status.setError("Unknown symbol in initial grid: " + c);
@@ -119,9 +119,9 @@ public class Puzzle {
 		}		
 	}
 
-	public void applyGivenValueToCell(int rowNumber, int columnNumber, Symbol symbol)
+	public void applyGivenValueToCell(Grid9x9 grid, int rowNumber, int columnNumber, Symbol symbol)
 	{
-		Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
+		Cell cell = grid.getCellFromGridPosition(rowNumber, columnNumber);
 		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
 		cell.assign(assignment);
 	}
@@ -155,7 +155,7 @@ public class Puzzle {
 			System.out.println();
 			System.out.println("Assignment step: " + stepNumber);
 
-			changed = m_solver.lookForNextAssignment(stepNumber);
+			changed = m_solver.nextStep(stepNumber);
 			
 			m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay(), stepNumber);
 			m_solver.printGrid(new CellAssessment.CouldBeValueDisplay(), stepNumber);

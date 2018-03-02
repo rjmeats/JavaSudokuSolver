@@ -1,18 +1,20 @@
 package solver;
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 
 import grid.Column;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 class ColumnAssessment extends CellSetAssessment {
 
 	Column m_column;
 	
-	public ColumnAssessment(Column column, List<Symbol> lSymbols) {
-		super(column, lSymbols);
+	public ColumnAssessment(Column column, SymbolsToUse symbols) {
+		super(column, symbols);
 		m_column = column;
 	}
 

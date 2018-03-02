@@ -1,19 +1,21 @@
 package solver;
 
 import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import grid.Box;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 public class BoxAssessment extends CellSetAssessment {
 
 	Box m_box;
 	
-	public BoxAssessment(Box box, List<Symbol> lSymbols) {
-		super(box, lSymbols);
+	public BoxAssessment(Box box, SymbolsToUse symbols) {
+		super(box, symbols);
 		m_box = box;
 	}
 

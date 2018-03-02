@@ -12,6 +12,7 @@ import grid.CellSet;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	CellSet m_cellSet;
@@ -20,13 +21,13 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	HashMap<Symbol, Assignment> m_assignedSymbols;
 	HashMap<Symbol, List<CellAssessment>> m_couldBeCellsForSymbol;
 
-	public CellSetAssessment(CellSet cellSet, List<Symbol> lSymbols) {
+	public CellSetAssessment(CellSet cellSet, SymbolsToUse symbols) {
 		m_cellSet = cellSet;
 		m_lCellAssessments = new TreeSet<>();
 		m_assignedSymbols = new HashMap<>();
 		
 		m_couldBeCellsForSymbol = new HashMap<>();		
-		for(Symbol symbol : lSymbols) {
+		for(Symbol symbol : symbols.getSymbolSet()) {
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<CellAssessment>());
 		}
 	}

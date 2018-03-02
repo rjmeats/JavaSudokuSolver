@@ -1,6 +1,7 @@
 package solver;
 
 import java.util.ArrayList;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import grid.Cell;
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
 import puzzle.Symbol;
+import puzzle.SymbolsToUse;
 
 public class CellAssessment implements Comparable<CellAssessment> {
 
@@ -20,7 +22,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	private LinkedHashSet<Symbol> m_couldBeSymbolsSet;
 	private LinkedHashSet<Symbol> m_ruledOutSymbolsSet;
 
-	CellAssessment(Cell cell, RowAssessment row, ColumnAssessment column, BoxAssessment box, List<Symbol> lAllSymbols) {
+	CellAssessment(Cell cell, RowAssessment row, ColumnAssessment column, BoxAssessment box, SymbolsToUse symbols) {
 		m_cell = cell;
 		m_row = row;
 		m_column = column;
@@ -28,7 +30,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		m_couldBeSymbolsSet = new LinkedHashSet<>();
 		m_ruledOutSymbolsSet = new LinkedHashSet<>();
 		
-		for(Symbol symbol : lAllSymbols) {
+		for(Symbol symbol : symbols.getSymbolSet()) {
 			m_couldBeSymbolsSet.add(symbol);
 		}
 	}
