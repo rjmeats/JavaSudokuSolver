@@ -187,14 +187,14 @@ public class Solver {
 		
 		if(!changedState) {
 			// Look through unassigned cell for cases where only one symbol is a possible assignment.
-			for(CellAssessment cell : m_lCells) {
-				if(!cell.m_cell.isAssigned()) {
-					Assignment a = cell.hasAssignmentAvailable(stepNumber);
+			for(CellAssessment ca : m_lCells) {
+				if(!ca.m_cell.isAssigned()) {
+					Assignment a = ca.hasAssignmentAvailable(stepNumber);
 					if(a != null) {
-						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + cell.m_cell.getGridLocationString();
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + ca.m_cell.getGridLocationString();
 						System.out.println(s);
 						System.out.println();
-						makeAssignment(cell, a);
+						makeAssignment(ca, a);
 						changedState = true;
 						break;
 					}
@@ -333,43 +333,33 @@ public class Solver {
 		}					
 	}
 
+	// Can be called for an initial 'given' assignment, or for one deduced
 	void spreadAssignmentImpact(CellAssessment ca, Assignment assignment) {
-		ca.assignmentMade(assignment.getSymbol());
-		spreadAssignmentImpact(ca.getRow(), ca, assignment);
-		spreadAssignmentImpact(ca.getColumn(), ca, assignment);
-		spreadAssignmentImpact(ca.getBox(), ca, assignment);
+		ca.assignmentMade(assignment.getSymbol());		
+		for(CellSetAssessment csa : ca.m_cellSetAssessments) {
+			spreadAssignmentImpact(csa, ca, assignment);			
+		}
 	}
 	
 	void spreadAssignmentImpact(CellSetAssessment csa, CellAssessment ca, Assignment assignment) {
 		Symbol symbol = assignment.getSymbol();
-		Cell cell = assignment.getCell();
-		
-		csa.assignmentMade(assignment, cell);
-	
-		// And go through all the other cells sharing a cell set with this set, ruling out this symbol for their use.
-		ruleOutSymbolFromOtherCells(ca.getRow(), symbol, ca.getCell());
-		ruleOutSymbolFromOtherCells(ca.getColumn(), symbol, ca.getCell());
-		ruleOutSymbolFromOtherCells(ca.getBox(), symbol, ca.getCell());
+		Cell assignmentCell = assignment.getCell();
 
-		// And go through all the symbols for other cell-sets sharing a cell set with this set, ruling out this symbol for use in their other sets.
-		ca.getRow().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
-		ca.getColumn().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
-		ca.getBox().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
-	}
+		// A cell in this cell-set has had an assignment made. Update the cell-set record to reflect this 
+		csa.assignmentMade(assignment, assignmentCell);
 	
-	void ruleOutSymbolFromOtherCells(CellSetAssessment csa, Symbol symbol, Cell assignmentCell) {
-		for(CellAssessment otherCellAssessment : csa.m_lCellAssessments) {
-			Cell otherCell =  otherCellAssessment.getCell();
+		// Go through the other cells in this cell-set, and rule out this symbol from being assigned to those cells 
+		for(CellAssessment otherCellInCellSet : csa.m_lCellAssessments) {
+			Cell otherCell = otherCellInCellSet.getCell();
 			if(otherCell != assignmentCell) {
-				otherCellAssessment.ruleOut(symbol);
-				if(csa != otherCellAssessment.getRow()) otherCellAssessment.getRow().ruleOutCellForSymbol(otherCell, symbol);
-				if(csa != otherCellAssessment.getColumn()) otherCellAssessment.getColumn().ruleOutCellForSymbol(otherCell, symbol);
-				if(csa != otherCellAssessment.getBox()) otherCellAssessment.getBox().ruleOutCellForSymbol(otherCell, symbol);
+				// This cell isn't assigned to the symbol
+				otherCellInCellSet.ruleOut(symbol);
+				// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
+				// NB One of these == csa, but it should be harmless to repeat the ruling out
+				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.m_cellSetAssessments) {
+					csaOfOtherCell.ruleOutCellForSymbol(otherCell, symbol);
+				}				
 			}
-		}
-		
-	}
-
-	
-
+		}		
+	}	
 }

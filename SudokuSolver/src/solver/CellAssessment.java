@@ -22,6 +22,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	private RowAssessment m_rowAssessment;
 	private ColumnAssessment m_columnAssessment;
 	private BoxAssessment m_boxAssessment;
+	public Set<CellSetAssessment> m_cellSetAssessments;
 	
 	private Set<Symbol> m_couldBeSymbolsSet;
 	private Set<Symbol> m_ruledOutSymbolsSet;
@@ -31,6 +32,10 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		m_rowAssessment = rowAssessment;
 		m_columnAssessment = columnAssessment;
 		m_boxAssessment = boxAssessment;
+		m_cellSetAssessments = new LinkedHashSet<>();
+		m_cellSetAssessments.add(rowAssessment);
+		m_cellSetAssessments.add(columnAssessment);
+		m_cellSetAssessments.add(boxAssessment);
 
 		m_couldBeSymbolsSet = new LinkedHashSet<>(symbols.getSymbolSet());		
 		m_ruledOutSymbolsSet = new LinkedHashSet<>();

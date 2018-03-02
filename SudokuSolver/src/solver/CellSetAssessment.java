@@ -18,7 +18,7 @@ import puzzle.SymbolsToUse;
 abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	
 	private CellSet m_cellSet;
-	public Set<CellAssessment> m_lCellAssessments;
+	Set<CellAssessment> m_lCellAssessments;		// Private, remove altogether and use list of cells from m_cellSet ????
 	
 	private HashMap<Symbol, Assignment> m_assignedSymbols;
 	private HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
@@ -47,10 +47,6 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 
 	boolean contains(Cell cell) {
 		return m_cellSet.containsCell(cell);
-	}
-	
-	boolean contains(CellAssessment cell) {
-		return m_lCellAssessments.contains(cell);
 	}
 	
 	String getRepresentation() {
@@ -91,22 +87,13 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		
 		return changed;
 	}
-
-//	void ruleOutSymbolFromOtherCells(Symbol symbol, Cell assignmentCell) {
-//		for(CellAssessment otherCellAssessment : m_lCellAssessments) {
-//			Cell otherCell =  otherCellAssessment.getCell();
-//			if(otherCell != assignmentCell) {
-//				otherCellAssessment.ruleOut(symbol);
-//				if(this != otherCellAssessment.getRow()) otherCellAssessment.getRow().ruleOutCellForSymbol(otherCell, symbol);
-//				if(this != otherCellAssessment.getColumn()) otherCellAssessment.getColumn().ruleOutCellForSymbol(otherCell, symbol);
-//				if(this != otherCellAssessment.getBox()) otherCellAssessment.getBox().ruleOutCellForSymbol(otherCell, symbol);
-//			}
-//		}
-//		
-//	}
-
 	
-	
+	// Only this cell can apply to this symbol, rule out the other cells for this symbol
+	void ruleOutOtherCellsForSymbol(Cell assignmentCell, Symbol symbol) {
+		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
+		lCellsForThisSymbol.clear();
+		lCellsForThisSymbol.add(assignmentCell);		
+	}
 	
 	// ------------------------------
 	
@@ -191,20 +178,8 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		
 		// Add to the list of symbols in this set which are now assigned.
 		m_assignedSymbols.put(symbol, assignment);
-
-		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
-		lCellsForThisSymbol.clear();
-		lCellsForThisSymbol.add(cell);
-
-		// And go through all the other cells sharing a cell set with this set, ruling out this symbol for their use.
-//		ca.getRow().ruleOutSymbolFromOtherCells(symbol, ca.getCell());
-//		ca.getColumn().ruleOutSymbolFromOtherCells(symbol, ca.getCell());
-//		ca.getBox().ruleOutSymbolFromOtherCells(symbol, ca.getCell());
-//
-//		// And go through all the symbols for other cell-sets sharing a cell set with this set, ruling out this symbol for use in their other sets.
-//		ca.getRow().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
-//		ca.getColumn().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
-//		ca.getBox().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
+		ruleOutOtherCellsForSymbol(cell, symbol);
+		ruleOutCellForOtherSymbols(cell, symbol);
 	}
 
 	Assignment hasAssignmentAvailable(int stepNumber) {
