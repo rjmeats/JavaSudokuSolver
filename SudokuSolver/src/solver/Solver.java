@@ -39,49 +39,40 @@ public class Solver {
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
 		m_lBoxes = new ArrayList<>();
-		m_lCellSets = new ArrayList<>();
 		m_lCells = new ArrayList<>();
 		m_cellAssessmentsMap = new HashMap<>();
 		m_rowAssessmentsMap = new HashMap<>();
 		m_columnAssessmentsMap = new HashMap<>();
 		m_boxAssessmentsMap = new HashMap<>();
-		m_cellSetAssessmentsMap = new HashMap<>();
 		
 		for(Row row : m_grid.getRows()) {
 			RowAssessment assessment = new RowAssessment(row, symbols);
 			m_lRows.add(assessment);
 			m_rowAssessmentsMap.put(row, assessment);
-			m_cellSetAssessmentsMap.put(row, assessment);
 		}
 		
 		for(Column column : m_grid.getColumns()) {
 			ColumnAssessment assessment = new ColumnAssessment(column, symbols);
 			m_lColumns.add(assessment);
 			m_columnAssessmentsMap.put(column, assessment);
-			m_cellSetAssessmentsMap.put(column, assessment);
 		}
 
 		for(Box box: m_grid.getBoxes()) {
 			BoxAssessment assessment = new BoxAssessment(box, symbols);
 			m_lBoxes.add(assessment);
 			m_boxAssessmentsMap.put(box, assessment);
-			m_cellSetAssessmentsMap.put(box, assessment);
 		}
 
 		m_lCellSets = new ArrayList<>(m_lRows);
 		m_lCellSets.addAll(m_lColumns);
 		m_lCellSets.addAll(m_lBoxes);
+		
+		m_cellSetAssessmentsMap = new HashMap<>(m_rowAssessmentsMap);
+		m_cellSetAssessmentsMap.putAll(m_columnAssessmentsMap);
+		m_cellSetAssessmentsMap.putAll(m_boxAssessmentsMap);
 			
 		for(Cell cell : m_grid.getCells()) {
-			RowAssessment row = getRowAssessmentForCell(cell);
-			ColumnAssessment column = getColumnAssessmentForCell(cell);
-			BoxAssessment box = getBoxAssessmentForCell(cell);
-			CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, symbols);				
-			m_lCells.add(cellAssessment);
-			m_cellAssessmentsMap.put(cell, cellAssessment);
-			row.addCellAssessment(cellAssessment);
-			column.addCellAssessment(cellAssessment);
-			box.addCellAssessment(cellAssessment);
+			setUpCellAssessment(cell);
 		}		
 
 		// Need to go through already-assigned given cells and do equivalent of Solver.applyGivenValueToCell processing to these cells to track initial state.
@@ -94,70 +85,19 @@ public class Solver {
 		}				
 	}
 
-	private static String s_divider = "-----------------------------------";
-
-	public void printCellSets() {
-		printCellSets(-1);
+	private void setUpCellAssessment(Cell cell) {
+		RowAssessment row = getRowAssessmentForCell(cell);
+		ColumnAssessment column = getColumnAssessmentForCell(cell);
+		BoxAssessment box = getBoxAssessmentForCell(cell);
+		CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, m_symbols);				
+		m_lCells.add(cellAssessment);
+		m_cellAssessmentsMap.put(cell, cellAssessment);
+		row.addCellAssessment(cellAssessment);
+		column.addCellAssessment(cellAssessment);
+		box.addCellAssessment(cellAssessment);		
 	}
 	
-	public void printCellSets(int stepNumber) {
-		StringBuilder sb1 = new StringBuilder();
-		
-		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
-		
-		sb1.append("\r\n\r\n").append(s_divider).append("\r\n\r\n");
-		sb1.append("Cell sets "  + stepInfo);
-		sb1.append("\r\n");
-		
-		for(CellSetAssessment cellset : m_lCellSets) {
-			sb1.append(cellset.getRepresentation() + " : " + cellset.getSymbolAssignmentSummary());
-			sb1.append("\r\n");
-		}
-		
-		System.out.println(sb1.toString());
-	}
-
-	public void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
 	
-	public void printGrid(CellContentDisplayer ccd, int stepNumber) {
-		StringBuilder sb1 = new StringBuilder();
-		
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
-		
-		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
-		
-		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
-		sb1.append(ccd.getHeading() + stepInfo);
-		sb1.append("\r\n");
-		
-		for(int rowNumber = 0; rowNumber < m_lRows.size(); rowNumber++) {
-			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
-			if(boxNumber != currentVerticalBoxNumber) {
-				sb1.append("\r\n\r\n");
-				currentVerticalBoxNumber = boxNumber; 
-			}
-
-			for(int columnNumber = 0; columnNumber < m_lColumns.size(); columnNumber++) {
-				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
-				if(boxNumber != currentHorizontalBoxNumber) {
-					sb1.append("    ");
-					currentHorizontalBoxNumber = boxNumber;
-				}
-
-				Cell c = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
-				CellAssessment cell = this.getCellAssessmentForCell(c);
-				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumber));
-				String contents = ccd.getContent(cell, highlight);
-				sb1.append(" " + contents + " ");					
-			}
-			
-			sb1.append("\r\n");
-		}
-		
-		System.out.println(sb1.toString());
-	}
-
 	CellAssessment getCellAssessmentForCell(Cell cell) {
 		return m_cellAssessmentsMap.get(cell);
 	}
@@ -239,7 +179,7 @@ public class Solver {
 		}
 		
 		if(!changedState) {
-			// Look through each column box to see where a particular unresolved symbol can only appear in a specific box.
+			// Look through each column to see where a particular unresolved symbol can only appear in a specific box.
 			// Where this arises, we can rule-out the symbol from the other cells in the box which are not in the column.
 			int stateChanges = 0;
 			for(ColumnAssessment column : m_lColumns) {
@@ -296,7 +236,8 @@ public class Solver {
 
 					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
 						for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
-							int causedChange = symbolSetRestriction.m_cellSet.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol);
+							CellSetAssessment cseta = getCellSetAssessmentForCellSet(symbolSetRestriction.m_cellSet);
+							int causedChange = cseta.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol);
 							if(causedChange > 0) {
 								stateChanges++;
 							}
@@ -362,4 +303,73 @@ public class Solver {
 			}
 		}		
 	}	
+
+
+	// --------------------------------------------------------------------------------
+	
+	
+	private static String s_divider = "-----------------------------------";
+
+	public void printCellSets() {
+		printCellSets(-1);
+	}
+	
+	public void printCellSets(int stepNumber) {
+		StringBuilder sb1 = new StringBuilder();
+		
+		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
+		
+		sb1.append("\r\n\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append("Cell sets "  + stepInfo);
+		sb1.append("\r\n");
+		
+		for(CellSetAssessment cellset : m_lCellSets) {
+			sb1.append(cellset.getRepresentation() + " : " + cellset.getSymbolAssignmentSummary());
+			sb1.append("\r\n");
+		}
+		
+		System.out.println(sb1.toString());
+	}
+
+	public void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
+	
+	public void printGrid(CellContentDisplayer ccd, int stepNumber) {
+		StringBuilder sb1 = new StringBuilder();
+		
+		int currentHorizontalBoxNumber = -1;
+		int currentVerticalBoxNumber = -1;
+		
+		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
+		
+		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
+		sb1.append(ccd.getHeading() + stepInfo);
+		sb1.append("\r\n");
+		
+		for(int rowNumber = 0; rowNumber < m_lRows.size(); rowNumber++) {
+			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
+			if(boxNumber != currentVerticalBoxNumber) {
+				sb1.append("\r\n\r\n");
+				currentVerticalBoxNumber = boxNumber; 
+			}
+
+			for(int columnNumber = 0; columnNumber < m_lColumns.size(); columnNumber++) {
+				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
+				if(boxNumber != currentHorizontalBoxNumber) {
+					sb1.append("    ");
+					currentHorizontalBoxNumber = boxNumber;
+				}
+
+				Cell c = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
+				CellAssessment cell = this.getCellAssessmentForCell(c);
+				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumber));
+				String contents = ccd.getContent(cell, highlight);
+				sb1.append(" " + contents + " ");					
+			}
+			
+			sb1.append("\r\n");
+		}
+		
+		System.out.println(sb1.toString());
+	}
+
 }

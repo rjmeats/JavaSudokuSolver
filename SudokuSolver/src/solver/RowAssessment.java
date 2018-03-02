@@ -1,14 +1,9 @@
 package solver;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import grid.*;
-import puzzle.Symbol;
+import grid.Row;
 import puzzle.SymbolsToUse;
 
-public class RowAssessment extends CellSetAssessment {
+public class RowAssessment extends LinearCellSetAssessment {
 
 	Row m_row;
 	
@@ -16,37 +11,5 @@ public class RowAssessment extends CellSetAssessment {
 		super(row, symbols);
 		m_row = row;
 	}
-
-	int getSetNumber() { return m_row.getRowNumber(); }
-
-	public List<SymbolRestriction> findRestrictedSymbols() {
-		
-		List<SymbolRestriction> lRestrictions = new ArrayList<>();
-		
-		for(Symbol symbol : getSymbols())
-		{
-			List<Cell> lCells = getCouldBeCellsForSymbol(symbol);
-			if(lCells.size() == 2 || lCells.size() == 3)
-			{
-				HashMap<Box, Box> boxMap = new HashMap<>();
-				for(Cell cell : lCells)
-				{
-					boxMap.put(cell.getBox(), cell.getBox());
-				}
-				
-				if(boxMap.size() == 1)
-				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in row " + m_row.getRowNumber() + " and box " + lCells.get(0).getBox().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction();
-					restriction.m_box = lCells.get(0).getBox();
-					restriction.m_symbol = symbol;
-					restriction.m_rowOrColumn= m_row;
-					lRestrictions.add(restriction);
-				}
-			}			
-		}
-		
-		return lRestrictions;
-	}	
 }
 

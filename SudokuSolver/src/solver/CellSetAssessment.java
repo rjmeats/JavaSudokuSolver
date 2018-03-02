@@ -174,12 +174,10 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
 	void assignmentMade(Assignment assignment, Cell cell) {
-		Symbol symbol = assignment.getSymbol();
-		
 		// Add to the list of symbols in this set which are now assigned.
-		m_assignedSymbols.put(symbol, assignment);
-		ruleOutOtherCellsForSymbol(cell, symbol);
-		ruleOutCellForOtherSymbols(cell, symbol);
+		m_assignedSymbols.put(assignment.getSymbol(), assignment);
+		ruleOutOtherCellsForSymbol(cell, assignment.getSymbol());
+		ruleOutCellForOtherSymbols(cell, assignment.getSymbol());
 	}
 
 	Assignment hasAssignmentAvailable(int stepNumber) {
@@ -212,6 +210,7 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		for(Symbol symbol1 : m_couldBeCellsForSymbol.keySet()) {
 			List<Cell> lCells1 = m_couldBeCellsForSymbol.get(symbol1);
 			if(lCells1.size() > 1) {
+
 				for(Symbol symbol2 : m_couldBeCellsForSymbol.keySet()) {
 					if(symbol2.ordinal() > symbol1.ordinal()) {
 						List<Cell> lCells2 = m_couldBeCellsForSymbol.get(symbol2);
@@ -228,6 +227,7 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 										// We have a combination of three symbols to investigate ...
 										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
 										lCombinations.add(l3);
+
 										for(Symbol symbol4 : m_couldBeCellsForSymbol.keySet()) {
 											if(symbol4.ordinal() > symbol3.ordinal()) {
 												List<Cell> lCells4 = m_couldBeCellsForSymbol.get(symbol4);
@@ -254,10 +254,7 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 			if(foundSet) {
 				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolListToString(lCombination) + " covers cells " +  Cell.cellListToString(lCellsForCombination));
 				
-				SymbolSetRestriction restriction = new SymbolSetRestriction();
-				restriction.m_cellSet = this;
-				restriction.m_lCells = lCellsForCombination;
-				restriction.m_lSymbols = lCombination;
+				SymbolSetRestriction restriction = new SymbolSetRestriction(m_cellSet, lCombination, lCellsForCombination);
 				l.add(restriction);
 			}
 		}		
@@ -349,9 +346,15 @@ System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " fo
 		
 //Paired symbols in a cell set which can only exist in a subset of cells. The two lists will be the same length.  
 class SymbolSetRestriction {
-	CellSetAssessment m_cellSet;	
+	CellSet m_cellSet;	
 	List<Symbol> m_lSymbols;
 	List<Cell> m_lCells;
+	
+	SymbolSetRestriction(CellSet cellSet, List<Symbol> lSymbols, List<Cell> lCells) {
+		m_cellSet = cellSet;	
+		m_lSymbols = lSymbols;
+		m_lCells = lCells;		
+	}
 	
 	List<CellSet> getAffectedCellSets() {
 		Set<CellSet> set = new TreeSet<>();	

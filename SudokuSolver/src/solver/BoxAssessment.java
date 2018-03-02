@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import grid.Cell;
-import grid.CellSet;
+import grid.LinearCellSet;
 import grid.Box;
 import grid.Row;
 import grid.Column;
@@ -24,8 +24,6 @@ public class BoxAssessment extends CellSetAssessment {
 		m_box = box;
 	}
 
-	int getSetNumber() { return m_box.getBoxNumber(); }
-	
 	public List<SymbolRestriction> findRestrictedSymbols() {
 		
 		List<SymbolRestriction> lRestrictions = new ArrayList<>();		
@@ -45,20 +43,14 @@ public class BoxAssessment extends CellSetAssessment {
 				
 				if(rowSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_box.getBoxNumber() + " and row " + lCells.get(0).getRow().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction();
-					restriction.m_rowOrColumn = lCells.get(0).getRow();
-					restriction.m_symbol = symbol;
-					restriction.m_box = m_box;
+					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getRow().getRepresentation());
+					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getRow());
 					lRestrictions.add(restriction);
 				}
 				else if(columnSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in box " + m_box.getBoxNumber() + " and column " + lCells.get(0).getColumn().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(); 
-					restriction.m_rowOrColumn = lCells.get(0).getColumn();
-					restriction.m_symbol = symbol;
-					restriction.m_box = m_box;
+					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getColumn().getRepresentation());
+					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getColumn()); 
 					lRestrictions.add(restriction);
 				}
 			}			
@@ -71,5 +63,11 @@ public class BoxAssessment extends CellSetAssessment {
 class SymbolRestriction {
 	Symbol m_symbol;
 	Box m_box;
-	CellSet m_rowOrColumn;	
+	LinearCellSet m_rowOrColumn;
+	
+	SymbolRestriction(Symbol symbol, Box box, LinearCellSet rowOrColumn) {
+		m_symbol = symbol;
+		m_box = box;
+		m_rowOrColumn = rowOrColumn;		
+	}
 }
