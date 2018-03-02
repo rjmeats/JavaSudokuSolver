@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import grid.Cell;
+import grid.CellSet;
 import grid.Row;
 import grid.Column;
 import grid.Box;
@@ -29,6 +30,7 @@ public class Solver {
 	HashMap<Row, RowAssessment> m_rowAssessmentsMap;
 	HashMap<Column, ColumnAssessment> m_columnAssessmentsMap;
 	HashMap<Box, BoxAssessment> m_boxAssessmentsMap;
+	HashMap<CellSet, CellSetAssessment> m_cellSetAssessmentsMap;
 	
 	public Solver(Grid9x9 grid, SymbolsToUse symbols) {
 		m_grid = grid;
@@ -43,23 +45,27 @@ public class Solver {
 		m_rowAssessmentsMap = new HashMap<>();
 		m_columnAssessmentsMap = new HashMap<>();
 		m_boxAssessmentsMap = new HashMap<>();
+		m_cellSetAssessmentsMap = new HashMap<>();
 		
 		for(Row row : m_grid.getRows()) {
 			RowAssessment assessment = new RowAssessment(row, symbols);
 			m_lRows.add(assessment);
 			m_rowAssessmentsMap.put(row, assessment);
+			m_cellSetAssessmentsMap.put(row, assessment);
 		}
 		
 		for(Column column : m_grid.getColumns()) {
 			ColumnAssessment assessment = new ColumnAssessment(column, symbols);
 			m_lColumns.add(assessment);
 			m_columnAssessmentsMap.put(column, assessment);
+			m_cellSetAssessmentsMap.put(column, assessment);
 		}
 
 		for(Box box: m_grid.getBoxes()) {
 			BoxAssessment assessment = new BoxAssessment(box, symbols);
 			m_lBoxes.add(assessment);
 			m_boxAssessmentsMap.put(box, assessment);
+			m_cellSetAssessmentsMap.put(box, assessment);
 		}
 
 		m_lCellSets = new ArrayList<>(m_lRows);
@@ -73,9 +79,9 @@ public class Solver {
 			CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, symbols);				
 			m_lCells.add(cellAssessment);
 			m_cellAssessmentsMap.put(cell, cellAssessment);
-			row.addCell(cellAssessment);
-			column.addCell(cellAssessment);
-			box.addCell(cellAssessment);
+			row.addCellAssessment(cellAssessment);
+			column.addCellAssessment(cellAssessment);
+			box.addCellAssessment(cellAssessment);
 		}		
 
 		// Need to go through already-assigned given cells and do equivalent of Solver.applyGivenValueToCell processing to these cells to track initial state.
@@ -104,7 +110,7 @@ public class Solver {
 		sb1.append("\r\n");
 		
 		for(CellSetAssessment cellset : m_lCellSets) {
-			sb1.append(cellset.m_cellSet.getRepresentation() + " : " + cellset.getSymbolAssignmentSummary());
+			sb1.append(cellset.getRepresentation() + " : " + cellset.getSymbolAssignmentSummary());
 			sb1.append("\r\n");
 		}
 		
@@ -156,6 +162,14 @@ public class Solver {
 		return m_cellAssessmentsMap.get(cell);
 	}
 	
+	CellSetAssessment getCellSetAssessmentForCellSet(CellSet cellSet) {
+		return m_cellSetAssessmentsMap.get(cellSet);
+	}
+	
+	BoxAssessment getBoxAssessmentForBox(Box box) {
+		return (BoxAssessment)m_cellSetAssessmentsMap.get(box);
+	}
+	
 	RowAssessment getRowAssessmentForCell(Cell cell) {
 		return m_rowAssessmentsMap.get(cell.getRow());
 	}
@@ -193,7 +207,7 @@ public class Solver {
 			for(CellSetAssessment set : m_lCellSets) {
 				Assignment a = set.hasAssignmentAvailable(stepNumber);
 				if(a != null) {
-					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getGridLocationString() + " from cell set " + set.m_cellSet.getRepresentation();
+					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getGridLocationString() + " from cell set " + set.getRepresentation();
 					System.out.println(s);
 					System.out.println();
 					CellAssessment ca = getCellAssessmentForCell(a.getCell());
@@ -212,7 +226,8 @@ public class Solver {
 				List<SymbolRestriction> lRestrictions = box.findRestrictedSymbols();
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
-						boolean causedStateChange = restriction.m_rowOrColumn.ruleOutSymbolOutsideBox(restriction);
+						CellSetAssessment csa = getCellSetAssessmentForCellSet(restriction.m_rowOrColumn);
+						boolean causedStateChange = csa.ruleOutSymbolOutsideBox(restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -231,7 +246,8 @@ public class Solver {
 				List<SymbolRestriction> lRestrictions = column.findRestrictedSymbols();
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
-						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
+						boolean causedStateChange = boxa.ruleOutSymbolOutsideRowOrColumn(restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -249,7 +265,8 @@ public class Solver {
 				List<SymbolRestriction> lRestrictions = row.findRestrictedSymbols();
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
-						boolean causedStateChange = restriction.m_box.ruleOutSymbolOutsideRowOrColumn(restriction);
+						BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
+						boolean causedStateChange = boxa.ruleOutSymbolOutsideRowOrColumn(restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -268,8 +285,9 @@ public class Solver {
 				List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
 				if(lRestrictedSymbolSets != null) {
 					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
-						for(CellAssessment cell : symbolSetRestriction.m_lCells) {
-							boolean causedStateChange = cell.ruleOutAllExcept(symbolSetRestriction.m_lSymbols);
+						for(Cell cell : symbolSetRestriction.m_lCells) {
+							CellAssessment ca = getCellAssessmentForCell(cell);
+							boolean causedStateChange = ca.ruleOutAllExcept(symbolSetRestriction.m_lSymbols);
 							if(causedStateChange) {
 								stateChanges++;
 							}
@@ -278,17 +296,18 @@ public class Solver {
 
 					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
 						for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
-							boolean causedStateChange = symbolSetRestriction.m_cellSet.ruleOutAllCellsBut(symbol, symbolSetRestriction.m_lCells);
-							if(causedStateChange) {
+							int causedChange = symbolSetRestriction.m_cellSet.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol);
+							if(causedChange > 0) {
 								stateChanges++;
 							}
 						}
 						
-						List<CellSetAssessment> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
-						for(CellSetAssessment cset : lAffectedCellSets) {
-							for(CellAssessment cell : symbolSetRestriction.m_lCells) {
-								boolean causedStateChange = cset.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols);
-								if(causedStateChange) {
+						List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
+						for(CellSet cset : lAffectedCellSets) {
+							CellSetAssessment cseta = getCellSetAssessmentForCellSet(cset);
+							for(Cell cell : symbolSetRestriction.m_lCells) {
+								int causedChange = cseta.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols);
+								if(causedChange > 0) {
 									stateChanges++;
 								}
 							}
@@ -307,8 +326,6 @@ public class Solver {
 		CellAssignmentStatus status = CellAssignmentStatus.checkCellCanBeAssigned(ca, assignment);
 		if(status == CellAssignmentStatus.CanBeAssigned) {
 			ca.m_cell.assign(assignment);
-
-			// ???? Duplicated code
 			spreadAssignmentImpact(ca, assignment);
 		}
 		else {
@@ -318,8 +335,41 @@ public class Solver {
 
 	void spreadAssignmentImpact(CellAssessment ca, Assignment assignment) {
 		ca.assignmentMade(assignment.getSymbol());
-		ca.getRow().assignmentMade(assignment, ca);
-		ca.getColumn().assignmentMade(assignment, ca);
-		ca.getBox().assignmentMade(assignment, ca);
+		spreadAssignmentImpact(ca.getRow(), ca, assignment);
+		spreadAssignmentImpact(ca.getColumn(), ca, assignment);
+		spreadAssignmentImpact(ca.getBox(), ca, assignment);
 	}
+	
+	void spreadAssignmentImpact(CellSetAssessment csa, CellAssessment ca, Assignment assignment) {
+		Symbol symbol = assignment.getSymbol();
+		Cell cell = assignment.getCell();
+		
+		csa.assignmentMade(assignment, cell);
+	
+		// And go through all the other cells sharing a cell set with this set, ruling out this symbol for their use.
+		ruleOutSymbolFromOtherCells(ca.getRow(), symbol, ca.getCell());
+		ruleOutSymbolFromOtherCells(ca.getColumn(), symbol, ca.getCell());
+		ruleOutSymbolFromOtherCells(ca.getBox(), symbol, ca.getCell());
+
+		// And go through all the symbols for other cell-sets sharing a cell set with this set, ruling out this symbol for use in their other sets.
+		ca.getRow().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
+		ca.getColumn().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
+		ca.getBox().ruleOutCellForOtherSymbols(ca.getCell(), symbol);
+	}
+	
+	void ruleOutSymbolFromOtherCells(CellSetAssessment csa, Symbol symbol, Cell assignmentCell) {
+		for(CellAssessment otherCellAssessment : csa.m_lCellAssessments) {
+			Cell otherCell =  otherCellAssessment.getCell();
+			if(otherCell != assignmentCell) {
+				otherCellAssessment.ruleOut(symbol);
+				if(csa != otherCellAssessment.getRow()) otherCellAssessment.getRow().ruleOutCellForSymbol(otherCell, symbol);
+				if(csa != otherCellAssessment.getColumn()) otherCellAssessment.getColumn().ruleOutCellForSymbol(otherCell, symbol);
+				if(csa != otherCellAssessment.getBox()) otherCellAssessment.getBox().ruleOutCellForSymbol(otherCell, symbol);
+			}
+		}
+		
+	}
+
+	
+
 }

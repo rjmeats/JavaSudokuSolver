@@ -1,5 +1,8 @@
 package grid;
 
+import java.util.Collections;
+import java.util.List;
+
 import puzzle.Assignment;
 import puzzle.Symbol;
 
@@ -52,5 +55,14 @@ public class Cell implements Comparable<Cell> {
 	@Override
 	public int compareTo(Cell c) {
 		return m_cellNumber - c.m_cellNumber;
+	}
+
+	public static String cellListToString(List<Cell> l) {
+		StringBuilder sb = new StringBuilder();
+		Collections.sort(l);
+		for(Cell cell: l) {
+			sb.append(cell.getCellNumber()).append(" ");
+		}
+		return sb.toString().trim();
 	}
 }

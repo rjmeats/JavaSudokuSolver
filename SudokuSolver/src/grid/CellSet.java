@@ -30,6 +30,10 @@ public abstract class CellSet {
 		return m_lCells.contains(cell);	
 	}
 	
+	public int size() { 
+		return m_lCells.size();		
+	}
+	
 	// Check that no symbol is used more than once in the cells in this cell set - return the cells where there is duplication
 	public Set<Cell> getIncompatibleCells() {
 		Map<Symbol, Cell> symbols = new HashMap<>();
