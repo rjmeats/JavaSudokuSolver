@@ -336,40 +336,75 @@ public class Solver {
 	public void printGrid(CellContentDisplayer ccd, int stepNumber) {
 		StringBuilder sb1 = new StringBuilder();
 		
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
-		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
 		
 		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
 		sb1.append(ccd.getHeading() + stepInfo);
 		sb1.append("\r\n");
+
+		sb1.append(formatGrid(ccd, stepNumber));
+		System.out.println(sb1.toString());
+	}
+
+	public String formatGrid(CellContentDisplayer ccd) {
+		return formatGrid(ccd, -1);
+	}
+	
+	public String formatCompactGrid(CellContentDisplayer ccd) {
+		boolean compact = true;
+		return formatGrid(ccd, -1, compact);
+	}
+	
+	public String formatGrid(CellContentDisplayer ccd, int stepNumberToHighlight) {
+		boolean compact = false;
+		return formatGrid(ccd, -1, compact);		
+	}
+	
+	public String formatGrid(CellContentDisplayer ccd, int stepNumberToHighlight, boolean compact) {
+		int currentHorizontalBoxNumber = -1;
+		int currentVerticalBoxNumber = -1;
 		
+		StringBuilder sb1 = new StringBuilder();
 		for(int rowNumber = 0; rowNumber < m_lRows.size(); rowNumber++) {
 			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
 			if(boxNumber != currentVerticalBoxNumber) {
-				sb1.append("\r\n\r\n");
+				if(currentVerticalBoxNumber != -1) {
+					if(compact) {
+						sb1.append("\r\n");
+					}
+					else {
+						sb1.append("\r\n\r\n");						
+					}
+				}
 				currentVerticalBoxNumber = boxNumber; 
 			}
 
 			for(int columnNumber = 0; columnNumber < m_lColumns.size(); columnNumber++) {
 				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
 				if(boxNumber != currentHorizontalBoxNumber) {
-					sb1.append("    ");
+					if(compact) {
+						sb1.append(" ");					}
+					else {						
+						sb1.append("    ");
+					}
 					currentHorizontalBoxNumber = boxNumber;
 				}
 
 				Cell c = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
 				CellAssessment cell = this.getCellAssessmentForCell(c);
-				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumber));
+				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumberToHighlight));
 				String contents = ccd.getContent(cell, highlight);
-				sb1.append(" " + contents + " ");					
+				if(compact) {
+					sb1.append(contents.replaceAll("\\s+", " "));					
+				}
+				else {
+					sb1.append(" " + contents + " ");
+				}
 			}
 			
 			sb1.append("\r\n");
 		}
 		
-		System.out.println(sb1.toString());
+		return sb1.toString();
 	}
-
 }

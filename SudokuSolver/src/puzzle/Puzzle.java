@@ -1,6 +1,9 @@
 package puzzle;
 
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+
 import grid.*;
 import solver.*;
 
@@ -48,7 +51,16 @@ public class Puzzle {
 		}
 		else {
 			puzzle.solve();
-		}			
+			
+			Puzzle.FinalStatus finalStatus = puzzle.getFinalStatus();
+			
+			System.out.println();
+			System.out.println("*******************************************************************");
+			System.out.println();
+			System.out.println("Puzzle was " + (finalStatus.m_solved ? "" : "not ") + "completed:");
+			System.out.println();
+			System.out.println(finalStatus.m_finalGrid);
+		}
 	}	
 	
 	// ================================================================================================
@@ -58,6 +70,7 @@ public class Puzzle {
 	SymbolsToUse m_symbolsToUse;
 	Grid9x9 m_grid;		// The Grid we want to solve
 	Solver m_solver;
+	FinalStatus m_finalStatus;
 	
 	Puzzle(SymbolsToUse symbols) {
 		m_symbolsToUse = symbols;
@@ -186,6 +199,23 @@ public class Puzzle {
 				System.out.println("Progress made, continuing puzzle ..");
 			}
 			System.out.println();
+		}
+
+		m_finalStatus = new FinalStatus();
+		m_finalStatus.m_solved = complete;
+		m_finalStatus.m_finalGrid = m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+	}
+
+	FinalStatus getFinalStatus() {
+		return m_finalStatus;		
+	}
+
+	static class FinalStatus {
+		boolean m_solved;
+		String m_finalGrid;
+		
+		FinalStatus() {
+			
 		}
 	}
 }

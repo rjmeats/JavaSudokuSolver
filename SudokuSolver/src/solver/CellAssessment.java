@@ -175,7 +175,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		
 		public String getContent(CellAssessment ca, boolean highlight) {
 			Cell c = ca.m_cell;
-			String representation = "-";
+			String representation = ".";
 			if(c.isAssigned())
 			{
 				Symbol symbol = c.getAssignment().getSymbol();
