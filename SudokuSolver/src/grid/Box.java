@@ -1,6 +1,6 @@
 package grid;
 
-public class Box extends CellSet implements Comparable<Box> {
+public class Box extends CellSet implements Comparable<CellSet> {
 
 	public Box(int boxNumber) {
 		super(boxNumber);
@@ -14,9 +14,9 @@ public class Box extends CellSet implements Comparable<Box> {
 		return "Box " + getBoxNumber(); 
 	}	
 	
-	@Override
-	public int compareTo(Box box) {
-		return super.compareTo(box);
-	}
+//	@Override
+//	public int compareTo(Box box) {
+//		return super.compareTo(box);
+//	}
 }
 

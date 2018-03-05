@@ -29,6 +29,10 @@ public abstract class CellSet {
 	public boolean containsCell(Cell cell) {
 		return m_lCells.contains(cell);	
 	}
+
+	public Set<Cell> getCells() {
+		return new LinkedHashSet<>(m_lCells);
+	}
 	
 	public int size() { 
 		return m_lCells.size();		

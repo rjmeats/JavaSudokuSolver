@@ -1,6 +1,6 @@
 package grid;
 
-public class Column extends LinearCellSet implements Comparable<Column> {
+public class Column extends LinearCellSet implements Comparable<CellSet> {
 
 	public Column(int columnNumber) {
 		super(columnNumber);
@@ -14,8 +14,8 @@ public class Column extends LinearCellSet implements Comparable<Column> {
 		return "Column " + getColumnNumber(); 
 	}	
 	
-	@Override
-	public int compareTo(Column column) {
-		return super.compareTo(column);
-	}
+//	@Override
+//	public int compareTo(Column column) {
+//		return super.compareTo(column);
+//	}
 }

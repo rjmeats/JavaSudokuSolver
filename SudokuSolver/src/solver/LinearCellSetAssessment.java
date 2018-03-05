@@ -1,7 +1,8 @@
 package solver;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 
 import grid.Box;
@@ -28,15 +29,15 @@ abstract class LinearCellSetAssessment extends CellSetAssessment {
 			List<Cell> lCells = getCouldBeCellsForSymbol(symbol);
 			if(lCells.size() == 2 || lCells.size() == 3)
 			{
-				HashMap<Box, Box> boxMap = new HashMap<>();
+				Set<Box> boxSet = new HashSet<>();
 				for(Cell cell : lCells)
 				{
-					boxMap.put(cell.getBox(), cell.getBox());
+					boxSet.add(cell.getBox());
 				}
 				
-				if(boxMap.size() == 1)
+				if(boxSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in " + getRepresentation() + " and box " + lCells.get(0).getBox().getRepresentation());
+//					System.err.println("Found restricted symbol " + symbol.toString() + " in " + getRepresentation() + " and box " + lCells.get(0).getBox().getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction(symbol, lCells.get(0).getBox(), m_linearCellSet);
 					lRestrictions.add(restriction);
 				}

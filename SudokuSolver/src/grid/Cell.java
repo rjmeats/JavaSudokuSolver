@@ -1,5 +1,6 @@
 package grid;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class Cell implements Comparable<Cell> {
 	public int getCellNumber() 			{ return m_cellNumber; }
 	
 	public String getGridLocationString() {
-		return "[" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "]";
+		return "{" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "}";
 	}
 	
 	public String getOneBasedGridLocationString() {
@@ -64,5 +65,26 @@ public class Cell implements Comparable<Cell> {
 			sb.append(cell.getCellNumber()).append(" ");
 		}
 		return sb.toString().trim();
+	}
+
+	static boolean compareCellLists(List<Cell> lCells1, List<Cell> lCells2) {
+		boolean same = true;
+
+		if(lCells1.size() != lCells2.size()) return false;
+		
+		List<Cell> l1 = new ArrayList<>(lCells1);
+		List<Cell> l2 = new ArrayList<>(lCells2);
+		
+		Collections.sort(l1);
+		Collections.sort(l2);
+
+		for(int n=0; n < l1.size(); n++) {
+			if(l1.get(n) != l2.get(n)) {
+				same = false;
+				break;
+			}
+		}
+		
+		return same;
 	}
 }

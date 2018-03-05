@@ -1,8 +1,6 @@
 package puzzle;
 
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
 
 import grid.*;
 import solver.*;
@@ -16,7 +14,7 @@ public class Puzzle {
 		InitialGridContentProvider contentProvider = null;
 		
 		// Read a list of initial grid entries from a file name parameter or from a static variable.
-		if(args.length > 0) {
+		if(args.length > 0 && !args[0].equals("-")) {
 			String puzzleFileName = args[0];
 			System.out.println("Reading initial grid from file " + puzzleFileName);
 			contentProvider = InitialGridContentProvider.fromFile(puzzleFileName);
@@ -26,7 +24,9 @@ public class Puzzle {
 		}
 		else {
 			System.out.println("Reading initial grid from hard-coded puzzle");
-			contentProvider = InitialGridContentProvider.fromArray(SampleSudokus.s_times9688);
+			String[] sa = SampleSudokus.s_initialValuesLeMondeHard;
+			//String[] sa = SampleSudokus.s_times9688;
+			contentProvider = InitialGridContentProvider.fromArray(sa);
 		}
 		
 		if(contentProvider == null) return;
@@ -58,6 +58,8 @@ public class Puzzle {
 			System.out.println("*******************************************************************");
 			System.out.println();
 			System.out.println("Puzzle was " + (finalStatus.m_solved ? "" : "not ") + "completed:");
+			System.out.println();
+			System.out.println(finalStatus.m_initialGrid);
 			System.out.println();
 			System.out.println(finalStatus.m_finalGrid);
 		}
@@ -158,6 +160,8 @@ public class Puzzle {
 		boolean changed = true;
 		int stepNumber = 0;
 		
+		String initialGrid = m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+		
 		while(changed && !complete && stepNumber <= 1000)
 		{
 			stepNumber++;
@@ -203,6 +207,7 @@ public class Puzzle {
 
 		m_finalStatus = new FinalStatus();
 		m_finalStatus.m_solved = complete;
+		m_finalStatus.m_initialGrid = initialGrid;
 		m_finalStatus.m_finalGrid = m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
 	}
 
@@ -212,6 +217,7 @@ public class Puzzle {
 
 	static class FinalStatus {
 		boolean m_solved;
+		String m_initialGrid;
 		String m_finalGrid;
 		
 		FinalStatus() {

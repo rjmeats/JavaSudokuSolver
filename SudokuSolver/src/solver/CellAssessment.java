@@ -1,6 +1,7 @@
 package solver;
 
 import java.util.Set;
+
 import java.util.stream.Collectors;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
@@ -8,7 +9,6 @@ import java.util.List;
 
 import grid.Cell;
 
-import puzzle.Assignment;
 import puzzle.AssignmentMethod;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
@@ -53,12 +53,16 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	int couldBeCount() {
 		return m_couldBeSymbolsSet.size();
 	}
-	
+
+	Set<Symbol> getCouldBeSymbols() {
+		return new LinkedHashSet<>(m_couldBeSymbolsSet);
+	}
+
 	boolean isRuledOut(Symbol symbol) {
 		return m_ruledOutSymbolsSet.contains(symbol);
 	}
 	
-	int ruleOut(Symbol symbol) {
+	int ruleOutSymbol(Symbol symbol) {
 		int changeCount = 0;
 		if(!isRuledOut(symbol)) {
 			m_ruledOutSymbolsSet.add(symbol);
@@ -68,7 +72,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		return changeCount;
 	}
 	
-	boolean ruleOutAllExcept(List<Symbol> lPossibleSymbols) {
+	boolean ruleOutAllSymbolsExcept(List<Symbol> lPossibleSymbols) {
 		
 		List<Symbol> lNoLongerPossibleSymbols = m_couldBeSymbolsSet.stream()
 				.filter(couldBeSymbol -> !lPossibleSymbols.contains(couldBeSymbol))
@@ -76,26 +80,20 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		
 		int changeCount = 0;		
 		for(Symbol unwantedSymbol : lNoLongerPossibleSymbols) {
-			changeCount += ruleOut(unwantedSymbol);
+			changeCount += ruleOutSymbol(unwantedSymbol);
 		}
 		
 		return changeCount > 0;
 	}
 
-	// If there is only one symbol which can still be assigned to this cell, then we have an assignment 
-	Assignment hasAssignmentAvailable(int stepNumber) {
-		Assignment a = null;
-		if(!m_cell.isAssigned() && m_couldBeSymbolsSet.size() == 1) {
-			Symbol symbol = m_couldBeSymbolsSet.stream().findFirst().get();
-			a = new Assignment(m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only symbol still possible for cell", stepNumber);
-		}		
-		return a;
+	boolean isAssigned() {
+		return m_cell.isAssigned();
 	}
-
+	
 	void assignmentMade(Symbol symbol) {		
 		List<Symbol> l = new ArrayList<>();
 		l.add(symbol);
-		ruleOutAllExcept(l);
+		ruleOutAllSymbolsExcept(l);
 	}
 	
 	@Override

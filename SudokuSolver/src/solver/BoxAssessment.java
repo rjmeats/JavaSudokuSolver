@@ -1,8 +1,6 @@
 package solver;
 
 import java.util.ArrayList;
-
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,13 +41,13 @@ public class BoxAssessment extends CellSetAssessment {
 				
 				if(rowSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getRow().getRepresentation());
+//					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getRow().getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getRow());
 					lRestrictions.add(restriction);
 				}
 				else if(columnSet.size() == 1)
 				{
-					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getColumn().getRepresentation());
+//					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getColumn().getRepresentation());
 					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getColumn()); 
 					lRestrictions.add(restriction);
 				}

@@ -12,6 +12,7 @@ import grid.Box;
 import grid.Grid9x9;
 
 import puzzle.Assignment;
+import puzzle.AssignmentMethod;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -128,10 +129,10 @@ public class Solver {
 		if(!changedState) {
 			// Look through unassigned cell for cases where only one symbol is a possible assignment.
 			for(CellAssessment ca : m_lCells) {
-				if(!ca.m_cell.isAssigned()) {
-					Assignment a = ca.hasAssignmentAvailable(stepNumber);
+				if(!ca.isAssigned()) {
+					Assignment a = hasAssignmentAvailable(ca, stepNumber);
 					if(a != null) {
-						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + ca.m_cell.getGridLocationString();
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + ca.m_cell.getOneBasedGridLocationString();
 						System.out.println(s);
 						System.out.println();
 						makeAssignment(ca, a);
@@ -145,9 +146,9 @@ public class Solver {
 		if(!changedState) {
 			// Look through each row, column, box for an unassigned symbol which can only go in one cell
 			for(CellSetAssessment set : m_lCellSets) {
-				Assignment a = set.hasAssignmentAvailable(stepNumber);
+				Assignment a = hasAssignmentAvailable(set, stepNumber);
 				if(a != null) {
-					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getGridLocationString() + " from cell set " + set.getRepresentation();
+					String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + a.getCell().getOneBasedGridLocationString() + " from cell set " + set.getRepresentation();
 					System.out.println(s);
 					System.out.println();
 					CellAssessment ca = getCellAssessmentForCell(a.getCell());
@@ -167,7 +168,7 @@ public class Solver {
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
 						CellSetAssessment csa = getCellSetAssessmentForCellSet(restriction.m_rowOrColumn);
-						boolean causedStateChange = csa.ruleOutSymbolOutsideBox(restriction);
+						boolean causedStateChange = ruleOutSymbolOutsideBox(csa, restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -187,7 +188,7 @@ public class Solver {
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
 						BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
-						boolean causedStateChange = boxa.ruleOutSymbolOutsideRowOrColumn(restriction);
+						boolean causedStateChange = ruleOutSymbolOutsideRowOrColumn(boxa, restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -206,7 +207,7 @@ public class Solver {
 				if(lRestrictions != null) {
 					for(SymbolRestriction restriction : lRestrictions) {
 						BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
-						boolean causedStateChange = boxa.ruleOutSymbolOutsideRowOrColumn(restriction);
+						boolean causedStateChange = ruleOutSymbolOutsideRowOrColumn(boxa, restriction);
 						if(causedStateChange) {
 							stateChanges++;
 						}
@@ -227,7 +228,7 @@ public class Solver {
 					for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
 						for(Cell cell : symbolSetRestriction.m_lCells) {
 							CellAssessment ca = getCellAssessmentForCell(cell);
-							boolean causedStateChange = ca.ruleOutAllExcept(symbolSetRestriction.m_lSymbols);
+							boolean causedStateChange = ca.ruleOutAllSymbolsExcept(symbolSetRestriction.m_lSymbols);
 							if(causedStateChange) {
 								stateChanges++;
 							}
@@ -263,6 +264,31 @@ public class Solver {
 		return changedState;
 	}
 
+	// If there is only one symbol which can still be assigned to this cell, then we have an assignment 
+	Assignment hasAssignmentAvailable(CellAssessment ca, int stepNumber) {
+		Assignment a = null;
+		if(!ca.isAssigned() && ca.couldBeCount() == 1) {
+			Symbol symbol = ca.getCouldBeSymbols().stream().findFirst().get();
+			a = new Assignment(ca.m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only symbol still possible for cell", stepNumber);
+		}		
+		return a;
+	}
+	
+	Assignment hasAssignmentAvailable(CellSetAssessment ca, int stepNumber) {
+		Assignment assignableCell = null;
+		for(Symbol symbol : m_symbols.getSymbolSet()) {
+			if(!ca.symbolAlreadyAssigned(symbol)) {
+				List<Cell> lCells = ca.getCouldBeCellsForSymbol(symbol);
+				if(lCells.size() == 1) {
+					assignableCell = new Assignment(lCells.get(0), symbol, AssignmentMethod.AutomatedDeduction, "Only cell for symbol in " + ca.getRepresentation(), stepNumber);
+					break;
+				}
+			}
+		}
+		
+		return assignableCell;
+	}
+
 	void makeAssignment(CellAssessment ca, Assignment assignment) {
 		CellAssignmentStatus status = CellAssignmentStatus.checkCellCanBeAssigned(ca, assignment);
 		if(status == CellAssignmentStatus.CanBeAssigned) {
@@ -290,11 +316,13 @@ public class Solver {
 		csa.assignmentMade(assignment, assignmentCell);
 	
 		// Go through the other cells in this cell-set, and rule out this symbol from being assigned to those cells 
-		for(CellAssessment otherCellInCellSet : csa.m_lCellAssessments) {
-			Cell otherCell = otherCellInCellSet.getCell();
+//		for(CellAssessment otherCellInCellSet : csa.m_lCellAssessments) {
+		for(Cell otherCell : csa.getCellSet().getCells()) {
+//			Cell otherCell = otherCellInCellSet.getCell();
 			if(otherCell != assignmentCell) {
 				// This cell isn't assigned to the symbol
-				otherCellInCellSet.ruleOut(symbol);
+				CellAssessment otherCellInCellSet = getCellAssessmentForCell(otherCell);
+				otherCellInCellSet.ruleOutSymbol(symbol);
 				// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
 				// NB One of these == csa, but it should be harmless to repeat the ruling out
 				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.m_cellSetAssessments) {
@@ -303,6 +331,40 @@ public class Solver {
 			}
 		}		
 	}	
+
+	boolean ruleOutSymbolOutsideBox(CellSetAssessment csa, SymbolRestriction restriction) {
+		boolean changedState = false;
+		// For cells not in the restriction box, rule out the symbol.
+		for(Cell cell : csa.getCellSet().getCells()) {
+			if(!restriction.m_box.containsCell(cell)) {
+				CellAssessment ca = getCellAssessmentForCell(cell);
+				if(!ca.isRuledOut(restriction.m_symbol)) {
+//System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getGridLocationString());				
+					ca.ruleOutSymbol(restriction.m_symbol);
+					changedState = true;
+				}
+			}
+		}
+		
+		return changedState;
+	}
+	
+	boolean ruleOutSymbolOutsideRowOrColumn(CellSetAssessment boxcsa, SymbolRestriction restriction) {
+		boolean changedState = false;
+		// For cells not in the restriction row/column, rule out the symbol.
+		for(Cell cell : boxcsa.getCellSet().getCells()) {
+			if(!restriction.m_rowOrColumn.containsCell(cell)) {
+				CellAssessment ca = getCellAssessmentForCell(cell);
+				if(!ca.isRuledOut(restriction.m_symbol)) {
+//System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getGridLocationString());				
+					ca.ruleOutSymbol(restriction.m_symbol);
+					changedState = true;
+				}
+			}
+		}
+		
+		return changedState;
+	}
 
 
 	// --------------------------------------------------------------------------------
