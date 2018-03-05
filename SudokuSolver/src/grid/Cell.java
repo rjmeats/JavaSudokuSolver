@@ -29,6 +29,8 @@ public class Cell implements Comparable<Cell> {
 	public Assignment getAssignment() 	{ return m_assignment; }
 	public int getCellNumber() 			{ return m_cellNumber; }
 	
+	public int getOneBasedCellNumber() 	{ return m_cellNumber+1; }
+
 	public String getGridLocationString() {
 		return "{" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "}";
 	}
@@ -58,11 +60,12 @@ public class Cell implements Comparable<Cell> {
 		return m_cellNumber - c.m_cellNumber;
 	}
 
-	public static String cellListToString(List<Cell> l) {
+	public static String cellListToString(List<Cell> lIn) {
+		List<Cell> l = new ArrayList<>(lIn);
 		StringBuilder sb = new StringBuilder();
 		Collections.sort(l);
 		for(Cell cell: l) {
-			sb.append(cell.getCellNumber()).append(" ");
+			sb.append(cell.getOneBasedCellNumber()).append(" ");
 		}
 		return sb.toString().trim();
 	}

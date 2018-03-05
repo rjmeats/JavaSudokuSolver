@@ -66,6 +66,10 @@ class SymbolRestriction {
 	SymbolRestriction(Symbol symbol, Box box, LinearCellSet rowOrColumn) {
 		m_symbol = symbol;
 		m_box = box;
-		m_rowOrColumn = rowOrColumn;		
+		m_rowOrColumn = rowOrColumn;
+	}
+	
+	String getRepresentation() {
+		return "Restriction on symbol " + m_symbol.getRepresentation() + " between " + m_box.getOneBasedRepresentation() + " and " + m_rowOrColumn.getOneBasedRepresentation();
 	}
 }

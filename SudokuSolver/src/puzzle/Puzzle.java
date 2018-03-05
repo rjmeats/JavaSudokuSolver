@@ -1,5 +1,9 @@
 package puzzle;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+
 import java.util.Set;
 
 import grid.*;
@@ -149,21 +153,21 @@ public class Puzzle {
 	public void solve() {
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 				
-		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
-		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
-		m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
+		m_solver.printGrid(new Solver.CellNumberDisplayer());
+		m_solver.printGrid(new Solver.BoxNumberDisplayer());
+		m_solver.printGrid(new Solver.AssignedValueDisplay());
 		
 		m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), 0);
 		m_solver.printGrid(m_solver.new CouldBeValueDisplay(), 0);
 		m_solver.printCellSets();
-		m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), 0);
+		m_solver.printGrid(new Solver.AssignedValueDisplay(), 0);
 		
 		boolean complete = false;
 		boolean changed = true;
 		int stepNumber = 0;
 		
 		GridFormatter gf = new GridFormatter(m_grid);
-		String initialGrid = gf.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+		String initialGrid = gf.formatCompactGrid(new Solver.AssignedValueDisplay());
 		
 		while(changed && !complete && stepNumber <= 1000)
 		{
@@ -181,7 +185,7 @@ public class Puzzle {
 			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);
 			m_solver.printGrid(m_solver.new CouldBeValueDisplay(), stepNumber);
 			m_solver.printCellSets(stepNumber);
-			m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), stepNumber);
+			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
 
 			System.out.println("After step " + stepNumber + ": ");
 			System.out.println("- " + stats.m_assignedCells + " assigned cells out of " + stats.m_cellCount + " (" + stats.m_initialAssignedCells + " givens)");
@@ -191,7 +195,7 @@ public class Puzzle {
 			if(complete)
 			{
 				System.out.println("Puzzle is complete");
-				m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
+				m_solver.printGrid(new Solver.AssignedValueDisplay());
 			}
 			else if(stepNumber > 1000)
 			{
@@ -217,7 +221,7 @@ public class Puzzle {
 		
 		m_status.m_initialGrid = initialGrid;
 		GridFormatter gf2 = new GridFormatter(m_grid);
-		m_status.m_finalGrid = gf2.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+		m_status.m_finalGrid = gf2.formatCompactGrid(new Solver.AssignedValueDisplay());
 		
 		Set<Cell> badCells = m_grid.getIncompatibleCells();
 		if(badCells.size() > 0) {
@@ -230,7 +234,10 @@ public class Puzzle {
 		}
 		else {
 			m_status.m_valid = true;
-		}					
+		}			
+		
+		String htmlbody = m_solver.getHtmlDiagnostics();
+		writeHTMLFile("logs/diagnostics.html", htmlbody);		
 	}
 
 	public Status getStatus() {
@@ -283,6 +290,48 @@ public class Puzzle {
 			status.m_finalGrid = null;
 			return status;
 		}		
+	}
+	
+	void writeHTMLFile(String filename, String htmlbody) {
+		String nl = System.lineSeparator();
+		StringBuilder sb = new StringBuilder();
+		sb.append("<html>").append(nl);
+		sb.append("<head>").append(nl);
+		
+		sb.append("<style>").append(nl);
+		sb.append("table { border-collapse: collapse;}").append(nl);
+		sb.append("table, th, td { border: 1px solid black; }").append(nl);
+		sb.append("</style>").append(nl);
+		
+		sb.append("</head>").append(nl);
+		sb.append("<body>").append(nl);
+		sb.append(htmlbody);
+		sb.append("</body>").append(nl);
+		sb.append("</html>").append(nl);
+		
+		writeFileAsUTF8(filename, sb.toString(), false);
+	}
+
+	public static boolean writeFileAsUTF8(String filename, String s, boolean append)
+	{
+	    try
+	    {
+			FileOutputStream	fos = new FileOutputStream (filename, append);
+			OutputStreamWriter	osw = new OutputStreamWriter (fos, "UTF-8");
+			BufferedWriter		bw = new BufferedWriter (osw);
+	
+			bw.write (s, 0, s.length ());
+			bw.newLine ();
+			
+			bw.flush ();		// Flush the file contents to disk
+			bw.close ();		// And close it
+			return true;
+	    }
+	    catch(Exception e)
+	    {
+	        System.err.println("Failed to write to: " + filename + " " + e.getMessage());
+	        return false;
+	    }
 	}	
 }
 

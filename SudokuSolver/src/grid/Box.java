@@ -14,6 +14,10 @@ public class Box extends CellSet implements Comparable<CellSet> {
 		return "Box " + getBoxNumber(); 
 	}	
 	
+	public String getOneBasedRepresentation() {
+		return "Box " + (getBoxNumber()+1); 
+	}	
+	
 //	@Override
 //	public int compareTo(Box box) {
 //		return super.compareTo(box);

@@ -21,6 +21,7 @@ public abstract class CellSet {
 	public int getItemNumber() { return m_itemNumber; }
 	
 	public abstract String getRepresentation();
+	public abstract String getOneBasedRepresentation();
 
 	void addCell(Cell cell)	{
 		m_lCells.add(cell);

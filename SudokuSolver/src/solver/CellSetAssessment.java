@@ -16,10 +16,10 @@ import puzzle.SymbolsToUse;
 
 abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	
-	private CellSet m_cellSet;
-	
+	private CellSet m_cellSet;	
 	private Set<Symbol> m_assignedSymbols;
 	private HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
+	private int m_stepNumberOfLatestChange;
 
 	public CellSetAssessment(CellSet cellSet, SymbolsToUse symbols) {
 		m_cellSet = cellSet;
@@ -29,6 +29,8 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		for(Symbol symbol : symbols.getSymbolSet()) {
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<Cell>());
 		}
+		
+		m_stepNumberOfLatestChange = -1;
 	}
 	
 	void addCell(Cell cell)	{
@@ -53,6 +55,10 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return m_cellSet.getRepresentation();
 	}
 
+	String getOneBasedRepresentation() {
+		return m_cellSet.getOneBasedRepresentation();
+	}
+
 	Set<Symbol> getSymbols() {
 		return m_couldBeCellsForSymbol.keySet();
 	}
@@ -61,27 +67,35 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return new ArrayList<>(m_couldBeCellsForSymbol.get(symbol));
 	}
 
-
+	private void setStepNumber(int n) {
+		m_stepNumberOfLatestChange = n;
+	}
+	
+	public int stepNumberOfLatestChange() { 
+		return m_stepNumberOfLatestChange;
+	}
+	
 	// ------------------------------
 	// These three arise after an assignment has been made to a cell
 
 	// This cell is no longer a possible cell for this symbol.
-	int ruleOutCellForSymbol(Cell notThisCell, Symbol symbol) {
+	int ruleOutCellForSymbol(Cell notThisCell, Symbol symbol, int stepNumber) {
 		int changed = 0;
 		List<Cell> lCouldBeCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		if(lCouldBeCellsForThisSymbol.contains(notThisCell)) {
 			lCouldBeCellsForThisSymbol.remove(notThisCell);
+			setStepNumber(stepNumber);
 			changed++;
 		}
 		return changed;
 	}
 	
 	// This cell can only apply to this symbol, rule out the cell for all other symbols
-	int ruleOutCellForOtherSymbols(Cell assignmentCell, Symbol symbol) {
+	int ruleOutCellForOtherSymbols(Cell assignmentCell, Symbol symbol, int stepNumber) {
 		int changed = 0;
 		for(Symbol otherSymbol : getSymbols()) {
 			if(otherSymbol != symbol) {				
-				changed += ruleOutCellForSymbol(assignmentCell, otherSymbol);
+				changed += ruleOutCellForSymbol(assignmentCell, otherSymbol, stepNumber);
 			}
 		}		
 		
@@ -89,10 +103,17 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 	
 	// Only this cell can apply to this symbol, rule out the other cells for this symbol
-	void ruleOutOtherCellsForSymbol(Cell assignmentCell, Symbol symbol) {
-		List<Cell> lCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
-		lCellsForThisSymbol.clear();
-		lCellsForThisSymbol.add(assignmentCell);		
+	int ruleOutOtherCellsForSymbol(Cell assignmentCell, Symbol symbol, int stepNumber) {
+		int changed = 0;
+		List<Cell> lUnwantedCells = getCouldBeCellsForSymbol(symbol).stream()
+				.filter(couldBeCell -> couldBeCell != assignmentCell)
+				.collect(Collectors.toList());
+				
+		for(Cell unwantedCell : lUnwantedCells) {
+			changed += ruleOutCellForSymbol(unwantedCell, symbol, stepNumber);
+		}
+		
+		return changed;
 	}
 	
 	// ------------------------------
@@ -100,7 +121,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	// Two below arise during combinations handling, not due to an assignment
 	
 	// These cells are the only ones possible for the symbol, rule any other cells out
-	int ruleOutAllOtherCellsForSymbol(List<Cell> lCellsToKeep, Symbol symbol) {
+	int ruleOutAllOtherCellsForSymbol(List<Cell> lCellsToKeep, Symbol symbol, int stepNumber) {
 		int changed = 0;
 		
 		List<Cell> lUnwantedCells = getCouldBeCellsForSymbol(symbol).stream()
@@ -108,18 +129,18 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 				.collect(Collectors.toList());
 				
 		for(Cell unwantedCell : lUnwantedCells) {
-			changed += ruleOutCellForSymbol(unwantedCell, symbol);
+			changed += ruleOutCellForSymbol(unwantedCell, symbol, stepNumber);
 		}
 		
 		return changed;
 	}
 
 	// These symbols are the only ones possible for this cell, rule this cell out for use in other symbols
-	int ruleOutCellFromOtherSymbols(Cell cell, List<Symbol> lSymbols) {
+	int ruleOutCellFromOtherSymbols(Cell cell, List<Symbol> lSymbols, int stepNumber) {
 		int changed = 0;
 		for(Symbol symbol : getSymbols()) {
 			if(!lSymbols.contains(symbol)) {
-				changed += ruleOutCellForSymbol(cell, symbol);
+				changed += ruleOutCellForSymbol(cell, symbol, stepNumber);
 			}
 		}
 		return changed;
@@ -136,11 +157,15 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
-	void assignmentMade(Symbol symbol, Cell cell) {
+	void assignmentMade(Symbol symbol, Cell cell, int stepNumber) {
 		// Add to the list of symbols in this set which are now assigned.
-		m_assignedSymbols.add(symbol);
-		ruleOutOtherCellsForSymbol(cell, symbol);
-		ruleOutCellForOtherSymbols(cell, symbol);
+		if(!symbolAlreadyAssigned(symbol))
+		{
+			m_assignedSymbols.add(symbol);
+			setStepNumber(stepNumber);
+		}
+		ruleOutOtherCellsForSymbol(cell, symbol, stepNumber);
+		ruleOutCellForOtherSymbols(cell, symbol, stepNumber);
 	}
 
 	boolean isComplete() {
@@ -243,8 +268,17 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 			}
 		}
 		
+		String returnString = "";
+		if(sbMultiCell.toString().trim().length() > 0)
+		{
+			returnString += "Unresolved: " + sbMultiCell.toString().trim() + "   ";
+		}
 		
-		return "Unresolved: " + sbMultiCell.toString().trim() + "   Resolved: " + sbSingleCell.toString().trim();
+		if(sbSingleCell.toString().trim().length() > 0) {
+			returnString += "Resolved: " + sbSingleCell.toString().trim() + "   ";			
+		}
+		
+		return returnString.trim();
 	}
 }
 		
@@ -268,5 +302,9 @@ class SymbolSetRestriction {
 			set.add(cell.column());
 		}
 		return new ArrayList<CellSet>(set);		
+	}
+	
+	String getRepresentation() {
+		return "SymbolSetRestriction for " + m_cellSet.getOneBasedRepresentation() + " Symbols: " + Symbol.symbolListToString(m_lSymbols) + ", Cells : " + Cell.cellListToString(m_lCells); 
 	}
 }

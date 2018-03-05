@@ -14,6 +14,10 @@ public class Column extends LinearCellSet implements Comparable<CellSet> {
 		return "Column " + getColumnNumber(); 
 	}	
 	
+	public String getOneBasedRepresentation() {
+		return "Column " + (getColumnNumber()+1); 
+	}	
+	
 //	@Override
 //	public int compareTo(Column column) {
 //		return super.compareTo(column);
