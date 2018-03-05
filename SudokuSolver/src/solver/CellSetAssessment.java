@@ -1,17 +1,16 @@
 package solver;
 
 import java.util.ArrayList;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import grid.Cell;
 import grid.CellSet;
-import puzzle.Assignment;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -19,12 +18,12 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	
 	private CellSet m_cellSet;
 	
-	private HashMap<Symbol, Assignment> m_assignedSymbols;
+	private Set<Symbol> m_assignedSymbols;
 	private HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
 
 	public CellSetAssessment(CellSet cellSet, SymbolsToUse symbols) {
 		m_cellSet = cellSet;
-		m_assignedSymbols = new HashMap<>();
+		m_assignedSymbols = new LinkedHashSet<>();
 		
 		m_couldBeCellsForSymbol = new HashMap<>();		
 		for(Symbol symbol : symbols.getSymbolSet()) {
@@ -32,9 +31,9 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		}
 	}
 	
-	void addCellAssessment(CellAssessment ca)	{
+	void addCell(Cell cell)	{
 		for(List<Cell> lCells : m_couldBeCellsForSymbol.values()) {
-			lCells.add(ca.m_cell);
+			lCells.add(cell);
 		}
 	}
 
@@ -133,15 +132,15 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 
 	boolean symbolAlreadyAssigned(Symbol symbol) {
-		return m_assignedSymbols.containsKey(symbol);
+		return m_assignedSymbols.contains(symbol);
 	}
 	
 	// A particular symbol has been assigned to a cell, so mark it as ruled-out for other cells in this set.
-	void assignmentMade(Assignment assignment, Cell cell) {
+	void assignmentMade(Symbol symbol, Cell cell) {
 		// Add to the list of symbols in this set which are now assigned.
-		m_assignedSymbols.put(assignment.getSymbol(), assignment);
-		ruleOutOtherCellsForSymbol(cell, assignment.getSymbol());
-		ruleOutCellForOtherSymbols(cell, assignment.getSymbol());
+		m_assignedSymbols.add(symbol);
+		ruleOutOtherCellsForSymbol(cell, symbol);
+		ruleOutCellForOtherSymbols(cell, symbol);
 	}
 
 	boolean isComplete() {
@@ -234,7 +233,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 			
 			if(lCells.size() == 1) {
 				String markAsUnassigned = "";
-				if(!m_assignedSymbols.containsKey(symbol)) {
+				if(!m_assignedSymbols.contains(symbol)) {
 					markAsUnassigned = "*";
 				}
 				sbSingleCell.append(symbol.getRepresentation() + ":" + cellListString + markAsUnassigned + " ");
@@ -262,11 +261,11 @@ class SymbolSetRestriction {
 	}
 	
 	List<CellSet> getAffectedCellSets() {
-		Set<CellSet> set = new TreeSet<>();	
+		Set<CellSet> set = new TreeSet<>();		// Tree set maintains sorting order, LinkedHashSet maintains insertion order ????	
 		for(Cell cell : m_lCells) {
-			set.add(cell.getBox());
-			set.add(cell.getRow());
-			set.add(cell.getColumn());
+			set.add(cell.box());
+			set.add(cell.row());
+			set.add(cell.column());
 		}
 		return new ArrayList<CellSet>(set);		
 	}

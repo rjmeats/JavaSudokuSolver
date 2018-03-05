@@ -1,6 +1,7 @@
 package solver;
 
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -15,6 +16,8 @@ import puzzle.Assignment;
 import puzzle.AssignmentMethod;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
+import diagnostics.FormatUtils;
+import diagnostics.GridFormatter;
 
 public class Solver {
 
@@ -24,7 +27,7 @@ public class Solver {
 	List<RowAssessment> m_lRows;
 	List<ColumnAssessment> m_lColumns;
 	List<BoxAssessment> m_lBoxes;	
-	List<CellAssessment> m_lCells;
+	List<CellAssessment> m_lCellAssessments;
 	List<CellSetAssessment> m_lCellSets;
 	
 	HashMap<Cell, CellAssessment> m_cellAssessmentsMap;
@@ -40,25 +43,25 @@ public class Solver {
 		m_lRows = new ArrayList<>();
 		m_lColumns = new ArrayList<>();
 		m_lBoxes = new ArrayList<>();
-		m_lCells = new ArrayList<>();
+		m_lCellAssessments = new ArrayList<>();
 		m_cellAssessmentsMap = new HashMap<>();
 		m_rowAssessmentsMap = new HashMap<>();
 		m_columnAssessmentsMap = new HashMap<>();
 		m_boxAssessmentsMap = new HashMap<>();
 		
-		for(Row row : m_grid.getRows()) {
+		for(Row row : m_grid.rows()) {
 			RowAssessment assessment = new RowAssessment(row, symbols);
 			m_lRows.add(assessment);
 			m_rowAssessmentsMap.put(row, assessment);
 		}
 		
-		for(Column column : m_grid.getColumns()) {
+		for(Column column : m_grid.columns()) {
 			ColumnAssessment assessment = new ColumnAssessment(column, symbols);
 			m_lColumns.add(assessment);
 			m_columnAssessmentsMap.put(column, assessment);
 		}
 
-		for(Box box: m_grid.getBoxes()) {
+		for(Box box: m_grid.boxes()) {
 			BoxAssessment assessment = new BoxAssessment(box, symbols);
 			m_lBoxes.add(assessment);
 			m_boxAssessmentsMap.put(box, assessment);
@@ -72,13 +75,13 @@ public class Solver {
 		m_cellSetAssessmentsMap.putAll(m_columnAssessmentsMap);
 		m_cellSetAssessmentsMap.putAll(m_boxAssessmentsMap);
 			
-		for(Cell cell : m_grid.getCells()) {
+		for(Cell cell : m_grid.cells()) {
 			setUpCellAssessment(cell);
 		}		
 
 		// Need to go through already-assigned given cells and do equivalent of Solver.applyGivenValueToCell processing to these cells to track initial state.
-		for(CellAssessment ca : m_lCells) {
-			Cell cell = ca.m_cell;
+		for(CellAssessment ca : m_lCellAssessments) {
+			Cell cell = ca.cell();
 			if(cell.isAssigned()) {
 				Assignment assignment = cell.getAssignment();
 				spreadAssignmentImpact(ca, assignment);
@@ -91,11 +94,11 @@ public class Solver {
 		ColumnAssessment column = getColumnAssessmentForCell(cell);
 		BoxAssessment box = getBoxAssessmentForCell(cell);
 		CellAssessment cellAssessment = new CellAssessment(cell, row, column, box, m_symbols);				
-		m_lCells.add(cellAssessment);
+		m_lCellAssessments.add(cellAssessment);
 		m_cellAssessmentsMap.put(cell, cellAssessment);
-		row.addCellAssessment(cellAssessment);
-		column.addCellAssessment(cellAssessment);
-		box.addCellAssessment(cellAssessment);		
+		row.addCell(cell);
+		column.addCell(cell);
+		box.addCell(cell);		
 	}
 	
 	
@@ -112,15 +115,15 @@ public class Solver {
 	}
 	
 	RowAssessment getRowAssessmentForCell(Cell cell) {
-		return m_rowAssessmentsMap.get(cell.getRow());
+		return m_rowAssessmentsMap.get(cell.row());
 	}
 
 	ColumnAssessment getColumnAssessmentForCell(Cell cell) {
-		return m_columnAssessmentsMap.get(cell.getColumn());
+		return m_columnAssessmentsMap.get(cell.column());
 	}
 
 	BoxAssessment getBoxAssessmentForCell(Cell cell) {
-		return m_boxAssessmentsMap.get(cell.getBox());
+		return m_boxAssessmentsMap.get(cell.box());
 	}
 	
 	public boolean nextStep(int stepNumber) {
@@ -128,11 +131,11 @@ public class Solver {
 		
 		if(!changedState) {
 			// Look through unassigned cell for cases where only one symbol is a possible assignment.
-			for(CellAssessment ca : m_lCells) {
+			for(CellAssessment ca : m_lCellAssessments) {
 				if(!ca.isAssigned()) {
 					Assignment a = hasAssignmentAvailable(ca, stepNumber);
 					if(a != null) {
-						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + ca.m_cell.getOneBasedGridLocationString();
+						String s = "Assigned symbol " + a.getSymbol().toString() + " to cell " + ca.cell().getOneBasedGridLocationString();
 						System.out.println(s);
 						System.out.println();
 						makeAssignment(ca, a);
@@ -269,7 +272,7 @@ public class Solver {
 		Assignment a = null;
 		if(!ca.isAssigned() && ca.couldBeCount() == 1) {
 			Symbol symbol = ca.getCouldBeSymbols().stream().findFirst().get();
-			a = new Assignment(ca.m_cell, symbol, AssignmentMethod.AutomatedDeduction, "Only symbol still possible for cell", stepNumber);
+			a = new Assignment(ca.cell(), symbol, AssignmentMethod.AutomatedDeduction, "Only symbol still possible for cell", stepNumber);
 		}		
 		return a;
 	}
@@ -292,7 +295,7 @@ public class Solver {
 	void makeAssignment(CellAssessment ca, Assignment assignment) {
 		CellAssignmentStatus status = CellAssignmentStatus.checkCellCanBeAssigned(ca, assignment);
 		if(status == CellAssignmentStatus.CanBeAssigned) {
-			ca.m_cell.assign(assignment);
+			ca.cell().assign(assignment);
 			spreadAssignmentImpact(ca, assignment);
 		}
 		else {
@@ -303,7 +306,7 @@ public class Solver {
 	// Can be called for an initial 'given' assignment, or for one deduced
 	void spreadAssignmentImpact(CellAssessment ca, Assignment assignment) {
 		ca.assignmentMade(assignment.getSymbol());		
-		for(CellSetAssessment csa : ca.m_cellSetAssessments) {
+		for(CellSetAssessment csa : ca.getCellSetAssessments()) {
 			spreadAssignmentImpact(csa, ca, assignment);			
 		}
 	}
@@ -313,19 +316,17 @@ public class Solver {
 		Cell assignmentCell = assignment.getCell();
 
 		// A cell in this cell-set has had an assignment made. Update the cell-set record to reflect this 
-		csa.assignmentMade(assignment, assignmentCell);
+		csa.assignmentMade(assignment.getSymbol(), assignmentCell);
 	
 		// Go through the other cells in this cell-set, and rule out this symbol from being assigned to those cells 
-//		for(CellAssessment otherCellInCellSet : csa.m_lCellAssessments) {
 		for(Cell otherCell : csa.getCellSet().getCells()) {
-//			Cell otherCell = otherCellInCellSet.getCell();
 			if(otherCell != assignmentCell) {
 				// This cell isn't assigned to the symbol
 				CellAssessment otherCellInCellSet = getCellAssessmentForCell(otherCell);
 				otherCellInCellSet.ruleOutSymbol(symbol);
 				// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
 				// NB One of these == csa, but it should be harmless to repeat the ruling out
-				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.m_cellSetAssessments) {
+				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.getCellSetAssessments()) {
 					csaOfOtherCell.ruleOutCellForSymbol(otherCell, symbol);
 				}				
 			}
@@ -393,9 +394,9 @@ public class Solver {
 		System.out.println(sb1.toString());
 	}
 
-	public void printGrid(CellContentDisplayer ccd) { printGrid(ccd, -1); }
+	public void printGrid(CellContentProvider ccd) { printGrid(ccd, -1); }
 	
-	public void printGrid(CellContentDisplayer ccd, int stepNumber) {
+	public void printGrid(CellContentProvider ccd, int stepNumber) {
 		StringBuilder sb1 = new StringBuilder();
 		
 		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
@@ -404,69 +405,51 @@ public class Solver {
 		sb1.append(ccd.getHeading() + stepInfo);
 		sb1.append("\r\n");
 
-		sb1.append(formatGrid(ccd, stepNumber));
+		GridFormatter gf = new GridFormatter(m_grid);
+		sb1.append(gf.formatGrid(ccd, stepNumber));
 		System.out.println(sb1.toString());
 	}
 
-	public String formatGrid(CellContentDisplayer ccd) {
-		return formatGrid(ccd, -1);
-	}
+	// ==============================================================
 	
-	public String formatCompactGrid(CellContentDisplayer ccd) {
-		boolean compact = true;
-		return formatGrid(ccd, -1, compact);
-	}
-	
-	public String formatGrid(CellContentDisplayer ccd, int stepNumberToHighlight) {
-		boolean compact = false;
-		return formatGrid(ccd, -1, compact);		
-	}
-	
-	public String formatGrid(CellContentDisplayer ccd, int stepNumberToHighlight, boolean compact) {
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
+	public class CouldBeValueCountDisplay implements CellContentProvider {
 		
-		StringBuilder sb1 = new StringBuilder();
-		for(int rowNumber = 0; rowNumber < m_lRows.size(); rowNumber++) {
-			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
-			if(boxNumber != currentVerticalBoxNumber) {
-				if(currentVerticalBoxNumber != -1) {
-					if(compact) {
-						sb1.append("\r\n");
-					}
-					else {
-						sb1.append("\r\n\r\n");						
-					}
-				}
-				currentVerticalBoxNumber = boxNumber; 
+		public String getHeading() { return "Cell 'Could-be-value' count: ~ => Given  = => Assigned  * => Could be assigned"; }
+		
+		public String getContent(Cell cell) {
+			CellAssessment ca = getCellAssessmentForCell(cell);
+			String representation = "" + ca.couldBeCount();
+			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
+				representation = "*"+ representation;
 			}
-
-			for(int columnNumber = 0; columnNumber < m_lColumns.size(); columnNumber++) {
-				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
-				if(boxNumber != currentHorizontalBoxNumber) {
-					if(compact) {
-						sb1.append(" ");					}
-					else {						
-						sb1.append("    ");
-					}
-					currentHorizontalBoxNumber = boxNumber;
-				}
-
-				Cell c = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
-				CellAssessment cell = this.getCellAssessmentForCell(c);
-				boolean highlight = (cell.m_cell.isAssigned() && (cell.m_cell.getAssignment().getStepNumber() == stepNumberToHighlight));
-				String contents = ccd.getContent(cell, highlight);
-				if(compact) {
-					sb1.append(contents.replaceAll("\\s+", " "));					
-				}
-				else {
-					sb1.append(" " + contents + " ");
-				}
+			else if (cell.isAssigned() && cell.getAssignment().getMethod() == AssignmentMethod.Given) {
+				representation = "~" + representation;				
 			}
-			
-			sb1.append("\r\n");
+			else if(cell.isAssigned()) {
+				representation = "=" + representation;								
+			}
+			return(FormatUtils.padRight(representation, 5));
 		}
-		
-		return sb1.toString();
 	}
+	
+	public class CouldBeValueDisplay implements CellContentProvider {
+		
+		public String getHeading() { return "Cell 'Could-be' values"; }
+		
+		public String getContent(Cell cell) {
+			CellAssessment ca = getCellAssessmentForCell(cell);
+			String representation = "" + ca.toCouldBeSymbolsString();
+			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
+				representation = "*"+ representation;
+			}
+			else if (cell.isAssigned() && cell.getAssignment().getMethod() == AssignmentMethod.Given) {
+				representation = "~" + representation;				
+			}
+			else if(cell.isAssigned()) {
+				representation = "=" + representation;								
+			}
+			return(FormatUtils.padRight(representation, 17));
+		}
+	}
+
 }

@@ -9,7 +9,6 @@ import java.util.List;
 
 import grid.Cell;
 
-import puzzle.AssignmentMethod;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -17,12 +16,12 @@ import diagnostics.FormatUtils;
 
 public class CellAssessment implements Comparable<CellAssessment> {
 
-	Cell m_cell;
+	private Cell m_cell;
 	
 	private RowAssessment m_rowAssessment;
 	private ColumnAssessment m_columnAssessment;
 	private BoxAssessment m_boxAssessment;
-	public Set<CellSetAssessment> m_cellSetAssessments;
+	private Set<CellSetAssessment> m_cellSetAssessments;
 	
 	private Set<Symbol> m_couldBeSymbolsSet;
 	private Set<Symbol> m_ruledOutSymbolsSet;
@@ -41,10 +40,10 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		m_ruledOutSymbolsSet = new LinkedHashSet<>();
 	}
 
-	Cell getCell() 					{ return m_cell; }
-	RowAssessment getRow() 			{ return m_rowAssessment; }
-	ColumnAssessment getColumn() 	{ return m_columnAssessment; }
-	BoxAssessment getBox() 			{ return m_boxAssessment; }	
+	Cell cell() 							{ return m_cell; }
+	RowAssessment rowAssessment() 			{ return m_rowAssessment; }
+	ColumnAssessment columnAssessment() 	{ return m_columnAssessment; }
+	BoxAssessment boxAssessment() 			{ return m_boxAssessment; }
 	
 	boolean couldBe(Symbol symbol) {
 		return m_couldBeSymbolsSet.contains(symbol);
@@ -58,6 +57,10 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		return new LinkedHashSet<>(m_couldBeSymbolsSet);
 	}
 
+	Set<CellSetAssessment> getCellSetAssessments() {
+		return new LinkedHashSet<>(m_cellSetAssessments);
+	}
+	
 	boolean isRuledOut(Symbol symbol) {
 		return m_ruledOutSymbolsSet.contains(symbol);
 	}
@@ -106,8 +109,8 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	}	
 	
 	// ==============================================================
-	
-	public static class CouldBeValueCountDisplay implements CellContentDisplayer {
+/*	
+	public static class CouldBeValueCountDisplay implements CellContentProvider {
 		
 		public String getHeading() { return "Cell 'Could-be-value' count: ~ => Given  = => Assigned  * => Could be assigned"; }
 		
@@ -127,7 +130,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		}
 	}
 	
-	public static class CouldBeValueDisplay implements CellContentDisplayer {
+	public static class CouldBeValueDisplay implements CellContentProvider {
 		
 		public String getHeading() { return "Cell 'Could-be' values"; }
 		
@@ -146,41 +149,36 @@ public class CellAssessment implements Comparable<CellAssessment> {
 			return(FormatUtils.padRight(representation, 17));
 		}
 	}
+*/
 	
-	public static class CellNumberDisplayer implements CellContentDisplayer {
+	public static class CellNumberDisplayer implements CellContentProvider {
 		
 		public String getHeading() { return "Cell numbering"; }
 		
-		public String getContent(CellAssessment ca, boolean highlight) {
-			Cell c = ca.m_cell;
-			return(FormatUtils.padRight(c.getCellNumber(), 5));
+		public String getContent(Cell cell) {
+			return(FormatUtils.padRight(cell.getCellNumber(), 5));
 		}
 	}
 
-	public static class BoxNumberDisplayer implements CellContentDisplayer {
+	public static class BoxNumberDisplayer implements CellContentProvider {
 		
 		public String getHeading() { return "Box numbering"; }
 		
-		public String getContent(CellAssessment ca, boolean highlight) {
-			Cell c = ca.m_cell;
-			return(FormatUtils.padRight(c.getBox().getBoxNumber(), 5));
+		public String getContent(Cell cell) {
+			return(FormatUtils.padRight(cell.box().getBoxNumber(), 5));
 		}
 	}
 	
-	public static class AssignedValueDisplay implements CellContentDisplayer {
+	public static class AssignedValueDisplay implements CellContentProvider {
 		
 		public String getHeading() { return "Assigned-value"; }
 		
-		public String getContent(CellAssessment ca, boolean highlight) {
-			Cell c = ca.m_cell;
+		public String getContent(Cell cell) {
 			String representation = ".";
-			if(c.isAssigned())
+			if(cell.isAssigned())
 			{
-				Symbol symbol = c.getAssignment().getSymbol();
+				Symbol symbol = cell.getAssignment().getSymbol();
 				representation = symbol.getRepresentation();
-				if(highlight) {
-					representation += "*";
-				}
 			}
 			return(FormatUtils.padRight(representation, 5));
 		}

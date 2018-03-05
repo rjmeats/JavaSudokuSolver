@@ -23,9 +23,9 @@ public class Cell implements Comparable<Cell> {
 		m_assignment = null;		
 	}
 	
-	public Row getRow() 				{ return m_row; }
-	public Column getColumn() 			{ return m_column; }
-	public Box getBox() 				{ return m_box; }
+	public Row row() 					{ return m_row; }
+	public Column column() 				{ return m_column; }
+	public Box box() 					{ return m_box; }
 	public Assignment getAssignment() 	{ return m_assignment; }
 	public int getCellNumber() 			{ return m_cellNumber; }
 	

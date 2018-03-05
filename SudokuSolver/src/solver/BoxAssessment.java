@@ -35,20 +35,20 @@ public class BoxAssessment extends CellSetAssessment {
 				Set<Column> columnSet = new HashSet<>();
 				for(Cell cell : lCells)
 				{
-					rowSet.add(cell.getRow());
-					columnSet.add(cell.getColumn());
+					rowSet.add(cell.row());
+					columnSet.add(cell.column());
 				}
 				
 				if(rowSet.size() == 1)
 				{
 //					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getRow().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getRow());
+					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).row());
 					lRestrictions.add(restriction);
 				}
 				else if(columnSet.size() == 1)
 				{
 //					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getColumn().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).getColumn()); 
+					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).column()); 
 					lRestrictions.add(restriction);
 				}
 			}			

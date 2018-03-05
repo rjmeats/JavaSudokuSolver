@@ -60,19 +60,19 @@ public class Grid9x9 {
 		box.addCell(cell);		
 	}
 	
-	public List<Row> getRows() {
+	public List<Row> rows() {
 		return Collections.unmodifiableList(m_lRows);
 	}
 	
-	public List<Column> getColumns() {
+	public List<Column> columns() {
 		return Collections.unmodifiableList(m_lColumns);
 	}
 	
-	public List<Box> getBoxes() {
+	public List<Box> boxes() {
 		return Collections.unmodifiableList(m_lBoxes);
 	}
 	
-	public List<Cell> getCells() {
+	public List<Cell> cells() {
 		return Collections.unmodifiableList(m_lCells);
 	}
 	

@@ -1,8 +1,8 @@
 package grid;
 
-import java.util.TreeSet;
 import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.TreeSet;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -48,8 +48,8 @@ public abstract class CellSet {
 			if(symbol != null) {
 				if(symbols.containsKey(symbol)) {
 					Cell sameSymbolCell = symbols.get(symbol);
-					sameSymbolCells.add(cell);
 					sameSymbolCells.add(sameSymbolCell);
+					sameSymbolCells.add(cell);
 				}
 				else {
 					symbols.put(symbol, cell);

@@ -32,13 +32,13 @@ abstract class LinearCellSetAssessment extends CellSetAssessment {
 				Set<Box> boxSet = new HashSet<>();
 				for(Cell cell : lCells)
 				{
-					boxSet.add(cell.getBox());
+					boxSet.add(cell.box());
 				}
 				
 				if(boxSet.size() == 1)
 				{
 //					System.err.println("Found restricted symbol " + symbol.toString() + " in " + getRepresentation() + " and box " + lCells.get(0).getBox().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(symbol, lCells.get(0).getBox(), m_linearCellSet);
+					SymbolRestriction restriction = new SymbolRestriction(symbol, lCells.get(0).box(), m_linearCellSet);
 					lRestrictions.add(restriction);
 				}
 			}			

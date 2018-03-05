@@ -10,7 +10,7 @@ public enum CellAssignmentStatus {
 		Symbol symbol = assignment.getSymbol();
 		CellAssignmentStatus status = CellAssignmentStatus.CanBeAssigned;
 		
-		if(cell.m_cell.isAssigned()) {
+		if(cell.isAssigned()) {
 			status = CellAssignmentStatus.CellAlreadyAssigned;
 		}
 		else if(!cell.couldBe(symbol)) {
@@ -19,13 +19,13 @@ public enum CellAssignmentStatus {
 		else if(cell.isRuledOut(symbol)) {
 			status = CellAssignmentStatus.SymbolAlreadyRuledOutForCell;			
 		}
-		else if(cell.getRow().symbolAlreadyAssigned(symbol)) {
+		else if(cell.rowAssessment().symbolAlreadyAssigned(symbol)) {
 			status = CellAssignmentStatus.SymbolAlreadyAssignedInRow;
 		}
-		else if(cell.getColumn().symbolAlreadyAssigned(symbol)) {
+		else if(cell.columnAssessment().symbolAlreadyAssigned(symbol)) {
 			status = CellAssignmentStatus.SymbolAlreadyAssignedInColumn;			
 		}
-		else if(cell.getBox().symbolAlreadyAssigned(symbol)) {
+		else if(cell.boxAssessment().symbolAlreadyAssigned(symbol)) {
 			status = CellAssignmentStatus.SymbolAlreadyAssignedInBox;			
 		}
 

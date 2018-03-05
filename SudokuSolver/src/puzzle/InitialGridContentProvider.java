@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class InitialGridContentProvider {
 
-	static InitialGridContentProvider fromFile(String fileName) {		
+	public static InitialGridContentProvider fromFile(String fileName) {		
 		InitialGridContentProvider igcp = null;
 		File f = new File(fileName);
 		
@@ -37,8 +37,27 @@ public class InitialGridContentProvider {
 		return igcp;
 	}
 	
-	static InitialGridContentProvider fromArray(String[] a) {
+	public static InitialGridContentProvider fromArray(String[] a) {
 		return new InitialGridContentProvider(Arrays.asList(a));
+	}
+	
+	public static InitialGridContentProvider from9x9String(String s) {
+		InitialGridContentProvider igcp = null;
+		String noWhiteSpace = s.replaceAll("\\s+",  "");
+		if(noWhiteSpace.length() == 9*9)
+		{
+			List<String> lines = new ArrayList<>();			
+			for(int lineNo = 0; lineNo < 9; lineNo++) {
+				String line = "";
+				for(int columnNo = 0; columnNo < 9; columnNo++) {
+					int index = 9*lineNo+columnNo;
+					line += noWhiteSpace.charAt(index);
+				}
+				lines.add(line);
+			}
+			igcp = new InitialGridContentProvider(lines);
+		}
+		return igcp;
 	}
 	
 	// ----------------------------------------------------------------------------
@@ -46,7 +65,7 @@ public class InitialGridContentProvider {
 	List<String> m_rawLines;
 	List<String> m_dataLines;
 	
-	InitialGridContentProvider(List<String> rawLines) {
+	private InitialGridContentProvider(List<String> rawLines) {
 		m_rawLines = new ArrayList<>(rawLines);
 		m_dataLines = 
 				rawLines.stream()

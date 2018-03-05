@@ -4,6 +4,7 @@ import java.util.Set;
 
 import grid.*;
 import solver.*;
+import diagnostics.*;
 
 // http://www.sudokuwiki.org
 
@@ -52,7 +53,7 @@ public class Puzzle {
 		else {
 			puzzle.solve();
 			
-			Puzzle.FinalStatus finalStatus = puzzle.getFinalStatus();
+			Puzzle.Status finalStatus = puzzle.getStatus();
 			
 			System.out.println();
 			System.out.println("*******************************************************************");
@@ -62,6 +63,8 @@ public class Puzzle {
 			System.out.println(finalStatus.m_initialGrid);
 			System.out.println();
 			System.out.println(finalStatus.m_finalGrid);
+			System.out.println();
+			System.out.println("Final grid is " + (finalStatus.m_valid ? "valid" : "not valid : " + finalStatus.m_invalidDetails));
 		}
 	}	
 	
@@ -72,15 +75,15 @@ public class Puzzle {
 	SymbolsToUse m_symbolsToUse;
 	Grid9x9 m_grid;		// The Grid we want to solve
 	Solver m_solver;
-	FinalStatus m_finalStatus;
+	Status m_status;
 	
-	Puzzle(SymbolsToUse symbols) {
+	public Puzzle(SymbolsToUse symbols) {
 		m_symbolsToUse = symbols;
 		m_grid = new Grid9x9();
 		m_solver = null;
 	}
 	
-	InitialGridStatus loadGivenCells(InitialGridContentProvider contentProvider) {
+	public InitialGridStatus loadGivenCells(InitialGridContentProvider contentProvider) {
 		InitialGridStatus status = new InitialGridStatus();
 		
 		if(m_symbolsToUse.size() != s_expectedSymbolCount) {
@@ -108,7 +111,7 @@ public class Puzzle {
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getGridLocationString() + " ");
+				badCellString += (cell.getOneBasedGridLocationString() + " ");
 			}
 			status.setError("Invalid initial grid : see cells " + badCellString);			
 		}
@@ -116,7 +119,7 @@ public class Puzzle {
 		return status;
 	}
 	
-	void processInitialGridRow(int rowNumber, String rowString, InitialGridStatus status) {
+	private void processInitialGridRow(int rowNumber, String rowString, InitialGridStatus status) {
 		for(int columnNumber = 0; columnNumber < rowString.length(); columnNumber ++) {
 			char c = rowString.charAt(columnNumber);
 			if(c == '.') {
@@ -134,7 +137,7 @@ public class Puzzle {
 		}		
 	}
 
-	public void applyGivenValueToCell(Grid9x9 grid, int rowNumber, int columnNumber, Symbol symbol)
+	private void applyGivenValueToCell(Grid9x9 grid, int rowNumber, int columnNumber, Symbol symbol)
 	{
 		Cell cell = grid.getCellFromGridPosition(rowNumber, columnNumber);
 		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
@@ -143,16 +146,15 @@ public class Puzzle {
 
 	// --------------------------------------------------------------------------------------
 	
-	void solve() {
+	public void solve() {
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 				
 		m_solver.printGrid(new CellAssessment.CellNumberDisplayer());
 		m_solver.printGrid(new CellAssessment.BoxNumberDisplayer());
 		m_solver.printGrid(new CellAssessment.AssignedValueDisplay());
 		
-
-		m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay(), 0);
-		m_solver.printGrid(new CellAssessment.CouldBeValueDisplay(), 0);
+		m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), 0);
+		m_solver.printGrid(m_solver.new CouldBeValueDisplay(), 0);
 		m_solver.printCellSets();
 		m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), 0);
 		
@@ -160,7 +162,8 @@ public class Puzzle {
 		boolean changed = true;
 		int stepNumber = 0;
 		
-		String initialGrid = m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+		GridFormatter gf = new GridFormatter(m_grid);
+		String initialGrid = gf.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
 		
 		while(changed && !complete && stepNumber <= 1000)
 		{
@@ -175,8 +178,8 @@ public class Puzzle {
 			Grid9x9.Stats stats = m_grid.getStats();
 			complete = (stats.m_unassignedCells == 0);
 			
-			m_solver.printGrid(new CellAssessment.CouldBeValueCountDisplay(), stepNumber);
-			m_solver.printGrid(new CellAssessment.CouldBeValueDisplay(), stepNumber);
+			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);
+			m_solver.printGrid(m_solver.new CouldBeValueDisplay(), stepNumber);
 			m_solver.printCellSets(stepNumber);
 			m_solver.printGrid(new CellAssessment.AssignedValueDisplay(), stepNumber);
 
@@ -205,38 +208,81 @@ public class Puzzle {
 			System.out.println();
 		}
 
-		m_finalStatus = new FinalStatus();
-		m_finalStatus.m_solved = complete;
-		m_finalStatus.m_initialGrid = initialGrid;
-		m_finalStatus.m_finalGrid = m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
-	}
-
-	FinalStatus getFinalStatus() {
-		return m_finalStatus;		
-	}
-
-	static class FinalStatus {
-		boolean m_solved;
-		String m_initialGrid;
-		String m_finalGrid;
+		// Check we've not made any invalid assignments
 		
-		FinalStatus() {
+
+		m_status = new Status();
+		m_status.m_initialGridStatus = new InitialGridStatus(); 
+		m_status.m_solved = complete;
+		
+		m_status.m_initialGrid = initialGrid;
+		GridFormatter gf2 = new GridFormatter(m_grid);
+		m_status.m_finalGrid = gf2.formatCompactGrid(new CellAssessment.AssignedValueDisplay());
+		
+		Set<Cell> badCells = m_grid.getIncompatibleCells();
+		if(badCells.size() > 0) {
+			String badCellString = "";
+			for(Cell cell : badCells) {
+				badCellString += (cell.getGridLocationString() + " ");
+			}
+			m_status.m_valid = false;
+			m_status.m_invalidDetails = "Invalid final grid : see cells " + badCellString;			
+		}
+		else {
+			m_status.m_valid = true;
+		}					
+	}
+
+	public Status getStatus() {
+		return m_status;		
+	}
+
+	public static class Status {
+		public InitialGridStatus m_initialGridStatus;
+		public boolean m_solved;
+		public String m_initialGrid;
+		public String m_finalGrid;
+		public boolean m_valid;
+		public String m_invalidDetails;
+		
+		Status() {
 			
 		}
 	}
+
+	public class InitialGridStatus {
+		public boolean m_isOK;
+		public String m_errorMessage;
+		
+		InitialGridStatus() {
+			m_isOK = true;
+			m_errorMessage = "";
+		}
+		
+		void setError(String message) {
+			m_isOK = false;
+			m_errorMessage = message;
+		}
+	}
+	
+	public static Puzzle.Status solve9x9Puzzle(String content) {
+		InitialGridContentProvider contentProvider = InitialGridContentProvider.from9x9String(content);
+		Puzzle puzzle = new Puzzle(SymbolsToUse.SET_1_TO_9);
+		InitialGridStatus initialStatus = puzzle.loadGivenCells(contentProvider);
+		if(initialStatus.m_isOK) {
+			puzzle.solve();
+			return puzzle.getStatus();
+		}
+		else {
+			Status status = new Status();
+			status.m_initialGridStatus = initialStatus;
+			status.m_solved = false;
+			status.m_valid = false;
+			status.m_invalidDetails = initialStatus.m_errorMessage;
+//			status.m_initialGrid = puzzle.m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());	// null pointer error
+			status.m_finalGrid = null;
+			return status;
+		}		
+	}	
 }
 
-class InitialGridStatus {
-	boolean m_isOK;
-	String m_errorMessage;
-	
-	InitialGridStatus() {
-		m_isOK = true;
-		m_errorMessage = "";
-	}
-	
-	void setError(String message) {
-		m_isOK = false;
-		m_errorMessage = message;
-	}
-}
