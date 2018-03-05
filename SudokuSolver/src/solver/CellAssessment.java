@@ -183,5 +183,4 @@ public class CellAssessment implements Comparable<CellAssessment> {
 			return(FormatUtils.padRight(representation, 5));
 		}
 	}
-
 }
