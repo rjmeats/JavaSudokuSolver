@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.LinkedHashSet;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import grid.Cell;
@@ -180,80 +179,6 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	boolean isComplete() {
 		return m_assignedSymbols.size() == m_cellSet.size();
 	}
-	
-	// Goes up to combinations of 4 - how to generalise to n ?
-	List<SymbolSetRestriction> findRestrictedSymbolSets() {
-		List<SymbolSetRestriction> l = new ArrayList<>();
-		// Generate combinations of 2, 3 and 4 unassigned symbols. If the combination has n symbols and between them these can only
-		// be placed in n cells, then we have a restricted symbol set.
-		
-		List<List<Symbol>> lCombinations = new ArrayList<>();
-		
-		for(Symbol symbol1 : getSymbols()) {
-			List<Cell> lCells1 = getCouldBeCellsForSymbol(symbol1);
-			if(lCells1.size() > 1) {
-
-				for(Symbol symbol2 : getSymbols()) {
-					if(symbol2.ordinal() > symbol1.ordinal()) {
-						List<Cell> lCells2 = getCouldBeCellsForSymbol(symbol2);
-						if(lCells2.size() > 1) {
-							// We have a combination of two symbols to investigate ...
-							List<Symbol> l2 = new ArrayList<>();
-							l2.add(symbol1); l2.add(symbol2);
-							lCombinations.add(l2);
-							
-							for(Symbol symbol3 : getSymbols()) {
-								if(symbol3.ordinal() > symbol2.ordinal()) {
-									List<Cell> lCells3 = getCouldBeCellsForSymbol(symbol3);
-									if(lCells3.size() > 1) {
-										// We have a combination of three symbols to investigate ...
-										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
-										lCombinations.add(l3);
-
-										for(Symbol symbol4 : getSymbols()) {
-											if(symbol4.ordinal() > symbol3.ordinal()) {
-												List<Cell> lCells4 = getCouldBeCellsForSymbol(symbol4);
-												if(lCells4.size() > 1) {
-													// We have a combination of four symbols to investigate ...
-													List<Symbol> l4 = new ArrayList<>(l3); l4.add(symbol4); 
-													lCombinations.add(l4);													
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}			
-		}
-
-		System.err.println("Found " + lCombinations.size() + " symbol combinations for " + m_cellSet.getRepresentation());
-		for(List<Symbol> lCombination : lCombinations) {
-			List<Cell> lCellsForCombination = getSymbolCombinationCells(lCombination);
-			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
-			if(foundSet) {
-				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolCollectionToString(lCombination) + " covers cells " +  Cell.cellCollectionToString(lCellsForCombination));				
-				SymbolSetRestriction restriction = new SymbolSetRestriction(m_cellSet, lCombination, lCellsForCombination);
-				l.add(restriction);
-			}
-		}		
-		
-		return l;
-	}
-
-	private List<Cell> getSymbolCombinationCells(List<Symbol> lCombination) {
-		Set<Cell> cells = new TreeSet<>();
-		for(Symbol symbol : lCombination) {
-			List<Cell> l = getCouldBeCellsForSymbol(symbol);
-			for(Cell cell : l) {
-				cells.add(cell);
-			}
-		}
-				
-		return new ArrayList<Cell>(cells);
-	}
 
 	String getSymbolAssignmentSummary() {
 		StringBuilder sbSingleCell = new StringBuilder();
@@ -288,32 +213,5 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		}
 		
 		return returnString.trim();
-	}
-}
-		
-//Paired symbols in a cell set which can only exist in a subset of cells. The two lists will be the same length.  
-class SymbolSetRestriction {
-	CellSet m_cellSet;	
-	List<Symbol> m_lSymbols;
-	List<Cell> m_lCells;
-	
-	SymbolSetRestriction(CellSet cellSet, List<Symbol> lSymbols, List<Cell> lCells) {
-		m_cellSet = cellSet;	
-		m_lSymbols = lSymbols;
-		m_lCells = lCells;		
-	}
-	
-	List<CellSet> getAffectedCellSets() {
-		Set<CellSet> set = new TreeSet<>();		// Tree set maintains sorting order, LinkedHashSet maintains insertion order ????	
-		for(Cell cell : m_lCells) {
-			set.add(cell.box());
-			set.add(cell.row());
-			set.add(cell.column());
-		}
-		return new ArrayList<CellSet>(set);		
-	}
-	
-	String getRepresentation() {
-		return "SymbolSetRestriction for " + m_cellSet.getOneBasedRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionToString(m_lCells); 
 	}
 }
