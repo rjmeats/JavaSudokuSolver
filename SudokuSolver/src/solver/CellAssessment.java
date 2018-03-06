@@ -58,6 +58,14 @@ public class CellAssessment implements Comparable<CellAssessment> {
 		return new LinkedHashSet<>(m_couldBeSymbolsSet);
 	}
 
+	Symbol getOnlyCouldBeSymbolForCell() {
+		Symbol symbol = null;
+		if(couldBeCount() == 1) {
+			symbol = m_couldBeSymbolsSet.stream().findFirst().get();
+		}
+		return symbol;
+	}
+	
 	private void setStepNumber(int n) {
 		m_stepNumberOfLatestChange = n;
 System.err.println("Setting cell " + cell().getOneBasedCellNumber() + " for step " + m_stepNumberOfLatestChange);			
@@ -117,10 +125,10 @@ System.err.println("Setting cell " + cell().getOneBasedCellNumber() + " for step
 	
 	@Override
 	public int compareTo(CellAssessment c) {
-		return m_cell.getCellNumber() - c.m_cell.getCellNumber();
+		return m_cell.cellNumber() - c.m_cell.cellNumber();
 	}
 
 	String toCouldBeSymbolsString() {
-		return Symbol.symbolSetToString(m_couldBeSymbolsSet);
+		return Symbol.symbolCollectionToString(m_couldBeSymbolsSet);
 	}	
 }

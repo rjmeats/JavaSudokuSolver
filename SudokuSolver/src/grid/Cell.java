@@ -1,5 +1,6 @@
 package grid;
 
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +27,8 @@ public class Cell implements Comparable<Cell> {
 	public Row row() 					{ return m_row; }
 	public Column column() 				{ return m_column; }
 	public Box box() 					{ return m_box; }
-	public Assignment getAssignment() 	{ return m_assignment; }
-	public int getCellNumber() 			{ return m_cellNumber; }
+	public Assignment assignment() 		{ return m_assignment; }
+	public int cellNumber() 			{ return m_cellNumber; }
 	
 	public int getOneBasedCellNumber() 	{ return m_cellNumber+1; }
 
@@ -40,7 +41,7 @@ public class Cell implements Comparable<Cell> {
 	}
 
 	public String toString() {
-		return "Cell no=" + getCellNumber();
+		return "Cell no=" + cellNumber();
 	}
 
 	public void assign(Assignment assignment) { 
@@ -52,7 +53,7 @@ public class Cell implements Comparable<Cell> {
 	}
 	
 	public Symbol getAssignedSymbol() {
-		return (m_assignment != null) ? m_assignment.getSymbol() : null;
+		return (m_assignment != null) ? m_assignment.symbol() : null;
 	}
 		
 	@Override
@@ -60,34 +61,13 @@ public class Cell implements Comparable<Cell> {
 		return m_cellNumber - c.m_cellNumber;
 	}
 
-	public static String cellListToString(List<Cell> lIn) {
-		List<Cell> l = new ArrayList<>(lIn);
-		StringBuilder sb = new StringBuilder();
+	public static String cellCollectionToString(Collection<Cell> cells) {
+		List<Cell> l = new ArrayList<>(cells);
 		Collections.sort(l);
+		StringBuilder sb = new StringBuilder();
 		for(Cell cell: l) {
 			sb.append(cell.getOneBasedCellNumber()).append(" ");
 		}
 		return sb.toString().trim();
-	}
-
-	static boolean compareCellLists(List<Cell> lCells1, List<Cell> lCells2) {
-		boolean same = true;
-
-		if(lCells1.size() != lCells2.size()) return false;
-		
-		List<Cell> l1 = new ArrayList<>(lCells1);
-		List<Cell> l2 = new ArrayList<>(lCells2);
-		
-		Collections.sort(l1);
-		Collections.sort(l2);
-
-		for(int n=0; n < l1.size(); n++) {
-			if(l1.get(n) != l2.get(n)) {
-				same = false;
-				break;
-			}
-		}
-		
-		return same;
 	}
 }

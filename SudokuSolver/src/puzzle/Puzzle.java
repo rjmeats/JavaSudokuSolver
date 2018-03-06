@@ -236,6 +236,7 @@ public class Puzzle {
 			m_status.m_valid = true;
 		}			
 		
+		m_solver.finaliseDiagnostics();
 		String htmlbody = m_solver.getHtmlDiagnostics();
 		writeHTMLFile("logs/diagnostics.html", htmlbody);		
 	}
@@ -301,6 +302,7 @@ public class Puzzle {
 		sb.append("<style>").append(nl);
 		sb.append("table { border-collapse: collapse;}").append(nl);
 		sb.append("table, th, td { border: 1px solid black; }").append(nl);
+		sb.append(".observation { color: red; }").append(nl);
 		sb.append("</style>").append(nl);
 		
 		sb.append("</head>").append(nl);

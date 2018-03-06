@@ -143,7 +143,7 @@ public class Grid9x9 {
 		for(Cell cell : m_lCells) {
 			if(cell.isAssigned()) {
 				stats.m_assignedCells++;
-				if(cell.getAssignment().getMethod() == AssignmentMethod.Given) {
+				if(cell.assignment().method() == AssignmentMethod.Given) {
 					stats.m_initialAssignedCells++;
 				}
 			}

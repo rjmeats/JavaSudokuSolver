@@ -67,6 +67,15 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return new ArrayList<>(m_couldBeCellsForSymbol.get(symbol));
 	}
 
+	// If there is only one cell this symbol could be used for, return that cell
+	Cell getOnlyCouldBeCellForSymbol(Symbol symbol) {
+		Cell cell = null;
+		if(m_couldBeCellsForSymbol.get(symbol).size() == 1) {
+			cell = m_couldBeCellsForSymbol.get(symbol).get(0);
+		}
+		return cell;
+	}
+	
 	private void setStepNumber(int n) {
 		m_stepNumberOfLatestChange = n;
 	}
@@ -225,7 +234,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 			List<Cell> lCellsForCombination = getSymbolCombinationCells(lCombination);
 			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
 			if(foundSet) {
-				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolListToString(lCombination) + " covers cells " +  Cell.cellListToString(lCellsForCombination));				
+				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolCollectionToString(lCombination) + " covers cells " +  Cell.cellCollectionToString(lCellsForCombination));				
 				SymbolSetRestriction restriction = new SymbolSetRestriction(m_cellSet, lCombination, lCellsForCombination);
 				l.add(restriction);
 			}
@@ -254,7 +263,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 				
 		for(Symbol symbol : lSymbols) {
 			List<Cell> lCells = getCouldBeCellsForSymbol(symbol);
-			String cellListString = Cell.cellListToString(lCells);
+			String cellListString = Cell.cellCollectionToString(lCells);
 			
 			if(lCells.size() == 1) {
 				String markAsUnassigned = "";
@@ -305,6 +314,6 @@ class SymbolSetRestriction {
 	}
 	
 	String getRepresentation() {
-		return "SymbolSetRestriction for " + m_cellSet.getOneBasedRepresentation() + " Symbols: " + Symbol.symbolListToString(m_lSymbols) + ", Cells : " + Cell.cellListToString(m_lCells); 
+		return "SymbolSetRestriction for " + m_cellSet.getOneBasedRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionToString(m_lCells); 
 	}
 }
