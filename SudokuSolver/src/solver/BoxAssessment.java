@@ -1,15 +1,10 @@
 package solver;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import grid.Cell;
-import grid.LinearCellSet;
+import grid.CellSet;
 import grid.Box;
-import grid.Row;
-import grid.Column;
 import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
@@ -21,55 +16,23 @@ public class BoxAssessment extends CellSetAssessment {
 		super(box, symbols);
 		m_box = box;
 	}
-
-	public List<SymbolRestriction> findRestrictedSymbols() {
-		
-		List<SymbolRestriction> lRestrictions = new ArrayList<>();		
-		
-		for(Symbol symbol : getSymbols())
-		{
-			List<Cell> lCells = getCouldBeCellsForSymbol(symbol);
-			if(lCells.size() == 2 || lCells.size() == 3)
-			{
-				Set<Row> rowSet = new HashSet<>();
-				Set<Column> columnSet = new HashSet<>();
-				for(Cell cell : lCells)
-				{
-					rowSet.add(cell.row());
-					columnSet.add(cell.column());
-				}
-				
-				if(rowSet.size() == 1)
-				{
-//					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getRow().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).row());
-					lRestrictions.add(restriction);
-				}
-				else if(columnSet.size() == 1)
-				{
-//					System.err.println("Found restricted symbol " + symbol.toString() + " in " + m_box.getRepresentation() + " and " + lCells.get(0).getColumn().getRepresentation());
-					SymbolRestriction restriction = new SymbolRestriction(symbol, m_box, lCells.get(0).column()); 
-					lRestrictions.add(restriction);
-				}
-			}			
-		}
-		
-		return lRestrictions;
-	}	
 }
 
 class SymbolRestriction {
 	Symbol m_symbol;
-	Box m_box;
-	LinearCellSet m_rowOrColumn;
+	CellSet m_restrictorCellSet;
+	CellSet m_restrictedCellSet;
+	Set<Cell> m_restrictedCells;
 	
-	SymbolRestriction(Symbol symbol, Box box, LinearCellSet rowOrColumn) {
+	SymbolRestriction(Symbol symbol, CellSet restrictor, CellSet restricted) {
 		m_symbol = symbol;
-		m_box = box;
-		m_rowOrColumn = rowOrColumn;
+		m_restrictorCellSet = restrictor;
+		m_restrictedCellSet = restricted;
+		m_restrictedCells = m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
 	}
 	
 	String getRepresentation() {
-		return "Restriction on symbol " + m_symbol.getRepresentation() + " between " + m_box.getOneBasedRepresentation() + " and " + m_rowOrColumn.getOneBasedRepresentation();
+		return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getOneBasedRepresentation() + 
+					" restricted to " + m_restrictedCellSet.getOneBasedRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
 	}
 }

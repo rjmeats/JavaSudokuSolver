@@ -1,8 +1,9 @@
 package solver;
 
 import java.util.HashMap;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 
 import grid.Cell;
@@ -217,140 +218,6 @@ public class Solver {
 		return changedState;
 	}
 
-	private void reportAssignmentFailure(Assignment a, CellAssignmentStatus status) {
-		String o = "Unexpected assignment failure at step " + a.stepNumber() + " : " + status.name() + " : " + a.toString();
-		m_stepObservations.add(o);
-		System.err.println(o);		
-	}
-	
-	// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
-	// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
-	private boolean tryMethod3(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		int stateChanges = 0;
-		for(BoxAssessment box : m_lBoxes) {
-			List<SymbolRestriction> lRestrictions = box.findRestrictedSymbols();
-			if(lRestrictions != null) {
-				for(SymbolRestriction restriction : lRestrictions) {
-					CellSetAssessment csa = assessmentForCellSet(restriction.m_rowOrColumn);
-					boolean causedStateChange = ruleOutSymbolOutsideBox(csa, restriction, stepNumber);
-					if(causedStateChange) {
-						String s = "Box restriction for " + restriction.getRepresentation();
-						actions.add(s);
-						stateChanges++;
-						break;
-					}
-				}
-			}
-			
-			if(stateChanges > 0) break;
-		}
-		changedState = (stateChanges > 0);
-		return changedState;
-	}
-	
-	// Look through each column to see where a particular unresolved symbol can only appear in a specific box.
-	// Where this arises, we can rule-out the symbol from the other cells in the box which are not in the column.
-	private boolean tryMethod4(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		int stateChanges = 0;
-		for(ColumnAssessment column : m_lColumns) {
-			List<SymbolRestriction> lRestrictions = column.findRestrictedSymbols();
-			if(lRestrictions != null) {
-				for(SymbolRestriction restriction : lRestrictions) {
-					BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
-					boolean causedStateChange = ruleOutSymbolOutsideRowOrColumn(boxa, restriction, stepNumber);
-					if(causedStateChange) {
-						String s = "Column restriction for " + restriction.getRepresentation();
-						actions.add(s);
-						stateChanges++;
-						break;
-					}
-				}
-			}
-			if(stateChanges > 0) break;
-		}
-		
-		changedState = (stateChanges > 0);
-		return changedState;
-	}
-
-	// And the same again for rows ...
-	private boolean tryMethod5(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		int stateChanges = 0;
-		for(RowAssessment row : m_lRows) {
-			List<SymbolRestriction> lRestrictions = row.findRestrictedSymbols();
-			if(lRestrictions != null) {
-				for(SymbolRestriction restriction : lRestrictions) {
-					BoxAssessment boxa = getBoxAssessmentForBox(restriction.m_box);
-					boolean causedStateChange = ruleOutSymbolOutsideRowOrColumn(boxa, restriction, stepNumber);
-					if(causedStateChange) {
-						String s = "Row restriction for " + restriction.getRepresentation();
-						actions.add(s);
-						stateChanges++;
-						break;
-					}
-				}
-			}
-			if(stateChanges > 0) break;
-		}
-		
-		changedState = (stateChanges > 0);
-		return changedState;
-	}
-	
-
-	// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
-	private boolean tryMethod6(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		int stateChanges = 0;
-		for(CellSetAssessment set : m_lCellSets) {
-			List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
-			if(lRestrictedSymbolSets != null) {
-				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
-					for(Cell cell : symbolSetRestriction.m_lCells) {
-						CellAssessment ca = assessmentForCell(cell);
-						boolean causedStateChange = ca.ruleOutAllSymbolsExcept(symbolSetRestriction.m_lSymbols, stepNumber);
-						if(causedStateChange) {
-							stateChanges++;
-							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
-							actions.add(s);
-						}
-					}
-				}
-	
-				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
-					for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
-						CellSetAssessment cseta = assessmentForCellSet(symbolSetRestriction.m_cellSet);
-						int causedChange = cseta.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol, stepNumber);
-						if(causedChange > 0) {
-							stateChanges++;
-							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
-							actions.add(s);
-						}
-					}
-					
-					List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
-					for(CellSet cset : lAffectedCellSets) {
-						CellSetAssessment cseta = assessmentForCellSet(cset);
-						for(Cell cell : symbolSetRestriction.m_lCells) {
-							int causedChange = cseta.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols, stepNumber);
-							if(causedChange > 0) {
-								stateChanges++;
-								String s = "Restriction: " + symbolSetRestriction.getRepresentation();
-								actions.add(s);
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		changedState = (stateChanges > 0);
-		return changedState;
-	}
-
 	// Does a cell-set (box, row, column) have a symbol which is not yet assigned but can only be assigned to one of the cells ? If so, we can make an assignment.
 	Assignment hasSymbolAssignmentAvailable(CellSetAssessment csa, int stepNumber) {
 		Assignment assignment = null;
@@ -460,43 +327,208 @@ public class Solver {
 		}		
 	}	
 
-	boolean ruleOutSymbolOutsideBox(CellSetAssessment csa, SymbolRestriction restriction, int stepNumber) {
+	private void reportAssignmentFailure(Assignment a, CellAssignmentStatus status) {
+		String o = "Unexpected assignment failure at step " + a.stepNumber() + " : " + status.name() + " : " + a.toString();
+		m_stepObservations.add(o);
+		System.err.println(o);		
+	}
+	
+	// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
+	// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
+	//
+	// For example (x or * can be a known or unknown value)
+	//
+	//                                  C7  C8  C9	
+	// x	x	x		x	x	x		3	1	.	R1
+	// *	*	*		*	*	*		.	.	.	R2
+	// x	7	x		x	x	x		.	.	5	R3
+	//
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	//
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	7
+	//
+	// For the top-right box (Box 3), the 7 can only be in Row 2. 
+	// Consequently we can rule out 7 from being any of the cells in Row 2 which are outside Box 3
+	// So the cells marked with a * cannot be a 7, and we can apply this 7-is-ruled-out restriction to those cells.	
+	
+	static class SymbolRestriction {
+		Symbol m_symbol;
+		CellSet m_restrictorCellSet;
+		CellSet m_restrictedCellSet;
+		Set<Cell> m_restrictedCells;
+		
+		SymbolRestriction(Symbol symbol, CellSet restrictor, CellSet restricted) {
+			m_symbol = symbol;
+			m_restrictorCellSet = restrictor;
+			m_restrictedCellSet = restricted;
+			m_restrictedCells = m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
+		}
+		
+		String getRepresentation() {
+			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getOneBasedRepresentation() + 
+						" restricted to " + m_restrictedCellSet.getOneBasedRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
+		}
+	}
+	
+	private boolean tryMethod3(int stepNumber, List<String> actions) {
 		boolean changedState = false;
-		// For cells not in the restriction box, rule out the symbol.
-		for(Cell cell : csa.getCellSet().getCells()) {
-			if(!restriction.m_box.containsCell(cell)) {
-				CellAssessment ca = assessmentForCell(cell);
-				if(!ca.isRuledOut(restriction.m_symbol)) {
-//System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getGridLocationString());				
-					ca.ruleOutSymbol(restriction.m_symbol, stepNumber);
-					changedState = true;
+		for(BoxAssessment box : m_lBoxes) {
+			List<SymbolRestriction> lRestrictions = findRestrictedSymbols(box);
+			changedState = applySymbolRestrictions(lRestrictions, stepNumber, actions);			
+			if(changedState) break;
+		}
+		return changedState;
+	}
+	
+	// Methods which are the inverse of the above - symbols in a row or column restricted to a specific box trigger ruling-outs in the other boxes in the row/column 
+	private boolean tryMethod4(int stepNumber, List<String> actions) {
+		boolean changedState = false;
+		for(ColumnAssessment column : m_lColumns) {
+			List<SymbolRestriction> lRestrictions = findRestrictedSymbols(column);
+			changedState = applySymbolRestrictions(lRestrictions, stepNumber, actions);			
+			if(changedState) break;
+		}		
+		return changedState;
+	}
+	
+	private boolean tryMethod5(int stepNumber, List<String> actions) {
+		boolean changedState = false;
+		for(RowAssessment row : m_lRows) {
+			List<SymbolRestriction> lRestrictions = findRestrictedSymbols(row);
+			changedState = applySymbolRestrictions(lRestrictions, stepNumber, actions);			
+			if(changedState) break;
+		}		
+		return changedState;
+	}
+
+	private List<SymbolRestriction> findRestrictedSymbols(CellSetAssessment csa) {
+		
+		CellSet thisCellSet = csa.getCellSet();
+		List<SymbolRestriction> lRestrictions = new ArrayList<>();		
+		
+		for(Symbol symbol : csa.getSymbols())
+		{
+			List<Cell> lCells = csa.getCouldBeCellsForSymbol(symbol);
+			if(lCells.size() > 1)
+			{
+				Set<Box> boxSet = new HashSet<>();
+				Set<Row> rowSet = new HashSet<>();
+				Set<Column> columnSet = new HashSet<>();
+				for(Cell cell : lCells)
+				{
+					boxSet.add(cell.box());
+					rowSet.add(cell.row());
+					columnSet.add(cell.column());
+				}
+
+				CellSet restrictedCellSet = null;
+				if(boxSet.size() == 1)
+				{
+					Box box = lCells.get(0).box();
+					if(box != thisCellSet) {
+						restrictedCellSet = box;
+					}
+				}
+				
+				if(rowSet.size() == 1)
+				{
+					Row row = lCells.get(0).row();
+					if(row != thisCellSet) {
+						restrictedCellSet = row;
+					}
+				}
+				
+				if(columnSet.size() == 1)
+				{
+					Column column = lCells.get(0).column();
+					if(column != thisCellSet) {
+						restrictedCellSet = column;
+					}
+				}				
+
+				if(restrictedCellSet != null) {
+					lRestrictions.add(new SymbolRestriction(symbol, thisCellSet, restrictedCellSet));
 				}
 			}
 		}
 		
+		return lRestrictions;
+	}	
+
+	
+	private boolean applySymbolRestrictions(List<SymbolRestriction> lRestrictions, int stepNumber, List<String> actions) {
+		boolean changedState = false;
+		for(SymbolRestriction restriction : lRestrictions) {
+			int changeCount = 0;
+			for(Cell cell : restriction.m_restrictedCells) {
+				CellAssessment ca = assessmentForCell(cell);
+				changeCount += ca.ruleOutSymbol(restriction.m_symbol, stepNumber);
+			}
+
+			if(changeCount > 0) {
+				changedState = true;
+				actions.add(restriction.getRepresentation());
+				break;
+			}
+		}
+
 		return changedState;
 	}
 	
-	boolean ruleOutSymbolOutsideRowOrColumn(CellSetAssessment boxcsa, SymbolRestriction restriction, int stepNumber) {
+	// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
+	private boolean tryMethod6(int stepNumber, List<String> actions) {
 		boolean changedState = false;
-		// For cells not in the restriction row/column, rule out the symbol.
-		for(Cell cell : boxcsa.getCellSet().getCells()) {
-			if(!restriction.m_rowOrColumn.containsCell(cell)) {
-				CellAssessment ca = assessmentForCell(cell);
-				if(!ca.isRuledOut(restriction.m_symbol)) {
-//System.err.println("Ruling out symbol " + restriction.m_symbol.toString() + " for cell " + cell.getGridLocationString());				
-					ca.ruleOutSymbol(restriction.m_symbol, stepNumber);
-					changedState = true;
+		int stateChanges = 0;
+		for(CellSetAssessment set : m_lCellSets) {
+			List<SymbolSetRestriction> lRestrictedSymbolSets = set.findRestrictedSymbolSets();
+			if(lRestrictedSymbolSets != null) {
+				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
+					for(Cell cell : symbolSetRestriction.m_lCells) {
+						CellAssessment ca = assessmentForCell(cell);
+						boolean causedStateChange = ca.ruleOutAllSymbolsExcept(symbolSetRestriction.m_lSymbols, stepNumber);
+						if(causedStateChange) {
+							stateChanges++;
+							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+							actions.add(s);
+						}
+					}
+				}
+	
+				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
+					for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
+						CellSetAssessment cseta = assessmentForCellSet(symbolSetRestriction.m_cellSet);
+						int causedChange = cseta.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol, stepNumber);
+						if(causedChange > 0) {
+							stateChanges++;
+							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+							actions.add(s);
+						}
+					}
+					
+					List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
+					for(CellSet cset : lAffectedCellSets) {
+						CellSetAssessment cseta = assessmentForCellSet(cset);
+						for(Cell cell : symbolSetRestriction.m_lCells) {
+							int causedChange = cseta.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols, stepNumber);
+							if(causedChange > 0) {
+								stateChanges++;
+								String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+								actions.add(s);
+							}
+						}
+					}
 				}
 			}
 		}
 		
+		changedState = (stateChanges > 0);
 		return changedState;
 	}
 
-
-	
-	
 	// --------------------------------------------------------------------------------
 	
 	

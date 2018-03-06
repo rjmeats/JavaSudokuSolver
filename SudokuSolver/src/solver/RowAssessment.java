@@ -1,9 +1,10 @@
 package solver;
 
 import grid.Row;
+
 import puzzle.SymbolsToUse;
 
-public class RowAssessment extends LinearCellSetAssessment {
+public class RowAssessment extends CellSetAssessment {
 
 	Row m_row;
 	

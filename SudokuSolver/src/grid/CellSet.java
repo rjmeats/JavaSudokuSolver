@@ -3,6 +3,7 @@ package grid;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -61,6 +62,10 @@ public abstract class CellSet {
 		return sameSymbolCells;
 	}
 	
+	public Set<Cell> getCellsNotIn(CellSet cs) {
+		return m_lCells.stream().filter(cell -> (!cs.containsCell(cell))).collect(Collectors.toSet());
+	}
+
 	public int compareTo(CellSet cellset) {
 		return getItemNumber() - cellset.getItemNumber();
 	}

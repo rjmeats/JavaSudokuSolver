@@ -1,9 +1,11 @@
 package solver;
 
 import grid.Column;
+
 import puzzle.SymbolsToUse;
 
-class ColumnAssessment extends LinearCellSetAssessment {
+
+class ColumnAssessment extends CellSetAssessment {
 
 	Column m_column;
 	

@@ -1,6 +1,6 @@
 package grid;
 
-public class Row extends LinearCellSet implements Comparable<CellSet> {
+public class Row extends CellSet implements Comparable<CellSet> {
 
 	public Row(int rowNumber) {
 		super(rowNumber);
