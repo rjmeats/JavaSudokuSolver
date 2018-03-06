@@ -109,7 +109,10 @@ public class GridFormatter {
 				currentHorizontalBoxNumber = boxNumber;
 
 				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
-				String toolTip = cell.getOneBasedGridLocationString() + " / " + cell.getOneBasedCellNumber(); 
+				String toolTip = cell.getOneBasedGridLocationString() + " = " + cell.getOneBasedCellNumber();
+				if(cell.isAssigned()) {
+					toolTip += " : " + cell.assignment().toString();
+				}
 				boolean highlight = provider.changedThisStep(cell,  stepNumberToHighlight);
 				String colour = highlight ? " bgcolor=cyan" : " bgcolor=ivory";
 				sb.append("<td " + colour + " title=\"" + toolTip + "\">").append(nl);

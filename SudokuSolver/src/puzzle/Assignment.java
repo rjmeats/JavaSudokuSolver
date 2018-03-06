@@ -24,6 +24,6 @@ public class Assignment {
 	public int stepNumber() 			{ return m_stepNumber; }
 	
 	public String toString() {
-		return "Assignment: Cell=" + m_cell.getGridLocationString() + ", Symbol=" + m_symbol.toString() + ", method=" + m_method.toString() + ", detail=" + m_assignmentDetail + ", step=" + m_stepNumber; 
+		return "Assignment: Cell=" + m_cell.getOneBasedGridLocationString() + ", Symbol=" + m_symbol.toString() + ", method=" + m_method.toString() + ", detail=" + m_assignmentDetail + ", step=" + m_stepNumber; 
 	}
 }

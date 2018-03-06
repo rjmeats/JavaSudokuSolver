@@ -227,7 +227,7 @@ public class Puzzle {
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getGridLocationString() + " ");
+				badCellString += (cell.getOneBasedGridLocationString() + " ");
 			}
 			m_status.m_valid = false;
 			m_status.m_invalidDetails = "Invalid final grid : see cells " + badCellString;			
