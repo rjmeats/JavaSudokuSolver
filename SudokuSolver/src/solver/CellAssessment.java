@@ -68,7 +68,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	
 	private void setStepNumber(int n) {
 		m_stepNumberOfLatestChange = n;
-System.err.println("Setting cell " + cell().getOneBasedCellNumber() + " for step " + m_stepNumberOfLatestChange);			
+//System.err.println("Setting cell " + cell().getOneBasedCellNumber() + " for step " + m_stepNumberOfLatestChange);			
 	}
 	
 	public int stepNumberOfLatestChange() { 
@@ -88,7 +88,7 @@ System.err.println("Setting cell " + cell().getOneBasedCellNumber() + " for step
 		if(!isRuledOut(symbol)) {
 			m_ruledOutSymbolsSet.add(symbol);
 			m_couldBeSymbolsSet.remove(symbol);
-			System.err.println("Ruling out symbol " + symbol + " for cell " + cell().getOneBasedCellNumber() + " for step " + stepNumber);			
+//			System.err.println("Ruling out symbol " + symbol + " for cell " + cell().getOneBasedCellNumber() + " for step " + stepNumber);			
 			setStepNumber(stepNumber);
 			changeCount++;
 		}		

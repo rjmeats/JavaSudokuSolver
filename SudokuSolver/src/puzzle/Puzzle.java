@@ -151,16 +151,19 @@ public class Puzzle {
 	// --------------------------------------------------------------------------------------
 	
 	public void solve() {
+		
+		long startTime = new java.util.Date().getTime();
+		
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 				
-		m_solver.printGrid(new Solver.CellNumberDisplayer());
-		m_solver.printGrid(new Solver.BoxNumberDisplayer());
-		m_solver.printGrid(new Solver.AssignedValueDisplay());
+//		m_solver.printGrid(new Solver.CellNumberDisplayer());
+//		m_solver.printGrid(new Solver.BoxNumberDisplayer());
+//		m_solver.printGrid(new Solver.AssignedValueDisplay());
 		
-		m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), 0);
-		m_solver.printGrid(m_solver.new CouldBeValueDisplay(), 0);
-		m_solver.printCellSets();
-		m_solver.printGrid(new Solver.AssignedValueDisplay(), 0);
+//		m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), 0);
+//		m_solver.printGrid(m_solver.new CouldBeValueDisplay(), 0);
+//		m_solver.printCellSets();
+//		m_solver.printGrid(new Solver.AssignedValueDisplay(), 0);
 		
 		boolean complete = false;
 		boolean changed = true;
@@ -173,29 +176,29 @@ public class Puzzle {
 		{
 			stepNumber++;
 			
-			System.out.println("==================================================================================================");
-			System.out.println("==================================================================================================");
-			System.out.println();
-			System.out.println("Assignment step: " + stepNumber);
+//			System.out.println("==================================================================================================");
+//			System.out.println("==================================================================================================");
+//			System.out.println();
+//			System.out.println("Assignment step: " + stepNumber);
 
 			changed = m_solver.nextStep(stepNumber);
 			Grid9x9.Stats stats = m_grid.getStats();
 			complete = (stats.m_unassignedCells == 0);
 			
-			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);
-			m_solver.printGrid(m_solver.new CouldBeValueDisplay(), stepNumber);
-			m_solver.printCellSets(stepNumber);
-			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
+//			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
+//			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);
+//			m_solver.printGrid(m_solver.new CouldBeValueDisplay(), stepNumber);
+//			m_solver.printCellSets(stepNumber);
 
-			System.out.println("After step " + stepNumber + ": ");
-			System.out.println("- " + stats.m_assignedCells + " assigned cells out of " + stats.m_cellCount + " (" + stats.m_initialAssignedCells + " givens)");
-			System.out.println("- " + stats.m_unassignedCells + " unassigned cell" + ((stats.m_unassignedCells == 1) ? "" : "s"));
-			System.out.println();
+//			System.out.println("After step " + stepNumber + ": ");
+//			System.out.println("- " + stats.m_assignedCells + " assigned cells out of " + stats.m_cellCount + " (" + stats.m_initialAssignedCells + " givens)");
+//			System.out.println("- " + stats.m_unassignedCells + " unassigned cell" + ((stats.m_unassignedCells == 1) ? "" : "s"));
+//			System.out.println();
 			
 			if(complete)
 			{
 				System.out.println("Puzzle is complete");
-				m_solver.printGrid(new Solver.AssignedValueDisplay());
+//				m_solver.printGrid(new Solver.AssignedValueDisplay());
 			}
 			else if(stepNumber > 1000)
 			{
@@ -207,14 +210,18 @@ public class Puzzle {
 			}
 			else
 			{
-				System.out.println("Progress made, continuing puzzle ..");
+//				System.out.println("Progress made, continuing puzzle ..");
 			}
-			System.out.println();
+//			System.out.println();
 		}
 
 		// Check we've not made any invalid assignments
 		
 
+		long endTime = new java.util.Date().getTime();
+		
+		long took = endTime - startTime;
+		
 		m_status = new Status();
 		m_status.m_initialGridStatus = new InitialGridStatus(); 
 		m_status.m_solved = complete;
@@ -236,7 +243,8 @@ public class Puzzle {
 			m_status.m_valid = true;
 		}			
 		
-		m_solver.finaliseDiagnostics();
+		m_solver.finaliseDiagnostics(stepNumber, took);
+		m_solver.showFinalGrid();
 		String htmlbody = m_solver.getHtmlDiagnostics();
 		writeHTMLFile("logs/diagnostics.html", htmlbody);		
 	}
@@ -298,13 +306,7 @@ public class Puzzle {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>").append(nl);
 		sb.append("<head>").append(nl);
-		
-		sb.append("<style>").append(nl);
-		sb.append("table { border-collapse: collapse;}").append(nl);
-		sb.append("table, th, td { border: 1px solid black; }").append(nl);
-		sb.append(".observation { color: red; }").append(nl);
-		sb.append("</style>").append(nl);
-		
+		sb.append(getStyles()).append(nl);
 		sb.append("</head>").append(nl);
 		sb.append("<body>").append(nl);
 		sb.append(htmlbody);
@@ -314,6 +316,89 @@ public class Puzzle {
 		writeFileAsUTF8(filename, sb.toString(), false);
 	}
 
+	String getStyles() {
+		String nl = System.lineSeparator();
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("<style>").append(nl);
+		sb.append("body {").append(nl);
+		sb.append("    font-family: Tahoma, Geneva, sans-serif;").append(nl);			// https://www.w3schools.com/cssref/css_websafe_fonts.asp
+		sb.append("}").append(nl);
+		sb.append(".gridouter {").append(nl);
+		sb.append("    border: 6px solid gray;").append(nl);
+		sb.append("    border-collapse: collapse;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".gridseparatorrow {").append(nl);
+		sb.append("    border-top: 4px solid grey;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".gridseparatorcolumn {").append(nl);
+		sb.append("    border-left: 4px solid grey;").append(nl);
+		sb.append("    border-right: 1px solid grey;").append(nl);
+		sb.append("    border-top: 1px solid grey;").append(nl);
+		sb.append("    border-bottom: 1px solid grey;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".gridnonseparatorcolumn {").append(nl);
+		sb.append("    border-left: 1px solid grey;").append(nl);
+		sb.append("    border-right: 1px solid grey;").append(nl);
+		sb.append("    border-top: 1px solid grey;").append(nl);
+		sb.append("    border-bottom: 1px solid grey;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".gridcell {").append(nl);
+		sb.append("    width: 20px;").append(nl);
+		sb.append("    height: 20px;").append(nl);
+		sb.append("    text-align: center;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".couldbevaluecountcell {").append(nl);
+		sb.append("    width: 20px;").append(nl);
+		sb.append("    height: 20px;").append(nl);
+		sb.append("    text-align: center;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".couldbevaluecell {").append(nl);
+		sb.append("    width: 100px;").append(nl);
+		sb.append("    height: 20px;").append(nl);
+		sb.append("    text-align: center;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".highlight {").append(nl);
+		sb.append("    background-color: yellow;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".given {").append(nl);
+		sb.append("    background-color: lightsteelblue;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".previouslyassigned {").append(nl);
+		sb.append("    background-color: aquamarine;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".cellsettable {").append(nl);
+		sb.append("    border: 6px solid gray;").append(nl);
+		sb.append("    border-collapse: collapse;").append(nl);
+		sb.append("}").append(nl);
+		sb.append(".cellsettablerowtitle {").append(nl);
+		sb.append("    font-weight: bold;").append(nl);
+		sb.append("    width: 80px;").append(nl);
+		sb.append("    height: 20px;").append(nl);
+		sb.append("    border-left: 1px solid grey;").append(nl);
+		sb.append("    border-right: 2px solid grey;").append(nl);
+		sb.append("    border-top: 1px solid grey;").append(nl);
+		sb.append("    border-bottom: 1px solid grey;").append(nl);
+		sb.append("}").append(nl);		
+		sb.append(".cellsetcell {").append(nl);
+		sb.append("    border-left: 1px solid grey;").append(nl);
+//		sb.append("    border-right: 1px solid grey;").append(nl);
+		sb.append("    border-top: 1px solid grey;").append(nl);
+		sb.append("    border-bottom: 1px solid grey;").append(nl);
+//		sb.append("    width: 180px;").append(nl);
+		sb.append("    height: 20px;").append(nl);
+		sb.append("}").append(nl);
+		
+
+		
+		
+//		sb.append("table { border-collapse: collapse;}").append(nl);
+//		sb.append("table, th, td { border: 1px solid black; }").append(nl);
+		sb.append(".observation { color: red; }").append(nl);
+		sb.append("</style>").append(nl);
+		
+		return sb.toString();
+	}
 	public static boolean writeFileAsUTF8(String filename, String s, boolean append)
 	{
 	    try

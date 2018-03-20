@@ -1,6 +1,7 @@
 package solver;
 
 import java.util.ArrayList;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,14 +20,18 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	private Set<Symbol> m_assignedSymbols;
 	private HashMap<Symbol, List<Cell>> m_couldBeCellsForSymbol;
 	private int m_stepNumberOfLatestChange;
+	private HashMap<Symbol, Integer> m_stepNumberOfLatestChangeForSymbol;
 
 	public CellSetAssessment(CellSet cellSet, SymbolsToUse symbols) {
 		m_cellSet = cellSet;
 		m_assignedSymbols = new LinkedHashSet<>();
 		
-		m_couldBeCellsForSymbol = new HashMap<>();		
+		m_couldBeCellsForSymbol = new HashMap<>();
+		m_stepNumberOfLatestChangeForSymbol = new HashMap<>();
+
 		for(Symbol symbol : symbols.getSymbolSet()) {
 			m_couldBeCellsForSymbol.put(symbol, new ArrayList<Cell>());
+			m_stepNumberOfLatestChangeForSymbol.put(symbol, -1);
 		}
 		
 		m_stepNumberOfLatestChange = -1;
@@ -59,11 +64,17 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 
 	Set<Symbol> getSymbols() {
-		return m_couldBeCellsForSymbol.keySet();
+		List<Symbol> l = new ArrayList<>(m_couldBeCellsForSymbol.keySet());		
+		Collections.sort(l);
+		return new LinkedHashSet<>(l);
 	}
 		
 	List<Cell> getCouldBeCellsForSymbol(Symbol symbol) {
 		return new ArrayList<>(m_couldBeCellsForSymbol.get(symbol));
+	}
+
+	int getStepNumberOfLatestChangeForSymbol(Symbol symbol) {
+		return m_stepNumberOfLatestChangeForSymbol.get(symbol);
 	}
 
 	// If there is only one cell this symbol could be used for, return that cell
@@ -93,6 +104,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		if(lCouldBeCellsForThisSymbol.contains(notThisCell)) {
 			lCouldBeCellsForThisSymbol.remove(notThisCell);
 			setStepNumber(stepNumber);
+			m_stepNumberOfLatestChangeForSymbol.put(symbol, stepNumber);
 			changed++;
 		}
 		return changed;
@@ -171,6 +183,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		{
 			m_assignedSymbols.add(symbol);
 			setStepNumber(stepNumber);
+			m_stepNumberOfLatestChangeForSymbol.put(symbol,  stepNumber);
 		}
 		ruleOutOtherCellsForSymbol(cell, symbol, stepNumber);
 		ruleOutCellForOtherSymbols(cell, symbol, stepNumber);

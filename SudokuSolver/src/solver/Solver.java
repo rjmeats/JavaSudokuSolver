@@ -32,6 +32,7 @@ public class Solver {
 	private HashMap<Cell, CellAssessment> m_cellAssessmentsMap;
 	private HashMap<CellSet, CellSetAssessment> m_cellSetAssessmentsMap;
 
+	private boolean m_produceHtmlDiagnostics; 
 	private String m_htmlDiagnostics;	
 	List<String> m_observations;
 	List<String> m_stepObservations;
@@ -82,6 +83,7 @@ public class Solver {
 			}
 		}
 		
+		m_produceHtmlDiagnostics = false;
 		m_htmlDiagnostics = "";
 		m_observations = new ArrayList<>();
 		m_stepObservations = new ArrayList<>();
@@ -198,7 +200,7 @@ public class Solver {
 	}
 	
 	void spreadAssignmentImpact(CellSetAssessment csa, CellAssessment ca, Assignment assignment) {
-		Symbol symbol = assignment.symbol();
+//		Symbol symbol = assignment.symbol();
 		Cell assignmentCell = assignment.cell();
 
 		// A cell in this cell-set has had an assignment made. Update the cell-set record to reflect this 
@@ -208,17 +210,32 @@ public class Solver {
 		for(Cell otherCell : csa.getCellSet().getCells()) {
 			if(otherCell != assignmentCell) {
 				// This cell isn't assigned to the symbol
-				CellAssessment otherCellInCellSet = assessmentForCell(otherCell);
-				otherCellInCellSet.ruleOutSymbol(symbol, assignment.stepNumber());
+				spreadRulingOutImpact(otherCell, assignment.symbol(), assignment.stepNumber());
+//				CellAssessment otherCellInCellSet = assessmentForCell(otherCell);
+//				otherCellInCellSet.ruleOutSymbol(symbol, assignment.stepNumber());
 				// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
 				// NB One of these == csa, but it should be harmless to repeat the ruling out
-				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.cellSetAssessments()) {
-					csaOfOtherCell.ruleOutCellForSymbol(otherCell, symbol, assignment.stepNumber());
-				}				
+//				for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.cellSetAssessments()) {
+//					csaOfOtherCell.ruleOutCellForSymbol(otherCell, symbol, assignment.stepNumber());
+//				}				
 			}
 		}		
 	}	
 
+	int spreadRulingOutImpact(Cell cell, Symbol symbol, int stepNumber) {
+		int changeCount = 0;
+		// This cell isn't assigned to the symbol
+		CellAssessment otherCellInCellSet = assessmentForCell(cell);
+		changeCount += otherCellInCellSet.ruleOutSymbol(symbol, stepNumber);
+		// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
+		// NB One of these == csa, but it should be harmless to repeat the ruling out
+		for(CellSetAssessment csaOfOtherCell : otherCellInCellSet.cellSetAssessments()) {
+			changeCount += csaOfOtherCell.ruleOutCellForSymbol(cell, symbol, stepNumber);
+		}				
+		
+		return changeCount;
+	}
+	
 	void reportAssignmentFailure(Assignment a, CellAssignmentStatus status) {
 		String o = "Unexpected assignment failure at step " + a.stepNumber() + " : " + status.name() + " : " + a.toString();
 		m_stepObservations.add(o);
@@ -279,13 +296,11 @@ public class Solver {
 			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
 				representation = "*"+ representation;
 			}
-			else if (cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given) {
-				representation = "~" + representation;				
-			}
-			else if(cell.isAssigned()) {
-				representation = "=" + representation;								
-			}
 			return(FormatUtils.padRight(representation, 5));
+		}
+		
+		public String getBasicCellClass() {
+			return "couldbevaluecountcell";
 		}
 		
 		public boolean changedThisStep(Cell cell, int stepNumber) { 
@@ -304,13 +319,11 @@ public class Solver {
 			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
 				representation = "*"+ representation;
 			}
-			else if (cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given) {
-				representation = "~" + representation;				
-			}
-			else if(cell.isAssigned()) {
-				representation = "=" + representation;								
-			}
 			return(FormatUtils.padRight(representation, 17));
+		}
+		
+		public String getBasicCellClass() {
+			return "couldbevaluecell";
 		}
 		
 		public boolean changedThisStep(Cell cell, int stepNumber) { 
@@ -327,6 +340,9 @@ public class Solver {
 		public String getContent(Cell cell) {
 			return(FormatUtils.padRight(cell.cellNumber(), 5));
 		}
+		public String getBasicCellClass() {
+			return "gridcell";
+		}
 		public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
 	}
 
@@ -338,6 +354,9 @@ public class Solver {
 			return(FormatUtils.padRight(cell.box().getBoxNumber(), 5));
 		}
 
+		public String getBasicCellClass() {
+			return "gridcell";
+		}
 		public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
 	}
 	
@@ -359,21 +378,55 @@ public class Solver {
 			return cell.isAssigned() && (cell.assignment().stepNumber() == stepNumber);
 		}
 
+		public String getBasicCellClass() {
+			return "gridcell";
+		}
 	}
 	
 	void collectInitialDiagnostics() {
+//		if(!m_produceHtmlDiagnostics) return;
 		m_htmlDiagnostics = "";
+		showGivenGrid();
 		collectDiagnosticsAfterStep(-1, new ArrayList<String>());
 	}
 
-	void collectDiagnosticsAfterStep(int stepNumber, List<String> actions) {
+	void showGivenGrid() {
+//		if(!m_produceHtmlDiagnostics) return;
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
-		if(stepNumber < 1) {
-			sb.append("<h2>Initial Grid" + "</h2>").append(nl);			
+		sb.append("<h2>Starting Grid" + "</h2>").append(nl);			
+
+		GridFormatter formatter = new GridFormatter(m_grid);		
+		sb.append(formatter.formatGridAsHTML(new Solver.AssignedValueDisplay(), -1));
+
+		sb.append("<p/><hr/><p/>").append(nl);
+
+		m_htmlDiagnostics += sb.toString();
+	}
+	
+	public void showFinalGrid() {
+//		if(!m_produceHtmlDiagnostics) return;
+		String nl = System.lineSeparator();
+		StringBuilder sb = new StringBuilder();
+		sb.append("<h2>Final Grid" + "</h2>").append(nl);			
+
+		GridFormatter formatter = new GridFormatter(m_grid);		
+		sb.append(formatter.formatGridAsHTML(new Solver.AssignedValueDisplay(), -1));
+
+		sb.append("<p/><hr/><p/>").append(nl);
+
+		m_htmlDiagnostics += sb.toString();
+	}
+	
+	void collectDiagnosticsAfterStep(int stepNumber, List<String> actions) {
+		if(!m_produceHtmlDiagnostics) return;
+		String nl = System.lineSeparator();
+		StringBuilder sb = new StringBuilder();
+		if(stepNumber == -1) {
+			sb.append("<h2>Initial Grid Assessment" + "</h2>").append(nl);			
 		}
 		else {
-			sb.append("<h2>Grid after Step " + stepNumber + "</h2>").append(nl);
+			sb.append("<h2>Grid Assessment after Step " + stepNumber + "</h2>").append(nl);
 		}
 		
 		sb.append("<p/>");
@@ -381,52 +434,91 @@ public class Solver {
 			sb.append("<div class=observation>" + o + "</div>").append("<p/>").append(nl);
 		}
 		
-		sb.append("<p/>");
+		sb.append("<ul>");
 		for(String a : actions) {
-			sb.append(a).append("<p/>").append(nl);
+			sb.append("<li>").append(a).append("</li>").append(nl);
 		}
+		sb.append("</ul>");
 		
 		GridFormatter formatter = new GridFormatter(m_grid);
 		
 		sb.append("<table>").append(nl);
 		sb.append("<tr>").append(nl);
-		sb.append("<td>").append(nl);
+		sb.append("<td>Assigned values<P>").append(nl);
 		sb.append(formatter.formatGridAsHTML(new Solver.AssignedValueDisplay(), stepNumber));
 		sb.append("</td>").append(nl);
 		sb.append("<td>&nbsp;&nbsp;&nbsp;&nbsp;").append(nl);
-		sb.append("<td>").append(nl);
+		sb.append("<td>Could-be values count<P>").append(nl);
 		sb.append(formatter.formatGridAsHTML(new Solver.CouldBeValueCountDisplay(), stepNumber));
 		sb.append("</td>").append(nl);
 		sb.append("<td>&nbsp;&nbsp;&nbsp;&nbsp;").append(nl);
-		sb.append("<td>").append(nl);
+		sb.append("<td>Could-be values list<P>").append(nl);
 		sb.append(formatter.formatGridAsHTML(new Solver.CouldBeValueDisplay(), stepNumber));
 		sb.append("</td>").append(nl);
 		sb.append("</tr>").append(nl);
 		sb.append("</table>").append(nl);
 		
+		sb.append("<p>").append(nl);
+		sb.append("Possible cells for each symbol in each row/column/box");
 		sb.append("<p/>").append(nl);
-		sb.append("<table>").append(nl);
+
+		sb.append("<table class=cellsettable>").append(nl);
 		sb.append("<tr>").append(nl);
-		
+		sb.append("<th class=\"cellsetcell cellsettablerowtitle\">").append("").append("</th>").append(nl);
+		Set<Symbol> symbols = m_symbols.getSymbolSet();
+		for(Symbol symbol : symbols) {
+			sb.append("<th class=\"cellsetcell\">").append(symbol.getRepresentation()).append("</th>").append(nl);			
+		}
+		sb.append("</tr>").append(nl);
 		for(int cellSet = 1; cellSet <= 3; cellSet++) {
-			
-//			sb.append("<td>").append(nl);
-//			sb.append("<table>").append(nl);
 			for(CellSetAssessment cellset : m_lCellSetAssessments) {
 				if((cellSet == 1) && !(cellset instanceof RowAssessment)) continue;
 				if((cellSet == 2) && !(cellset instanceof ColumnAssessment)) continue;
 				if((cellSet == 3) && !(cellset instanceof BoxAssessment)) continue;
+				String cls = "cellsetcell cellsettablerowtitle";
+				if(cellset.stepNumberOfLatestChange() == stepNumber) {
+					cls += " highlight";
+				}
+				
+				cls = "\"" + cls + "\"";
 				sb.append("<tr>").append(nl);
-				String bgColor = cellset.stepNumberOfLatestChange() == stepNumber ? " bgcolor=cyan" : "";
-				sb.append("<td" + bgColor + ">").append(nl);
-				sb.append(cellset.getOneBasedRepresentation() + " : " + cellset.getSymbolAssignmentSummary() + "<br/>");
-				sb.append("</td>").append(nl);
+				sb.append("<td  class=" + cls + ">").append(cellset.getOneBasedRepresentation()).append("</td>").append(nl);					
+				for(Symbol symbol : symbols) {
+					cls = "cellsetcell";
+					List<Cell> lc = cellset.getCouldBeCellsForSymbol(symbol);
+					String slc = Cell.cellCollectionToString(lc);
+					boolean highlight = false; // provider.changedThisStep(cell,  stepNumberToHighlight);
+					highlight = (cellset.getStepNumberOfLatestChangeForSymbol(symbol) == stepNumber);
+					if(highlight) {
+						cls += " highlight";
+					}
+					if(lc.size() == 1) {
+						Cell cell = lc.get(0);
+						//CellAssessment ca = ;
+						//highlight = (assessmentForCell(cell).stepNumberOfLatestChange() == stepNumber);
+						boolean given = cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given;
+						if(highlight) {
+//							cls += " highlight";
+						}
+						else if(given) {
+							cls += " given";					
+						}
+						else if(cell.isAssigned()) {
+							cls += " previouslyassigned";
+						}
+
+						//if(cell.assignment().method() == )
+						//cls += " previouslyassigned";		// Handle Given, and assigned-during-this-step
+					}
+					cls = "\"" + cls + "\"";
+					String title = "lastchange=" + cellset.getStepNumberOfLatestChangeForSymbol(symbol);
+					sb.append("<td  class=" + cls + " title=\"" + title + "\">").append(slc).append("</td>").append(nl);					
+				}
+				
 				sb.append("</tr>").append(nl);
 			}
-//			sb.append("</table>").append(nl);
-//			sb.append("</td>").append(nl);
 		}
-			
+		sb.append("</table>").append(nl);
 
 		sb.append("</tr>").append(nl);
 		sb.append("</table>").append(nl);
@@ -434,10 +526,12 @@ public class Solver {
 		
 		sb.append("<p/><hr/><p/>").append(nl);
 
+//		if(stepNumber < 3)
 		m_htmlDiagnostics += sb.toString();
 	}
 	
-	public void finaliseDiagnostics() {
+	public void finaliseDiagnostics(int steps, long ms) {
+//		if(!m_produceHtmlDiagnostics) return;
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		sb.append("<h2>Summary</h2>").append(nl);			
@@ -449,6 +543,8 @@ public class Solver {
 		}
 		sb.append("</ul>").append(nl);
 		
+		sb.append("<p/>Took " + ms + " ms, " + steps + " steps<p/>").append(nl);
+		sb.append("<p/><hr/><p/>").append(nl);
 		// ???? Stats ????
 		// Show initial and final grids, whether complete, whether invalid ????
 		m_htmlDiagnostics += sb.toString();
@@ -485,7 +581,7 @@ class Method1 extends Method {
 			if(a != null) {
 				CellAssignmentStatus status = m_solver.performAssignment(a);
 				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "Assigned symbol " + a.symbol().getRepresentation() + " to Cell " + a.cell().getOneBasedGridLocationString() + " for " + csa.getOneBasedRepresentation();
+					String s = "assigned symbol " + a.symbol().getRepresentation() + " to cell " + a.cell().getOneBasedGridLocationString() + " for " + csa.getOneBasedRepresentation().toLowerCase();
 					actions.add(s);
 					changedState = true;
 				}
@@ -531,7 +627,7 @@ class Method2 extends Method {
 			if(a != null) {
 				CellAssignmentStatus status = m_solver.performAssignment(a);
 				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "Assigned only possible symbol " + a.symbol().getRepresentation() + " to Cell " + ca.cell().getOneBasedGridLocationString();
+					String s = "assigned only possible symbol " + a.symbol().getRepresentation() + " to cell " + ca.cell().getOneBasedGridLocationString();
 					actions.add(s);
 					changedState = true;
 				}
@@ -613,8 +709,8 @@ class Method3 extends Method {
 		}
 		
 		String getRepresentation() {
-			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getOneBasedRepresentation() + 
-						" restricted to " + m_restrictedCellSet.getOneBasedRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
+			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictedCellSet.getOneBasedRepresentation() + 
+						" must be in " + m_restrictorCellSet.getOneBasedRepresentation();
 		}
 	}
 
@@ -671,8 +767,16 @@ class Method3 extends Method {
 		for(Method3Restriction restriction : lRestrictions) {
 			int changeCount = 0;
 			for(Cell cell : restriction.m_restrictedCells) {
-				CellAssessment ca = m_solver.assessmentForCell(cell);
-				changeCount += ca.ruleOutSymbol(restriction.m_symbol, stepNumber);
+				changeCount += m_solver.spreadRulingOutImpact(cell, restriction.m_symbol, stepNumber);								
+//				CellAssessment ca = m_solver.assessmentForCell(cell);
+//				changeCount += ca.ruleOutSymbol(restriction.m_symbol, stepNumber);
+//
+//				// And update all the cell sets in which this other cell resides to reflect that the symbol is not in this cell
+//				// NB One of these == csa, but it should be harmless to repeat the ruling out
+//				// NB Duplicates some code from 'spread assignment code' earlier ???? Should be rationalised.
+//				for(CellSetAssessment csaOfOtherCell : ca.cellSetAssessments()) {
+//					csaOfOtherCell.ruleOutCellForSymbol(cell, restriction.m_symbol, stepNumber);
+//				}				
 			}
 
 			if(changeCount > 0) {
@@ -705,23 +809,28 @@ class Method4 extends Method {
 						boolean causedStateChange = ca.ruleOutAllSymbolsExcept(symbolSetRestriction.m_lSymbols, stepNumber);
 						if(causedStateChange) {
 							stateChanges++;
-							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+							String s = "Restriction1: " + symbolSetRestriction.getRepresentation();
 							actions.add(s);
+							break;
 						}
 					}
+					if(stateChanges > 0) break;
 				}
 	
+				if(stateChanges > 0) break;
 				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
 					for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
 						CellSetAssessment cseta = m_solver.assessmentForCellSet(symbolSetRestriction.m_cellSet);
 						int causedChange = cseta.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol, stepNumber);
 						if(causedChange > 0) {
 							stateChanges++;
-							String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+							String s = "Restriction2: " + symbolSetRestriction.getRepresentation();
 							actions.add(s);
+//							break;
 						}
 					}
 					
+//					if(stateChanges > 0) break;
 					List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
 					for(CellSet cset : lAffectedCellSets) {
 						CellSetAssessment cseta = m_solver.assessmentForCellSet(cset);
@@ -729,13 +838,17 @@ class Method4 extends Method {
 							int causedChange = cseta.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols, stepNumber);
 							if(causedChange > 0) {
 								stateChanges++;
-								String s = "Restriction: " + symbolSetRestriction.getRepresentation();
+								String s = "Restriction3: " + symbolSetRestriction.getRepresentation();
 								actions.add(s);
+//								break;
 							}
 						}
 					}
+//					if(stateChanges > 0) break;
 				}
+//				if(stateChanges > 0) break;
 			}
+			if(stateChanges > 0) break;
 		}
 		
 		changedState = (stateChanges > 0);
@@ -790,12 +903,12 @@ class Method4 extends Method {
 			}			
 		}
 
-		System.err.println("Found " + lCombinations.size() + " symbol combinations for " + csa.getCellSet().getRepresentation());
+//		System.err.println("Found " + lCombinations.size() + " symbol combinations for " + csa.getCellSet().getRepresentation());
 		for(List<Symbol> lCombination : lCombinations) {
 			List<Cell> lCellsForCombination = getSymbolCombinationCells(csa, lCombination);
 			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
 			if(foundSet) {
-				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolCollectionToString(lCombination) + " covers cells " +  Cell.cellCollectionToString(lCellsForCombination));				
+//				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolCollectionToString(lCombination) + " covers cells " +  Cell.cellCollectionToString(lCellsForCombination));				
 				SymbolSetRestriction restriction = new SymbolSetRestriction(csa.getCellSet(), lCombination, lCellsForCombination);
 				l.add(restriction);
 			}

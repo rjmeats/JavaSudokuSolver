@@ -1,6 +1,7 @@
 package diagnostics;
 
 import grid.Grid9x9;
+import puzzle.AssignmentMethod;
 import grid.Cell;
 
 import solver.CellContentProvider;
@@ -84,38 +85,54 @@ public class GridFormatter {
 		int currentHorizontalBoxNumber = -1;
 		int currentVerticalBoxNumber = -1;
 
-		sb.append("<table>").append(nl);
+		sb.append("<table class=gridouter>").append(nl);
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
 			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
+			String rowClass = "class=\"normalrow\"";
 			if(boxNumber != currentVerticalBoxNumber) {
 				if(currentVerticalBoxNumber != -1) {
-					sb.append("<tr>");
-					for(int columnNumber = 0; columnNumber < m_grid.columns().size()+2; columnNumber++) {
-						sb.append("<td bgcolor=black></td>");						
-					}
-					sb.append("</tr>");
+					rowClass = "class=\"gridseparatorrow\"";
+//					sb.append("<tr>");
+//					for(int columnNumber = 0; columnNumber < m_grid.columns().size()+2; columnNumber++) {
+//						sb.append("<td bgcolor=black></td>");						
+//					}
+//					sb.append("</tr>");
 				}
 				currentVerticalBoxNumber = boxNumber;
 			}
-			sb.append("<tr>").append(nl);
+			sb.append("<tr " + rowClass + ">").append(nl);
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
+				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
 				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
+				String basicCellClass = provider.getBasicCellClass();
+				String columnClass = basicCellClass + " gridnonseparatorcolumn";
 				if(boxNumber != currentHorizontalBoxNumber) {
 					if(columnNumber != 0) {
-						sb.append("<td bgcolor=black></td>");						
+//						sb.append("<td bgcolor=black></td>");						
+						columnClass = basicCellClass + " gridseparatorcolumn";
 					}
 				}
 				currentHorizontalBoxNumber = boxNumber;
 
-				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
 				String toolTip = cell.getOneBasedGridLocationString() + " = " + cell.getOneBasedCellNumber();
 				if(cell.isAssigned()) {
 					toolTip += " : " + cell.assignment().toString();
 				}
 				boolean highlight = provider.changedThisStep(cell,  stepNumberToHighlight);
-				String colour = highlight ? " bgcolor=cyan" : " bgcolor=ivory";
-				sb.append("<td " + colour + " title=\"" + toolTip + "\">").append(nl);
+				boolean given = cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given;
+				if(highlight) {
+					columnClass += " highlight";
+				}
+				else if(given) {
+					columnClass += " given";					
+				}
+				else if(cell.isAssigned()) {
+					columnClass += " previouslyassigned";
+				}
+				columnClass = "class=" + "\"" + columnClass + "\"";
+//				String colour = highlight ? " bgcolor=cyan" : " bgcolor=ivory";
+				sb.append("<td " + columnClass + " title=\"" + toolTip + "\">").append(nl);
 				String contents = provider.getContent(cell);
 				sb.append(contents).append(nl);		// Protect
 				
