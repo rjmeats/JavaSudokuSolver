@@ -1,6 +1,6 @@
 package diagnostics;
 
-import grid.Grid9x9;
+import grid.Grid;
 
 import puzzle.AssignmentMethod;
 import grid.Cell;
@@ -10,8 +10,8 @@ import solver.CellContentProvider;
 
 public class GridFormatter {
 
-	Grid9x9 m_grid;
-	public GridFormatter(Grid9x9 grid) {
+	Grid m_grid;
+	public GridFormatter(Grid grid) {
 		m_grid = grid;
 	}
 	

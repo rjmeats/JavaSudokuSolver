@@ -12,7 +12,7 @@ import grid.CellSet;
 import grid.Row;
 import grid.Column;
 import grid.Box;
-import grid.Grid9x9;
+import grid.Grid;
 
 import puzzle.Assignment;
 import puzzle.AssignmentMethod;
@@ -23,7 +23,7 @@ import diagnostics.GridFormatter;
 
 public class Solver {
 
-	Grid9x9 m_grid;	
+	Grid m_grid;	
 	SymbolsToUse m_symbols;
 	
 	private List<CellAssessment> m_lCellAssessments;
@@ -42,7 +42,7 @@ public class Solver {
 	Method3 m_method3;
 	Method4 m_method4;
 	
-	public Solver(Grid9x9 grid, SymbolsToUse symbols) {
+	public Solver(Grid grid, SymbolsToUse symbols) {
 		m_grid = grid;
 		m_symbols = symbols;
 

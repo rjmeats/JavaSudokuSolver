@@ -76,13 +76,13 @@ public class Puzzle {
 	
 	static int s_expectedSymbolCount = 9;	// Only handle a standard 9x9 grid
 	SymbolsToUse m_symbolsToUse;
-	Grid9x9 m_grid;		// The Grid we want to solve
+	Grid m_grid;		// The Grid we want to solve
 	Solver m_solver;
 	Status m_status;
 	
 	public Puzzle(SymbolsToUse symbols) {
 		m_symbolsToUse = symbols;
-		m_grid = new Grid9x9();
+		m_grid = new Grid();
 		m_solver = null;
 	}
 	
@@ -140,7 +140,7 @@ public class Puzzle {
 		}		
 	}
 
-	private void applyGivenValueToCell(Grid9x9 grid, int rowNumber, int columnNumber, Symbol symbol)
+	private void applyGivenValueToCell(Grid grid, int rowNumber, int columnNumber, Symbol symbol)
 	{
 		Cell cell = grid.getCellFromGridPosition(rowNumber, columnNumber);
 		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
@@ -181,7 +181,7 @@ public class Puzzle {
 //			System.out.println("Assignment step: " + stepNumber);
 
 			changed = m_solver.nextStep(stepNumber);
-			Grid9x9.Stats stats = m_grid.getStats();
+			Grid.Stats stats = m_grid.getStats();
 			complete = (stats.m_unassignedCells == 0);
 			
 //			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);

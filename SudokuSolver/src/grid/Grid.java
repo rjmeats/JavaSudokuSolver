@@ -8,7 +8,7 @@ import java.util.LinkedHashSet;
 
 import puzzle.AssignmentMethod;
 
-public class Grid9x9 {
+public class Grid {
 
 	private static int NUM_ROWS = 9;
 	private static int NUM_COLUMNS = 9;
@@ -21,7 +21,7 @@ public class Grid9x9 {
 	private List<Box> m_lBoxes;		
 	private List<Cell> m_lCells;	
 	
-	public Grid9x9() {
+	public Grid() {
 
 		m_lRows = new ArrayList<>();
 		for(int rowNum = 0; rowNum < NUM_ROWS; rowNum++) {
