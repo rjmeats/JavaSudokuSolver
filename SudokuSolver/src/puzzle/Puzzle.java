@@ -37,6 +37,13 @@ public class Puzzle {
 
 		// Only work with basic symbols 1 to 9 for now, expecting a standard 9x9 grid
 		SymbolsToUse symbolsToUse = SymbolsToUse.SET_1_TO_9;
+		GridLayout layout = GridLayout.GRID9x9;
+
+		//symbolsToUse = SymbolsToUse.SET_1_TO_6;
+		//layout = GridLayout.GRID6x6;
+
+		symbolsToUse = SymbolsToUse.SET_A_TO_Y;
+		layout = GridLayout.GRID25x25;
 
 		System.out.println("Using initial grid values:");
 		System.out.println();
@@ -47,7 +54,7 @@ public class Puzzle {
 		System.out.println("Symbols to use: " + symbolsToUse.toString());
 		System.out.println();
 				
-		Puzzle puzzle = new Puzzle(symbolsToUse);
+		Puzzle puzzle = new Puzzle(symbolsToUse, layout);
 		InitialGridStatus status = puzzle.loadGivenCells(contentProvider);
 		
 		if(!status.m_isOK) {
@@ -74,34 +81,34 @@ public class Puzzle {
 	// ================================================================================================
 	// ================================================================================================
 	
-	static int s_expectedSymbolCount = 9;	// Only handle a standard 9x9 grid
+//	static int s_expectedSymbolCount = 9;	// Only handle a standard 9x9 grid
 	SymbolsToUse m_symbolsToUse;
 	Grid m_grid;		// The Grid we want to solve
 	Solver m_solver;
 	Status m_status;
 	
-	public Puzzle(SymbolsToUse symbols) {
+	public Puzzle(SymbolsToUse symbols, GridLayout layout) {
 		m_symbolsToUse = symbols;
-		m_grid = new Grid();
+		m_grid = new Grid(layout);
 		m_solver = null;
 	}
 	
 	public InitialGridStatus loadGivenCells(InitialGridContentProvider contentProvider) {
 		InitialGridStatus status = new InitialGridStatus();
 		
-		if(m_symbolsToUse.size() != s_expectedSymbolCount) {
-			status.setError("Unexpected number of symbols: " + m_symbolsToUse.size() + " instead of " + s_expectedSymbolCount);
+		if(m_symbolsToUse.size() != m_grid.layout().m_rows) {
+			status.setError("Unexpected number of symbols: " + m_symbolsToUse.size() + " instead of " + m_grid.layout().m_rows);
 			return status;
 		}
 		
-		if(contentProvider.m_dataLines.size() != s_expectedSymbolCount) {
-			status.setError("Unexpected number of rows in initial grid: " + contentProvider.m_dataLines.size() + " instead of " + s_expectedSymbolCount);
+		if(contentProvider.m_dataLines.size() != m_grid.layout().m_columns) {
+			status.setError("Unexpected number of rows in initial grid: " + contentProvider.m_dataLines.size() + " instead of " + m_grid.layout().m_rows);
 		}
 		else {
 			for(int rowNumber = 0; rowNumber < contentProvider.m_dataLines.size(); rowNumber ++) {
 				String rowString = contentProvider.m_dataLines.get(rowNumber);
-				if(rowString.length() != 9) {
-					status.setError("Unexpected number of column values: " + rowString.length() +  " instead of " + s_expectedSymbolCount + " : [" + rowString + "]");	// Not showing the raw input
+				if(rowString.length() != m_grid.layout().m_columns) {
+					status.setError("Unexpected number of column values: " + rowString.length() +  " instead of " + m_grid.layout().m_columns + " : [" + rowString + "]");	// Not showing the raw input
 				}
 				else {
 					processInitialGridRow(rowNumber, rowString, status);
@@ -175,16 +182,16 @@ public class Puzzle {
 		{
 			stepNumber++;
 			
-//			System.out.println("==================================================================================================");
-//			System.out.println("==================================================================================================");
-//			System.out.println();
-//			System.out.println("Assignment step: " + stepNumber);
+			System.out.println("==================================================================================================");
+			System.out.println("==================================================================================================");
+			System.out.println();
+			System.out.println("Assignment step: " + stepNumber);
 
 			changed = m_solver.nextStep(stepNumber);
 			Grid.Stats stats = m_grid.getStats();
 			complete = (stats.m_unassignedCells == 0);
 			
-//			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
+			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
 //			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);
 //			m_solver.printGrid(m_solver.new CouldBeValueDisplay(), stepNumber);
 //			m_solver.printCellSets(stepNumber);
@@ -282,7 +289,7 @@ public class Puzzle {
 	
 	public static Puzzle.Status solve9x9Puzzle(String content) {
 		InitialGridContentProvider contentProvider = InitialGridContentProvider.from9x9String(content);
-		Puzzle puzzle = new Puzzle(SymbolsToUse.SET_1_TO_9);
+		Puzzle puzzle = new Puzzle(SymbolsToUse.SET_1_TO_9, GridLayout.GRID9x9);
 		InitialGridStatus initialStatus = puzzle.loadGivenCells(contentProvider);
 		if(initialStatus.m_isOK) {
 			puzzle.solve();

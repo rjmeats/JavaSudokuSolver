@@ -83,7 +83,7 @@ public class Solver {
 			}
 		}
 		
-		m_produceHtmlDiagnostics = true;
+		m_produceHtmlDiagnostics = false;
 		m_htmlDiagnostics = "";
 		m_observations = new ArrayList<>();
 		m_stepObservations = new ArrayList<>();
@@ -544,6 +544,7 @@ public class Solver {
 		sb.append("</ul>").append(nl);
 		
 		sb.append("<p/>Took " + ms + " ms, " + steps + " steps<p/>").append(nl);
+System.out.println("Took " + ms + " ms.");		
 		sb.append("<p/><hr/><p/>").append(nl);
 		// ???? Stats ????
 		// Show initial and final grids, whether complete, whether invalid ????

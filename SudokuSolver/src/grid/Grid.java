@@ -10,38 +10,35 @@ import puzzle.AssignmentMethod;
 
 public class Grid {
 
-	private static int NUM_ROWS = 9;
-	private static int NUM_COLUMNS = 9;
-	private static int NUM_BOXES = 9;
-	private static int BOX_HEIGHT = 3;
-	private static int BOX_WIDTH = 3;
-	
+	private GridLayout m_layout;
 	private List<Row> m_lRows;
 	private List<Column> m_lColumns;
 	private List<Box> m_lBoxes;		
 	private List<Cell> m_lCells;	
 	
-	public Grid() {
+	public Grid(GridLayout layout) {
 
+		m_layout = layout;
+		
 		m_lRows = new ArrayList<>();
-		for(int rowNum = 0; rowNum < NUM_ROWS; rowNum++) {
+		for(int rowNum = 0; rowNum < m_layout.m_rows; rowNum++) {
 			m_lRows.add(new Row(rowNum));
 		}
 		
 		m_lColumns = new ArrayList<>();
-		for(int columnNum = 0; columnNum < NUM_COLUMNS; columnNum++) {
+		for(int columnNum = 0; columnNum < m_layout.m_columns; columnNum++) {
 			m_lColumns.add(new Column(columnNum));
 		}
 			
 		m_lBoxes = new ArrayList<>();
-		for(int boxNum = 0; boxNum < NUM_BOXES; boxNum++) {
+		for(int boxNum = 0; boxNum < m_layout.m_boxes; boxNum++) {
 			m_lBoxes.add(new Box(boxNum));
 		}
 
 		m_lCells = new ArrayList<>();
 		int cellNumber = 0;
-		for(int rowNum = 0; rowNum < NUM_ROWS; rowNum++) {
-			for(int columnNum = 0; columnNum < NUM_COLUMNS; columnNum++) {
+		for(int rowNum = 0; rowNum < m_lRows.size(); rowNum++) {
+			for(int columnNum = 0; columnNum < m_lColumns.size(); columnNum++) {
 				addCell(cellNumber++, rowNum, columnNum);
 			}			
 		}		
@@ -59,6 +56,10 @@ public class Grid {
 		row.addCell(cell);
 		column.addCell(cell);
 		box.addCell(cell);		
+	}
+	
+	public GridLayout layout() {
+		return m_layout;
 	}
 	
 	public List<Row> rows() {
@@ -79,12 +80,12 @@ public class Grid {
 	
 	public List<Cell> getListOfIncompatibleCells() {
 		
-		// Get cells from each CellSet that use a symbol more than once.
+		// Get a list of all the cells which clash.
 		List<CellSet> lCellSets = new ArrayList<>(m_lRows);
 		lCellSets.addAll(m_lColumns);
 		lCellSets.addAll(m_lBoxes);
 		
-		Set<Cell> s = new LinkedHashSet<>();
+		Set<Cell> s = new LinkedHashSet<>();	// Only list each clashing cell once. 
 		for(CellSet cellSet : lCellSets) {
 			s.addAll(cellSet.getListOfIncompatibleCells());
 		}
@@ -97,8 +98,8 @@ public class Grid {
 	// ..
 	// 72 73 ... 80
 	
-	private static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return rowNumber*NUM_COLUMNS + columnNumber;
+	private int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
+		return rowNumber * m_layout.m_columns + columnNumber;
 	}
 	
 	public Cell getCellFromGridPosition(int rowNumber, int columnNumber) {		
@@ -109,8 +110,9 @@ public class Grid {
 	// 3 4 5
 	// 6 7 8
 	
-	private static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return (rowNumber/BOX_HEIGHT)*BOX_HEIGHT + columnNumber / BOX_WIDTH;
+	private int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
+		return ((rowNumber/m_layout.m_rowsPerBox) * m_layout.m_rowsPerBox) + 
+			   (columnNumber / m_layout.m_columnsPerBox);
 	}
 
 	public Box getBoxFromGridPosition(int rowNumber, int columnNumber) {
@@ -120,37 +122,32 @@ public class Grid {
 	// ---------------------------------------------------------------------
 	
 	public class Stats {
-		public int m_cellCount;
-		public int m_rowCount;
-		public int m_columnCount;
-		public int m_boxCount;
-		public int m_initialAssignedCells;
-		public int m_assignedCells;
-		public int m_unassignedCells;
 		
-		private Stats() {			
+		public GridLayout m_layout;
+		public int m_initialAssignedCellCount;
+		public int m_assignedCellCount;
+		public int m_unassignedCellCount;
+		
+		private Stats() {
 		}
 	}
 	
 	public Stats getStats() {
 		Stats stats = new Stats();
-		stats.m_cellCount = m_lCells.size();
-		stats.m_rowCount = m_lRows.size();
-		stats.m_columnCount = m_lColumns.size();
-		stats.m_boxCount = m_lBoxes.size();
-		stats.m_initialAssignedCells = 0;
-		stats.m_assignedCells = 0;
-		stats.m_unassignedCells = 0;
+		stats.m_layout = m_layout;
+		stats.m_initialAssignedCellCount = 0;
+		stats.m_assignedCellCount = 0;
+		stats.m_unassignedCellCount = 0;
 
 		for(Cell cell : m_lCells) {
 			if(cell.isAssigned()) {
-				stats.m_assignedCells++;
+				stats.m_assignedCellCount++;
 				if(cell.assignment().method() == AssignmentMethod.Given) {
-					stats.m_initialAssignedCells++;
+					stats.m_initialAssignedCellCount++;
 				}
 			}
 			else {
-				stats.m_unassignedCells++;
+				stats.m_unassignedCellCount++;
 			}
 		}
 		return stats;

@@ -8,6 +8,10 @@ public class SymbolsToUse {
 
 	public static SymbolsToUse SET_1_TO_9 = new SymbolsToUse("1", "2", "3", "4", "5", "6", "7", "8", "9");
 	public static SymbolsToUse SET_A_TO_I = new SymbolsToUse("A", "B", "C", "D", "E", "F", "G", "H", "I");
+	public static SymbolsToUse SET_1_TO_6 = new SymbolsToUse("1", "2", "3", "4", "5", "6");
+	public static SymbolsToUse SET_A_TO_Y = new SymbolsToUse("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", 
+															 "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", 
+															 "U", "V", "W", "X", "Y");
 	
 	private Set<Symbol> m_symbols;
 	
