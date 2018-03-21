@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import grid.Cell;
-
-import puzzle.Symbol;
+import grid.Symbol;
 import puzzle.SymbolsToUse;
 
 public class CellAssessment implements Comparable<CellAssessment> {

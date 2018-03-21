@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import puzzle.Assignment;
-import puzzle.Symbol;
-
 public class Cell implements Comparable<Cell> {
 
 	private int m_cellNumber;

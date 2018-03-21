@@ -1,6 +1,9 @@
 package puzzle;
 
 import java.util.Set;
+
+import grid.Symbol;
+
 import java.util.LinkedHashSet;
 import java.util.Collections;
 

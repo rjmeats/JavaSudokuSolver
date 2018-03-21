@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import grid.Cell;
 import grid.CellSet;
-import puzzle.Symbol;
+import grid.Symbol;
 import puzzle.SymbolsToUse;
 
 abstract class CellSetAssessment implements Comparable<CellSetAssessment> {

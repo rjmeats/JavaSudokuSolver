@@ -189,7 +189,7 @@ public class Puzzle {
 
 			changed = m_solver.nextStep(stepNumber);
 			Grid.Stats stats = m_grid.getStats();
-			complete = (stats.m_unassignedCells == 0);
+			complete = (stats.m_unassignedCellCount == 0);
 			
 			m_solver.printGrid(new Solver.AssignedValueDisplay(), stepNumber);
 //			m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), stepNumber);

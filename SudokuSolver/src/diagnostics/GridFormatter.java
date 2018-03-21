@@ -1,9 +1,8 @@
 package diagnostics;
 
 import grid.Grid;
-
-import puzzle.AssignmentMethod;
 import grid.Cell;
+import grid.AssignmentMethod;
 import grid.Box;
 
 import solver.CellContentProvider;

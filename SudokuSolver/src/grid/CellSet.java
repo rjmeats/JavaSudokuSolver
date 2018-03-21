@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-import puzzle.Symbol;
-
 public abstract class CellSet implements Comparable<CellSet> {
 
 	private int m_itemNumber;

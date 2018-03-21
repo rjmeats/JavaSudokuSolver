@@ -1,4 +1,4 @@
-package puzzle;
+package grid;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ public class Symbol implements Comparable<Symbol> {
 	private String m_representation;
 	private int m_ordinal;
 	
-	Symbol(String representation, int ordinal) {
+	public Symbol(String representation, int ordinal) {
 		m_representation = representation;
 		m_ordinal = ordinal;
 	}

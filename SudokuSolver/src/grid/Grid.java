@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
-import puzzle.AssignmentMethod;
-
 public class Grid {
 
 	private GridLayout m_layout;

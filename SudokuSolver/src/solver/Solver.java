@@ -10,13 +10,12 @@ import java.util.ArrayList;
 import grid.Cell;
 import grid.CellSet;
 import grid.Row;
+import grid.Symbol;
 import grid.Column;
+import grid.Assignment;
+import grid.AssignmentMethod;
 import grid.Box;
 import grid.Grid;
-
-import puzzle.Assignment;
-import puzzle.AssignmentMethod;
-import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 import diagnostics.FormatUtils;
 import diagnostics.GridFormatter;

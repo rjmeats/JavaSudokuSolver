@@ -4,8 +4,8 @@ import java.util.Set;
 
 import grid.Cell;
 import grid.CellSet;
+import grid.Symbol;
 import grid.Box;
-import puzzle.Symbol;
 import puzzle.SymbolsToUse;
 
 public class BoxAssessment extends CellSetAssessment {
