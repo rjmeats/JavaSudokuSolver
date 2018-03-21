@@ -1,8 +1,10 @@
 package diagnostics;
 
 import grid.Grid9x9;
+
 import puzzle.AssignmentMethod;
 import grid.Cell;
+import grid.Box;
 
 import solver.CellContentProvider;
 
@@ -28,14 +30,14 @@ public class GridFormatter {
 	}
 	
 	public String formatGrid(CellContentProvider ccp, int stepNumberToHighlight, boolean compact) {
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
+		Box currentHorizontalBox = null;
+		Box currentVerticalBox = null;
 		
 		StringBuilder sb1 = new StringBuilder();
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
-			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
-			if(boxNumber != currentVerticalBoxNumber) {
-				if(currentVerticalBoxNumber != -1) {
+			Box box = m_grid.getBoxFromGridPosition(rowNumber, 0);
+			if(box != currentVerticalBox) {
+				if(currentVerticalBox!= null) {
 					if(compact) {
 						sb1.append("\r\n");
 					}
@@ -43,18 +45,18 @@ public class GridFormatter {
 						sb1.append("\r\n\r\n");						
 					}
 				}
-				currentVerticalBoxNumber = boxNumber; 
+				currentVerticalBox = box; 
 			}
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
-				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
-				if(boxNumber != currentHorizontalBoxNumber) {
+				box = m_grid.getBoxFromGridPosition(rowNumber, columnNumber);
+				if(box != currentHorizontalBox) {
 					if(compact) {
 						sb1.append(" ");					}
 					else {						
 						sb1.append("    ");
 					}
-					currentHorizontalBoxNumber = boxNumber;
+					currentHorizontalBox = box;
 				}
 
 				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
@@ -82,15 +84,15 @@ public class GridFormatter {
 	public String formatGridAsHTML(CellContentProvider provider, int stepNumberToHighlight) {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
-		int currentHorizontalBoxNumber = -1;
-		int currentVerticalBoxNumber = -1;
+		Box currentHorizontalBox = null;
+		Box currentVerticalBox = null;
 
 		sb.append("<table class=gridouter>").append(nl);
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
-			int boxNumber = m_grid.getBoxFromGridPosition(rowNumber, 0).getBoxNumber();
+			Box box = m_grid.getBoxFromGridPosition(rowNumber, 0);
 			String rowClass = "class=\"normalrow\"";
-			if(boxNumber != currentVerticalBoxNumber) {
-				if(currentVerticalBoxNumber != -1) {
+			if(box != currentVerticalBox) {
+				if(currentVerticalBox != null) {
 					rowClass = "class=\"gridseparatorrow\"";
 //					sb.append("<tr>");
 //					for(int columnNumber = 0; columnNumber < m_grid.columns().size()+2; columnNumber++) {
@@ -98,24 +100,24 @@ public class GridFormatter {
 //					}
 //					sb.append("</tr>");
 				}
-				currentVerticalBoxNumber = boxNumber;
+				currentVerticalBox = box;
 			}
 			sb.append("<tr " + rowClass + ">").append(nl);
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
 				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
-				boxNumber = m_grid.getBoxFromGridPosition(rowNumber, columnNumber).getBoxNumber();
+				box = m_grid.getBoxFromGridPosition(rowNumber, columnNumber);
 				String basicCellClass = provider.getBasicCellClass();
 				String columnClass = basicCellClass + " gridnonseparatorcolumn";
-				if(boxNumber != currentHorizontalBoxNumber) {
+				if(box != currentHorizontalBox) {
 					if(columnNumber != 0) {
 //						sb.append("<td bgcolor=black></td>");						
 						columnClass = basicCellClass + " gridseparatorcolumn";
 					}
 				}
-				currentHorizontalBoxNumber = boxNumber;
+				currentHorizontalBox = box;
 
-				String toolTip = cell.getOneBasedGridLocationString() + " = " + cell.getOneBasedCellNumber();
+				String toolTip = cell.getGridLocationString() + " = " + cell.getRepresentation();
 				if(cell.isAssigned()) {
 					toolTip += " : " + cell.assignment().toString();
 				}

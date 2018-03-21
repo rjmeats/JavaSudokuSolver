@@ -43,10 +43,6 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		}
 	}
 
-	int getItemNumber() {
-		return m_cellSet.getItemNumber();
-	}
-
 	boolean contains(Cell cell) {
 		return m_cellSet.containsCell(cell);
 	}
@@ -55,12 +51,12 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return m_cellSet;
 	}
 
+//	String getRepresentation() {
+//		return m_cellSet.getRepresentation();
+//	}
+
 	String getRepresentation() {
 		return m_cellSet.getRepresentation();
-	}
-
-	String getOneBasedRepresentation() {
-		return m_cellSet.getOneBasedRepresentation();
 	}
 
 	Set<Symbol> getSymbols() {
@@ -169,7 +165,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 	@Override
 	public int compareTo(CellSetAssessment csa) {
 	   // comparison logic goes here
-		return this.getItemNumber() - csa.getItemNumber();
+		return m_cellSet.compareTo(csa.m_cellSet);
 	}
 
 	boolean symbolAlreadyAssigned(Symbol symbol) {

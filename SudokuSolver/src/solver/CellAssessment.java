@@ -125,7 +125,7 @@ public class CellAssessment implements Comparable<CellAssessment> {
 	
 	@Override
 	public int compareTo(CellAssessment c) {
-		return m_cell.cellNumber() - c.m_cell.cellNumber();
+		return m_cell.compareTo(c.m_cell);
 	}
 
 	String toCouldBeSymbolsString() {

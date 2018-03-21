@@ -30,16 +30,16 @@ public class Cell implements Comparable<Cell> {
 	public Assignment assignment() 		{ return m_assignment; }
 	public int cellNumber() 			{ return m_cellNumber; }
 	
-	public int getOneBasedCellNumber() 	{ return m_cellNumber+1; }
-
+	// Use one-based numbering for external descriptions
 	public String getGridLocationString() {
-		return "{" + m_column.getColumnNumber() + "," + m_row.getRowNumber() + "}";
-	}
-	
-	public String getOneBasedGridLocationString() {
-		return "[" + (m_column.getColumnNumber()+1) + "," + (m_row.getRowNumber()+1) + "]";
+		return "[" + (m_column.getNumberOnlyRepresentation()) + "," + (m_row.getNumberOnlyRepresentation()) + "]";
 	}
 
+	public String getRepresentation() {
+		return "Cell " + (cellNumber()+1);
+	}
+
+	// For debuggers only
 	public String toString() {
 		return "Cell no=" + cellNumber();
 	}
@@ -61,12 +61,13 @@ public class Cell implements Comparable<Cell> {
 		return m_cellNumber - c.m_cellNumber;
 	}
 
+	// For external consumption, so use one-based cell numbering
 	public static String cellCollectionToString(Collection<Cell> cells) {
 		List<Cell> l = new ArrayList<>(cells);
 		Collections.sort(l);
 		StringBuilder sb = new StringBuilder();
 		for(Cell cell: l) {
-			sb.append(cell.getOneBasedCellNumber()).append(" ");
+			sb.append(cell.cellNumber()+1).append(" ");
 		}
 		return sb.toString().trim();
 	}

@@ -3,27 +3,36 @@ package grid;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import puzzle.Symbol;
 
-public abstract class CellSet {
+public abstract class CellSet implements Comparable<CellSet> {
 
 	private int m_itemNumber;
+	private String m_typeName;
 	private Set<Cell> m_lCells;
 		
-	public CellSet(int itemNumber) {
+	public CellSet(String typeName, int itemNumber) {
+		m_typeName = typeName;
 		m_itemNumber = itemNumber;
 		m_lCells = new TreeSet<>();
 	}
 
-	public int getItemNumber() { return m_itemNumber; }
+	private int getItemNumber() { return m_itemNumber; }
 	
-	public abstract String getRepresentation();
-	public abstract String getOneBasedRepresentation();
+	public String getRepresentation() {
+		return m_typeName + " " + getNumberOnlyRepresentation(); 
+	}
 
+	public String getNumberOnlyRepresentation() {
+		return "" + (getItemNumber()+1);
+	}
+	
 	void addCell(Cell cell)	{
 		m_lCells.add(cell);
 	}
@@ -41,7 +50,7 @@ public abstract class CellSet {
 	}
 	
 	// Check that no symbol is used more than once in the cells in this cell set - return the cells where there is duplication
-	public Set<Cell> getIncompatibleCells() {
+	public List<Cell> getListOfIncompatibleCells() {
 		Map<Symbol, Cell> symbols = new HashMap<>();
 		Set<Cell> sameSymbolCells = new LinkedHashSet<>();
 		
@@ -59,7 +68,7 @@ public abstract class CellSet {
 			}
 		}
 		
-		return sameSymbolCells;
+		return new ArrayList<>(sameSymbolCells);
 	}
 	
 	public Set<Cell> getCellsNotIn(CellSet cs) {
@@ -67,6 +76,11 @@ public abstract class CellSet {
 	}
 
 	public int compareTo(CellSet cellset) {
-		return getItemNumber() - cellset.getItemNumber();
+		int diff = m_typeName.compareTo(cellset.m_typeName);
+		if(diff == 0) {
+			diff = getItemNumber() - cellset.getItemNumber();
+		}
+		
+		return diff;
 	}
 }

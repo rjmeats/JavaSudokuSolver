@@ -32,7 +32,7 @@ class SymbolRestriction {
 	}
 	
 	String getRepresentation() {
-		return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getOneBasedRepresentation() + 
-					" restricted to " + m_restrictedCellSet.getOneBasedRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
+		return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getRepresentation() + 
+					" restricted to " + m_restrictedCellSet.getRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
 	}
 }

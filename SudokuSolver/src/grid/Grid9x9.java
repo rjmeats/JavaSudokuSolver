@@ -10,37 +10,38 @@ import puzzle.AssignmentMethod;
 
 public class Grid9x9 {
 
+	private static int NUM_ROWS = 9;
+	private static int NUM_COLUMNS = 9;
+	private static int NUM_BOXES = 9;
+	private static int BOX_HEIGHT = 3;
+	private static int BOX_WIDTH = 3;
+	
 	private List<Row> m_lRows;
 	private List<Column> m_lColumns;
-	private List<Box> m_lBoxes;	
-	
+	private List<Box> m_lBoxes;		
 	private List<Cell> m_lCells;	
-	
-	private static int s_rows = 9;
-	private static int s_columns = 9;
-	private static int s_boxes = 9;
 	
 	public Grid9x9() {
 
 		m_lRows = new ArrayList<>();
-		for(int rowNum = 0; rowNum < s_rows; rowNum++) {
+		for(int rowNum = 0; rowNum < NUM_ROWS; rowNum++) {
 			m_lRows.add(new Row(rowNum));
 		}
 		
 		m_lColumns = new ArrayList<>();
-		for(int columnNum = 0; columnNum < s_columns; columnNum++) {
+		for(int columnNum = 0; columnNum < NUM_COLUMNS; columnNum++) {
 			m_lColumns.add(new Column(columnNum));
 		}
 			
 		m_lBoxes = new ArrayList<>();
-		for(int boxNum = 0; boxNum < s_boxes; boxNum++) {
+		for(int boxNum = 0; boxNum < NUM_BOXES; boxNum++) {
 			m_lBoxes.add(new Box(boxNum));
 		}
 
 		m_lCells = new ArrayList<>();
 		int cellNumber = 0;
-		for(int rowNum = 0; rowNum < s_rows; rowNum++) {
-			for(int columnNum = 0; columnNum < s_columns; columnNum++) {
+		for(int rowNum = 0; rowNum < NUM_ROWS; rowNum++) {
+			for(int columnNum = 0; columnNum < NUM_COLUMNS; columnNum++) {
 				addCell(cellNumber++, rowNum, columnNum);
 			}			
 		}		
@@ -76,19 +77,19 @@ public class Grid9x9 {
 		return Collections.unmodifiableList(m_lCells);
 	}
 	
-	public Set<Cell> getIncompatibleCells() {
-		Set<Cell> l = new LinkedHashSet<>();
+	public List<Cell> getListOfIncompatibleCells() {
 		
 		// Get cells from each CellSet that use a symbol more than once.
 		List<CellSet> lCellSets = new ArrayList<>(m_lRows);
 		lCellSets.addAll(m_lColumns);
 		lCellSets.addAll(m_lBoxes);
 		
+		Set<Cell> s = new LinkedHashSet<>();
 		for(CellSet cellSet : lCellSets) {
-			l.addAll(cellSet.getIncompatibleCells());
+			s.addAll(cellSet.getListOfIncompatibleCells());
 		}
 		
-		return l;
+		return new ArrayList<>(s);
 	}
 	
 	// 0  1  ... 8
@@ -96,11 +97,11 @@ public class Grid9x9 {
 	// ..
 	// 72 73 ... 80
 	
-	public static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return rowNumber*s_columns + columnNumber;
+	private static int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
+		return rowNumber*NUM_COLUMNS + columnNumber;
 	}
 	
-	public Cell getCellFromGridPosition(int rowNumber, int columnNumber) {
+	public Cell getCellFromGridPosition(int rowNumber, int columnNumber) {		
 		return m_lCells.get(getCellNumberFromGridPosition(rowNumber, columnNumber));
 	}
 	
@@ -108,9 +109,8 @@ public class Grid9x9 {
 	// 3 4 5
 	// 6 7 8
 	
-	// Where do the hard-coded 3s come from. 9x9 obviously but how ????
 	private static int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return (rowNumber/3)*3 + columnNumber / 3;
+		return (rowNumber/BOX_HEIGHT)*BOX_HEIGHT + columnNumber / BOX_WIDTH;
 	}
 
 	public Box getBoxFromGridPosition(int rowNumber, int columnNumber) {
@@ -121,21 +121,23 @@ public class Grid9x9 {
 	
 	public class Stats {
 		public int m_cellCount;
+		public int m_rowCount;
+		public int m_columnCount;
+		public int m_boxCount;
 		public int m_initialAssignedCells;
 		public int m_assignedCells;
-		public int m_unassignedCells;		
+		public int m_unassignedCells;
 		
-		Stats() {
-			m_cellCount = -1;
-			m_initialAssignedCells = -1;
-			m_assignedCells = -1;
-			m_unassignedCells = -1;
+		private Stats() {			
 		}
 	}
 	
 	public Stats getStats() {
 		Stats stats = new Stats();
 		stats.m_cellCount = m_lCells.size();
+		stats.m_rowCount = m_lRows.size();
+		stats.m_columnCount = m_lColumns.size();
+		stats.m_boxCount = m_lBoxes.size();
 		stats.m_initialAssignedCells = 0;
 		stats.m_assignedCells = 0;
 		stats.m_unassignedCells = 0;

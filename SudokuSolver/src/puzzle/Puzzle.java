@@ -3,8 +3,7 @@ package puzzle;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-
-import java.util.Set;
+import java.util.List;
 
 import grid.*;
 import solver.*;
@@ -111,11 +110,11 @@ public class Puzzle {
 		}
 				
 		// Now check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
-		Set<Cell> badCells = m_grid.getIncompatibleCells();
+		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getOneBasedGridLocationString() + " ");
+				badCellString += (cell.getGridLocationString() + " ");
 			}
 			status.setError("Invalid initial grid : see cells " + badCellString);			
 		}
@@ -230,11 +229,11 @@ public class Puzzle {
 		GridFormatter gf2 = new GridFormatter(m_grid);
 		m_status.m_finalGrid = gf2.formatCompactGrid(new Solver.AssignedValueDisplay());
 		
-		Set<Cell> badCells = m_grid.getIncompatibleCells();
+		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getOneBasedGridLocationString() + " ");
+				badCellString += (cell.getGridLocationString() + " ");
 			}
 			m_status.m_valid = false;
 			m_status.m_invalidDetails = "Invalid final grid : see cells " + badCellString;			

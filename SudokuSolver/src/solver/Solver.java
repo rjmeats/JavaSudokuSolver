@@ -83,7 +83,7 @@ public class Solver {
 			}
 		}
 		
-		m_produceHtmlDiagnostics = false;
+		m_produceHtmlDiagnostics = true;
 		m_htmlDiagnostics = "";
 		m_observations = new ArrayList<>();
 		m_stepObservations = new ArrayList<>();
@@ -338,7 +338,7 @@ public class Solver {
 		public String getHeading() { return "Cell numbering"; }
 		
 		public String getContent(Cell cell) {
-			return(FormatUtils.padRight(cell.cellNumber(), 5));
+			return(FormatUtils.padRight(cell.getRepresentation(), 5));
 		}
 		public String getBasicCellClass() {
 			return "gridcell";
@@ -351,7 +351,7 @@ public class Solver {
 		public String getHeading() { return "Box numbering"; }
 		
 		public String getContent(Cell cell) {
-			return(FormatUtils.padRight(cell.box().getBoxNumber(), 5));
+			return(FormatUtils.padRight(cell.box().getRepresentation(), 5));
 		}
 
 		public String getBasicCellClass() {
@@ -482,7 +482,7 @@ public class Solver {
 				
 				cls = "\"" + cls + "\"";
 				sb.append("<tr>").append(nl);
-				sb.append("<td  class=" + cls + ">").append(cellset.getOneBasedRepresentation()).append("</td>").append(nl);					
+				sb.append("<td  class=" + cls + ">").append(cellset.getRepresentation()).append("</td>").append(nl);					
 				for(Symbol symbol : symbols) {
 					cls = "cellsetcell";
 					List<Cell> lc = cellset.getCouldBeCellsForSymbol(symbol);
@@ -581,7 +581,7 @@ class Method1 extends Method {
 			if(a != null) {
 				CellAssignmentStatus status = m_solver.performAssignment(a);
 				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "assigned symbol " + a.symbol().getRepresentation() + " to cell " + a.cell().getOneBasedGridLocationString() + " for " + csa.getOneBasedRepresentation().toLowerCase();
+					String s = "assigned symbol " + a.symbol().getRepresentation() + " to cell " + a.cell().getGridLocationString() + " for " + csa.getRepresentation().toLowerCase();
 					actions.add(s);
 					changedState = true;
 				}
@@ -627,7 +627,7 @@ class Method2 extends Method {
 			if(a != null) {
 				CellAssignmentStatus status = m_solver.performAssignment(a);
 				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "assigned only possible symbol " + a.symbol().getRepresentation() + " to cell " + ca.cell().getOneBasedGridLocationString();
+					String s = "assigned only possible symbol " + a.symbol().getRepresentation() + " to cell " + ca.cell().getGridLocationString();
 					actions.add(s);
 					changedState = true;
 				}
@@ -709,8 +709,8 @@ class Method3 extends Method {
 		}
 		
 		String getRepresentation() {
-			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictedCellSet.getOneBasedRepresentation() + 
-						" must be in " + m_restrictorCellSet.getOneBasedRepresentation();
+			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictedCellSet.getRepresentation() + 
+						" must be in " + m_restrictorCellSet.getRepresentation();
 		}
 	}
 
@@ -944,7 +944,7 @@ class Method4 extends Method {
 		List<CellSet> getAffectedCellSets() {
 			Set<CellSet> set = new TreeSet<>();		// Tree set maintains sorting order, LinkedHashSet maintains insertion order ????	
 			for(Cell cell : m_lCells) {
-				set.add(cell.box());
+				set.add(cell.box());			// Invokes compare, so box, row, column need to implement comparable to do the ordering of CellSets  
 				set.add(cell.row());
 				set.add(cell.column());
 			}
@@ -952,7 +952,7 @@ class Method4 extends Method {
 		}
 		
 		String getRepresentation() {
-			return "SymbolSetRestriction for " + m_cellSet.getOneBasedRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionToString(m_lCells); 
+			return "SymbolSetRestriction for " + m_cellSet.getRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionToString(m_lCells); 
 		}
 	}
 }	
