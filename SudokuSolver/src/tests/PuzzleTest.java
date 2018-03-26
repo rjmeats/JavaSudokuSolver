@@ -148,7 +148,7 @@ public class PuzzleTest {
 		Puzzle.Status status = Puzzle.solve9x9Puzzle(content);
 		assertFalse(status.m_initialGridStatus.m_isOK);
 		
-		// Error message should mention cells involved [1,1] [8,1]  (using 1-based coordinates) 
+		// Error message should mention cells involved [1,1] [8,1] 
 		assertTrue(status.m_initialGridStatus.m_errorMessage.indexOf("[1,1]") != -1);
 		assertTrue(status.m_initialGridStatus.m_errorMessage.indexOf("[8,1]") != -1);
 		

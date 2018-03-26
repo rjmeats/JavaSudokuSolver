@@ -206,7 +206,7 @@ public class Solver {
 		csa.assignmentMade(assignment.symbol(), assignmentCell, assignment.stepNumber());
 	
 		// Go through the other cells in this cell-set, and rule out this symbol from being assigned to those cells 
-		for(Cell otherCell : csa.getCellSet().getCells()) {
+		for(Cell otherCell : csa.getCellSet().cells()) {
 			if(otherCell != assignmentCell) {
 				// This cell isn't assigned to the symbol
 				spreadRulingOutImpact(otherCell, assignment.symbol(), assignment.stepNumber());

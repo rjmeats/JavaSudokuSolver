@@ -21,25 +21,25 @@ public abstract class CellSet implements Comparable<CellSet> {
 		m_lCells = new TreeSet<>();
 	}
 
-	private int getItemNumber() { return m_itemNumber; }
+	void addCell(Cell cell)	{
+		m_lCells.add(cell);
+	}
+
+	private int itemNumber() { return m_itemNumber; }
 	
 	public String getRepresentation() {
 		return m_typeName + " " + getNumberOnlyRepresentation(); 
 	}
 
 	public String getNumberOnlyRepresentation() {
-		return "" + (getItemNumber()+1);
+		return "" + (itemNumber()+1);
 	}
 	
-	void addCell(Cell cell)	{
-		m_lCells.add(cell);
-	}
-
 	public boolean containsCell(Cell cell) {
 		return m_lCells.contains(cell);	
 	}
 
-	public Set<Cell> getCells() {
+	public Set<Cell> cells() {
 		return new LinkedHashSet<>(m_lCells);
 	}
 	
@@ -76,7 +76,7 @@ public abstract class CellSet implements Comparable<CellSet> {
 	public int compareTo(CellSet cellset) {
 		int diff = m_typeName.compareTo(cellset.m_typeName);
 		if(diff == 0) {
-			diff = getItemNumber() - cellset.getItemNumber();
+			diff = itemNumber() - cellset.itemNumber();
 		}
 		
 		return diff;
