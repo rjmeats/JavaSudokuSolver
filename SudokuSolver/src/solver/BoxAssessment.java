@@ -33,6 +33,6 @@ class SymbolRestriction {
 	
 	String getRepresentation() {
 		return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getRepresentation() + 
-					" restricted to " + m_restrictedCellSet.getRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionToString(m_restrictedCells);
+					" restricted to " + m_restrictedCellSet.getRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionRepresentation(m_restrictedCells);
 	}
 }

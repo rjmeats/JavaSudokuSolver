@@ -82,7 +82,7 @@ public class Solver {
 			}
 		}
 		
-		m_produceHtmlDiagnostics = false;
+		m_produceHtmlDiagnostics = true;
 		m_htmlDiagnostics = "";
 		m_observations = new ArrayList<>();
 		m_stepObservations = new ArrayList<>();
@@ -485,7 +485,7 @@ public class Solver {
 				for(Symbol symbol : symbols) {
 					cls = "cellsetcell";
 					List<Cell> lc = cellset.getCouldBeCellsForSymbol(symbol);
-					String slc = Cell.cellCollectionToString(lc);
+					String slc = Cell.cellCollectionRepresentation(lc);
 					boolean highlight = false; // provider.changedThisStep(cell,  stepNumberToHighlight);
 					highlight = (cellset.getStepNumberOfLatestChangeForSymbol(symbol) == stepNumber);
 					if(highlight) {
@@ -952,7 +952,7 @@ class Method4 extends Method {
 		}
 		
 		String getRepresentation() {
-			return "SymbolSetRestriction for " + m_cellSet.getRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionToString(m_lCells); 
+			return "SymbolSetRestriction for " + m_cellSet.getRepresentation() + " Symbols: " + Symbol.symbolCollectionToString(m_lSymbols) + ", Cells : " + Cell.cellCollectionRepresentation(m_lCells); 
 		}
 	}
 }	

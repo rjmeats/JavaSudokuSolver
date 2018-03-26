@@ -34,7 +34,7 @@ public class GridFormatter {
 		
 		StringBuilder sb1 = new StringBuilder();
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
-			Box box = m_grid.getBoxFromGridPosition(rowNumber, 0);
+			Box box = m_grid.getBoxFromGridPosition(0, rowNumber);
 			if(box != currentVerticalBox) {
 				if(currentVerticalBox!= null) {
 					if(compact) {
@@ -48,7 +48,7 @@ public class GridFormatter {
 			}
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
-				box = m_grid.getBoxFromGridPosition(rowNumber, columnNumber);
+				box = m_grid.getBoxFromGridPosition(columnNumber, rowNumber);
 				if(box != currentHorizontalBox) {
 					if(compact) {
 						sb1.append(" ");					}
@@ -58,7 +58,7 @@ public class GridFormatter {
 					currentHorizontalBox = box;
 				}
 
-				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
+				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
 //				CellAssessment cell = getCellAssessmentForCell(c);
 //				boolean highlight = (cell.isAssigned() && (cell.getAssignment().getStepNumber() == stepNumberToHighlight));
 				String contents = ccp.getContent(cell);
@@ -88,7 +88,7 @@ public class GridFormatter {
 
 		sb.append("<table class=gridouter>").append(nl);
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
-			Box box = m_grid.getBoxFromGridPosition(rowNumber, 0);
+			Box box = m_grid.getBoxFromGridPosition(0, rowNumber);
 			String rowClass = "class=\"normalrow\"";
 			if(box != currentVerticalBox) {
 				if(currentVerticalBox != null) {
@@ -104,8 +104,8 @@ public class GridFormatter {
 			sb.append("<tr " + rowClass + ">").append(nl);
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
-				Cell cell = m_grid.getCellFromGridPosition(rowNumber, columnNumber);
-				box = m_grid.getBoxFromGridPosition(rowNumber, columnNumber);
+				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
+				box = m_grid.getBoxFromGridPosition(columnNumber, rowNumber);
 				String basicCellClass = provider.getBasicCellClass();
 				String columnClass = basicCellClass + " gridnonseparatorcolumn";
 				if(box != currentHorizontalBox) {

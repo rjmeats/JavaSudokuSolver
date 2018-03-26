@@ -197,7 +197,7 @@ abstract class CellSetAssessment implements Comparable<CellSetAssessment> {
 				
 		for(Symbol symbol : lSymbols) {
 			List<Cell> lCells = getCouldBeCellsForSymbol(symbol);
-			String cellListString = Cell.cellCollectionToString(lCells);
+			String cellListString = Cell.cellCollectionRepresentation(lCells);
 			
 			if(lCells.size() == 1) {
 				String markAsUnassigned = "";

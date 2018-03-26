@@ -42,8 +42,8 @@ public class Puzzle {
 		//symbolsToUse = SymbolsToUse.SET_1_TO_6;
 		//layout = GridLayout.GRID6x6;
 
-		symbolsToUse = SymbolsToUse.SET_A_TO_Y;
-		layout = GridLayout.GRID25x25;
+		//symbolsToUse = SymbolsToUse.SET_A_TO_Y;
+		//layout = GridLayout.GRID25x25;
 
 		System.out.println("Using initial grid values:");
 		System.out.println();
@@ -138,7 +138,7 @@ public class Puzzle {
 			else {
 				Symbol symbol = m_symbolsToUse.isKnownSymbol(c + "");
 				if(symbol != null) {
-					applyGivenValueToCell(m_grid, rowNumber, columnNumber, symbol);
+					applyGivenValueToCell(m_grid, columnNumber, rowNumber, symbol);
 				}
 				else {
 					status.setError("Unknown symbol in initial grid: " + c);
@@ -147,9 +147,9 @@ public class Puzzle {
 		}		
 	}
 
-	private void applyGivenValueToCell(Grid grid, int rowNumber, int columnNumber, Symbol symbol)
+	private void applyGivenValueToCell(Grid grid, int columnNumber, int rowNumber, Symbol symbol)
 	{
-		Cell cell = grid.getCellFromGridPosition(rowNumber, columnNumber);
+		Cell cell = grid.getCellFromGridPosition(columnNumber, rowNumber);
 		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
 		cell.assign(assignment);
 	}

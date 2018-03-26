@@ -1,17 +1,23 @@
 package grid;
 
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
+import java.util.stream.Collectors;
+
+/**
+ * Represents a letter/number used to fill in a grid cell. 
+ * 
+ * Each one belongs to a set of symbols which apply to a particular puzzle, each symbol having a different 'ordinal' value.
+ */
 
 public class Symbol implements Comparable<Symbol> {
 
 	private String m_representation;
+	private String m_setName;
 	private int m_ordinal;
 	
-	public Symbol(String representation, int ordinal) {
+	public Symbol(String representation, String setName, int ordinal) {
 		m_representation = representation;
+		m_setName = setName;
 		m_ordinal = ordinal;
 	}
 
@@ -23,23 +29,34 @@ public class Symbol implements Comparable<Symbol> {
 		return m_ordinal;
 	}
 	
+	// For debuggers only
 	public String toString() {
 		return m_representation;
 	}
-	
+
+	// Implement comparable. Only makes sense for comparing two symbols from the same set (and so definitely having different ordinals)
 	@Override
 	public int compareTo(Symbol symbol) {
-		return this.m_ordinal - symbol.m_ordinal;
+		int diff = m_setName.compareTo(symbol.m_setName);
+		if(diff == 0) {
+			diff = ordinal() - symbol.ordinal();
+		}		
+		return diff;
 	}	
 
-	public static String symbolCollectionToString(Collection<Symbol> l)
-	{
-		List<Symbol> lSorted = new ArrayList<>(l);
-		Collections.sort(lSorted);		
-		StringBuilder sb = new StringBuilder();
-		for(Symbol symbol: lSorted) {
-			sb.append(symbol.getRepresentation()).append(" ");
-		}
-		return sb.toString().trim();
+	/**
+	 * Generates a string recording each symbol in a collection.
+	 * 
+	 * @param symbols A collection (e.g. a List or a Set) of symbols
+	 * 
+	 * @return Space-separated, ordered list of the symbols as a string 
+	 */
+	
+	public static String symbolCollectionToString(Collection<Symbol> symbols) {
+		// Functional approach.
+		return symbols.stream()
+				.sorted()
+				.map(s -> s.getRepresentation())
+				.collect(Collectors.joining(" "));
 	}	
 }

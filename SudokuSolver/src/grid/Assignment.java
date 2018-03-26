@@ -1,12 +1,20 @@
 package grid;
 
+/**
+ * Records details of the assignment of a specific symbol to a specific cell.
+ */
+
 public class Assignment {
 
 	private Cell m_cell;
 	private Symbol m_symbol;
-	private AssignmentMethod m_method;
-	private String m_assignmentDetail;
-	private int m_stepNumber;
+	
+	// Was the assignment part of the initial puzzle ('Given') or deduced/guessed by later processing ? 
+	private AssignmentMethod m_method; 
+	
+	// Items providing diagnostics and explanations of how/when the assignment occurred.
+	private String m_assignmentDetail;		 
+	private int m_stepNumber;				
 	
 	public Assignment(Cell cell, Symbol symbol, AssignmentMethod method, String assignmentDetail, int stepNumber) {
 		m_cell = cell;
@@ -22,7 +30,8 @@ public class Assignment {
 	public String detail() 				{ return m_assignmentDetail; }
 	public int stepNumber() 			{ return m_stepNumber; }
 	
+	// For the debugger
 	public String toString() {
-		return "Assignment: Cell=" + m_cell.getGridLocationString() + ", Symbol=" + m_symbol.toString() + ", method=" + m_method.toString() + ", detail=" + m_assignmentDetail + ", step=" + m_stepNumber; 
+		return "Assignment: cell=" + m_cell.getGridLocationString() + ", symbol=" + m_symbol.toString() + ", method=" + m_method.toString() + ", detail=" + m_assignmentDetail + ", step=" + m_stepNumber; 
 	}
 }

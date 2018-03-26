@@ -6,53 +6,64 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
+/**
+ *	Represents a Sudoku puzzle grid and the cells, rows, columns and boxes within it. 
+ */
+
 public class Grid {
 
+	// The dimensions of the grid.
 	private GridLayout m_layout;
-	private List<Row> m_lRows;
+	
+	// The Rows, Columns, Boxes and Cells within the grid.
 	private List<Column> m_lColumns;
+	private List<Row> m_lRows;
 	private List<Box> m_lBoxes;		
 	private List<Cell> m_lCells;	
 	
 	public Grid(GridLayout layout) {
-
 		m_layout = layout;
-		
-		m_lRows = new ArrayList<>();
-		for(int rowNum = 0; rowNum < m_layout.m_rows; rowNum++) {
-			m_lRows.add(new Row(rowNum));
-		}
-		
+
+		// Add columns to the grid
 		m_lColumns = new ArrayList<>();
 		for(int columnNum = 0; columnNum < m_layout.m_columns; columnNum++) {
 			m_lColumns.add(new Column(columnNum));
 		}
 			
+		// Add rows to the grid
+		m_lRows = new ArrayList<>();
+		for(int rowNum = 0; rowNum < m_layout.m_rows; rowNum++) {
+			m_lRows.add(new Row(rowNum));
+		}
+		
+		// Add boxes to the grid
 		m_lBoxes = new ArrayList<>();
 		for(int boxNum = 0; boxNum < m_layout.m_boxes; boxNum++) {
 			m_lBoxes.add(new Box(boxNum));
 		}
 
+		// Generate cells for the grid.
 		m_lCells = new ArrayList<>();
 		int cellNumber = 0;
 		for(int rowNum = 0; rowNum < m_lRows.size(); rowNum++) {
 			for(int columnNum = 0; columnNum < m_lColumns.size(); columnNum++) {
-				addCell(cellNumber++, rowNum, columnNum);
+				addCell(cellNumber++, columnNum, rowNum);
 			}			
 		}		
 	}
 
-	private void addCell(int cellNumber, int rowNum, int columnNum) {
-		Row row = m_lRows.get(rowNum);
+	// Create a new cell in the grid, including it in a specific column/row/box as well.
+	private void addCell(int cellNumber, int columnNum, int rowNum) {
 		Column column = m_lColumns.get(columnNum);
-		int boxNum = getBoxNumberFromGridPosition(rowNum, columnNum);
+		Row row = m_lRows.get(rowNum);
+		int boxNum = getBoxNumberFromGridPosition(columnNum, rowNum);
 		Box box = m_lBoxes.get(boxNum);
 		
-		Cell cell = new Cell(cellNumber, row, column, box);
+		Cell cell = new Cell(cellNumber, column, row, box);
 		m_lCells.add(cell);
 		
-		row.addCell(cell);
 		column.addCell(cell);
+		row.addCell(cell);
 		box.addCell(cell);		
 	}
 	
@@ -76,14 +87,21 @@ public class Grid {
 		return Collections.unmodifiableList(m_lCells);
 	}
 	
+	
+	/**
+	 * Check whether the assignments to the grid are compatible with each other.
+	 *  
+	 * @return A list of the cells in the grid which are not compatible, because a symbol appears more than once in a column, row or box. 
+	 * If the grid is valid, an empty list will be returned.
+	 */
 	public List<Cell> getListOfIncompatibleCells() {
 		
-		// Get a list of all the cells which clash.
-		List<CellSet> lCellSets = new ArrayList<>(m_lRows);
-		lCellSets.addAll(m_lColumns);
+		// Get a list of all the cellsets in the grid 
+		List<CellSet> lCellSets = new ArrayList<>(m_lColumns);
+		lCellSets.addAll(m_lRows);
 		lCellSets.addAll(m_lBoxes);
 		
-		Set<Cell> s = new LinkedHashSet<>();	// Only list each clashing cell once. 
+		Set<Cell> s = new LinkedHashSet<>();	// Use a set for colecting the clashing cells, to prevent cells being listed more than once. 
 		for(CellSet cellSet : lCellSets) {
 			s.addAll(cellSet.getListOfIncompatibleCells());
 		}
@@ -91,33 +109,40 @@ public class Grid {
 		return new ArrayList<>(s);
 	}
 	
+	// Work out cell and box numbering based on column and row numbering. Note that all
+	// numbering uses the internal 0-based item numbers here.
+	
+	// Example 9x9 grid cell numbering
 	// 0  1  ... 8
 	// 9  10 ... 17
 	// ..
 	// 72 73 ... 80
 	
-	private int getCellNumberFromGridPosition(int rowNumber, int columnNumber) {
-		return rowNumber * m_layout.m_columns + columnNumber;
+	private int getCellNumberFromGridPosition(int columnNumber, int rowNumber) {
+		return (rowNumber * m_layout.m_columns) + columnNumber;
 	}
 	
-	public Cell getCellFromGridPosition(int rowNumber, int columnNumber) {		
-		return m_lCells.get(getCellNumberFromGridPosition(rowNumber, columnNumber));
+	public Cell getCellFromGridPosition(int columnNumber, int rowNumber) {		
+		return m_lCells.get(getCellNumberFromGridPosition(columnNumber, rowNumber));
 	}
 	
+	// Example 9x9 grid box numbering
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
 	
-	private int getBoxNumberFromGridPosition(int rowNumber, int columnNumber) {
+	private int getBoxNumberFromGridPosition(int columnNumber, int rowNumber) {
 		return ((rowNumber/m_layout.m_rowsPerBox) * m_layout.m_rowsPerBox) + 
 			   (columnNumber / m_layout.m_columnsPerBox);
 	}
 
-	public Box getBoxFromGridPosition(int rowNumber, int columnNumber) {
-		return m_lBoxes.get(getBoxNumberFromGridPosition(rowNumber, columnNumber));
+	public Box getBoxFromGridPosition(int columnNumber, int rowNumber) {
+		return m_lBoxes.get(getBoxNumberFromGridPosition(columnNumber, rowNumber));
 	}
 	
 	// ---------------------------------------------------------------------
+	//
+	// Nested class to record some stats related to a parent grid and its cells and their assignments
 	
 	public class Stats {
 		
@@ -129,7 +154,7 @@ public class Grid {
 		private Stats() {
 		}
 	}
-	
+		
 	public Stats getStats() {
 		Stats stats = new Stats();
 		stats.m_layout = m_layout;
