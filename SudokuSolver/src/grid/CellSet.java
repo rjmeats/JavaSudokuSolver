@@ -68,7 +68,6 @@ public abstract class CellSet implements Comparable<CellSet> {
 		if(diff == 0) {
 			diff = itemNumber() - cellset.itemNumber();
 		}
-		
 		return diff;
 	}
 

@@ -1,16 +1,16 @@
 package solver;
 
 import grid.Row;
+import grid.Symbols;
 
-import puzzle.SymbolsToUse;
+/**
+ * Class to record the ongoing assessment of what cell/symbol assignments are possible for a particular row in a grid.
+ */
 
-public class RowAssessment extends CellSetAssessment {
+class RowAssessment extends CellSetAssessment {
 
-	Row m_row;
-	
-	public RowAssessment(Row row, SymbolsToUse symbols) {
+	RowAssessment(Row row, Symbols symbols) {
 		super(row, symbols);
-		m_row = row;
 	}
 }
 

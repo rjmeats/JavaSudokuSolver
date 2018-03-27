@@ -52,7 +52,7 @@ public class Symbol implements Comparable<Symbol> {
 	 * @return Space-separated, ordered list of the symbols as a string 
 	 */
 	
-	public static String symbolCollectionToString(Collection<Symbol> symbols) {
+	public static String symbolCollectionRepresentation(Collection<Symbol> symbols) {
 		// Functional approach.
 		return symbols.stream()
 				.sorted()

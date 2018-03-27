@@ -1,38 +1,15 @@
 package solver;
 
-import java.util.Set;
-
-import grid.Cell;
-import grid.CellSet;
-import grid.Symbol;
 import grid.Box;
-import puzzle.SymbolsToUse;
+import grid.Symbols;
 
-public class BoxAssessment extends CellSetAssessment {
+/**
+ * Class to record the ongoing assessment of what cell/symbol assignments are possible for a particular box in a grid.
+ */
 
-	Box m_box;
-	
-	public BoxAssessment(Box box, SymbolsToUse symbols) {
+class BoxAssessment extends CellSetAssessment {
+
+	BoxAssessment(Box box, Symbols symbols) {
 		super(box, symbols);
-		m_box = box;
-	}
-}
-
-class SymbolRestriction {
-	Symbol m_symbol;
-	CellSet m_restrictorCellSet;
-	CellSet m_restrictedCellSet;
-	Set<Cell> m_restrictedCells;
-	
-	SymbolRestriction(Symbol symbol, CellSet restrictor, CellSet restricted) {
-		m_symbol = symbol;
-		m_restrictorCellSet = restrictor;
-		m_restrictedCellSet = restricted;
-		m_restrictedCells = m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
-	}
-	
-	String getRepresentation() {
-		return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictorCellSet.getRepresentation() + 
-					" restricted to " + m_restrictedCellSet.getRepresentation() + " : symbol cannot be present in cells: " + Cell.cellCollectionRepresentation(m_restrictedCells);
 	}
 }

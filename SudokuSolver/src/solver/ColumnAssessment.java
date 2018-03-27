@@ -1,17 +1,16 @@
 package solver;
 
 import grid.Column;
+import grid.Symbols;
 
-import puzzle.SymbolsToUse;
-
+/**
+ * Class to record the ongoing assessment of what cell/symbol assignments are possible for a particular column in a grid.
+ */
 
 class ColumnAssessment extends CellSetAssessment {
 
-	Column m_column;
-	
-	public ColumnAssessment(Column column, SymbolsToUse symbols) {
+	ColumnAssessment(Column column, Symbols symbols) {
 		super(column, symbols);
-		m_column = column;
 	}
 }
 

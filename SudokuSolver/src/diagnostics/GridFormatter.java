@@ -59,8 +59,6 @@ public class GridFormatter {
 				}
 
 				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
-//				CellAssessment cell = getCellAssessmentForCell(c);
-//				boolean highlight = (cell.isAssigned() && (cell.getAssignment().getStepNumber() == stepNumberToHighlight));
 				String contents = ccp.getContent(cell);
 				if(compact) {
 					sb1.append(contents.replaceAll("\\s+", " "));					
@@ -93,11 +91,6 @@ public class GridFormatter {
 			if(box != currentVerticalBox) {
 				if(currentVerticalBox != null) {
 					rowClass = "class=\"gridseparatorrow\"";
-//					sb.append("<tr>");
-//					for(int columnNumber = 0; columnNumber < m_grid.columns().size()+2; columnNumber++) {
-//						sb.append("<td bgcolor=black></td>");						
-//					}
-//					sb.append("</tr>");
 				}
 				currentVerticalBox = box;
 			}
@@ -110,7 +103,6 @@ public class GridFormatter {
 				String columnClass = basicCellClass + " gridnonseparatorcolumn";
 				if(box != currentHorizontalBox) {
 					if(columnNumber != 0) {
-//						sb.append("<td bgcolor=black></td>");						
 						columnClass = basicCellClass + " gridseparatorcolumn";
 					}
 				}
@@ -120,9 +112,14 @@ public class GridFormatter {
 				if(cell.isAssigned()) {
 					toolTip += " : " + cell.assignment().toString();
 				}
+				
+				boolean staticContent = provider.staticContent();
 				boolean highlight = provider.changedThisStep(cell,  stepNumberToHighlight);
 				boolean given = cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given;
-				if(highlight) {
+				if(staticContent) {
+					
+				}
+				else if(highlight) {
 					columnClass += " highlight";
 				}
 				else if(given) {
@@ -132,7 +129,6 @@ public class GridFormatter {
 					columnClass += " previouslyassigned";
 				}
 				columnClass = "class=" + "\"" + columnClass + "\"";
-//				String colour = highlight ? " bgcolor=cyan" : " bgcolor=ivory";
 				sb.append("<td " + columnClass + " title=\"" + toolTip + "\">").append(nl);
 				String contents = provider.getContent(cell);
 				sb.append(contents).append(nl);		// Protect
