@@ -5,8 +5,6 @@ import grid.Cell;
 import grid.AssignmentMethod;
 import grid.Box;
 
-import solver.CellContentProvider;
-
 public class GridFormatter {
 
 	Grid m_grid;
@@ -14,21 +12,21 @@ public class GridFormatter {
 		m_grid = grid;
 	}
 	
-	public String formatGrid(CellContentProvider ccd) {
+	public String formatGrid(CellDiagnosticsProvider ccd) {
 		return formatGrid(ccd, -1);
 	}
 	
-	public String formatCompactGrid(CellContentProvider ccd) {
+	public String formatCompactGrid(CellDiagnosticsProvider ccd) {
 		boolean compact = true;
 		return formatGrid(ccd, -1, compact);
 	}
 	
-	public String formatGrid(CellContentProvider ccd, int stepNumberToHighlight) {
+	public String formatGrid(CellDiagnosticsProvider ccd, int stepNumberToHighlight) {
 		boolean compact = false;
 		return formatGrid(ccd, -1, compact);		
 	}
 	
-	public String formatGrid(CellContentProvider ccp, int stepNumberToHighlight, boolean compact) {
+	public String formatGrid(CellDiagnosticsProvider ccp, int stepNumberToHighlight, boolean compact) {
 		Box currentHorizontalBox = null;
 		Box currentVerticalBox = null;
 		
@@ -59,7 +57,7 @@ public class GridFormatter {
 				}
 
 				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
-				String contents = ccp.getContent(cell);
+				String contents = ccp.getCellDiagnostics(cell);
 				if(compact) {
 					sb1.append(contents.replaceAll("\\s+", " "));					
 				}
@@ -74,11 +72,11 @@ public class GridFormatter {
 		return sb1.toString();
 	}
 
-	public String formatGridAsHTML(CellContentProvider provider) {
+	public String formatGridAsHTML(CellDiagnosticsProvider provider) {
 		return formatGridAsHTML(provider, -1);
 	}
 	
-	public String formatGridAsHTML(CellContentProvider provider, int stepNumberToHighlight) {
+	public String formatGridAsHTML(CellDiagnosticsProvider provider, int stepNumberToHighlight) {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		Box currentHorizontalBox = null;
@@ -100,6 +98,9 @@ public class GridFormatter {
 				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
 				box = m_grid.getBoxFromGridPosition(columnNumber, rowNumber);
 				String basicCellClass = provider.getBasicCellClass();
+				if(basicCellClass.length() == 0) {
+					basicCellClass = "gridcell";
+				}
 				String columnClass = basicCellClass + " gridnonseparatorcolumn";
 				if(box != currentHorizontalBox) {
 					if(columnNumber != 0) {
@@ -113,7 +114,7 @@ public class GridFormatter {
 					toolTip += " : " + cell.assignment().toString();
 				}
 				
-				boolean staticContent = provider.staticContent();
+				boolean staticContent = provider.hasStaticContent();
 				boolean highlight = provider.changedThisStep(cell,  stepNumberToHighlight);
 				boolean given = cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given;
 				if(staticContent) {
@@ -130,7 +131,7 @@ public class GridFormatter {
 				}
 				columnClass = "class=" + "\"" + columnClass + "\"";
 				sb.append("<td " + columnClass + " title=\"" + toolTip + "\">").append(nl);
-				String contents = provider.getContent(cell);
+				String contents = provider.getCellDiagnostics(cell);
 				sb.append(contents).append(nl);		// Protect
 				
 				sb.append("</td>").append(nl);

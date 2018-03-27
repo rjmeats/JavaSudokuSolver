@@ -150,6 +150,7 @@ class CellSetAssessment implements Comparable<CellSetAssessment> {
 	 */
 	int ruleOutCellForSymbol(Cell notThisCell, Symbol symbol, int stepNumber) {
 		int changed = 0;
+		// System.err.println(getRepresentation() + " : Ruling out cell " + notThisCell.getRepresentation() + " for symbol " + symbol.getRepresentation());		
 		Set<Cell> couldBeCellsForThisSymbol = m_couldBeCellsForSymbol.get(symbol);
 		if(couldBeCellsForThisSymbol.contains(notThisCell)) {
 			couldBeCellsForThisSymbol.remove(notThisCell);

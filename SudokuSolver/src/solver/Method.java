@@ -16,8 +16,7 @@ import grid.Row;
 import grid.Symbol;
 import grid.Symbols;
 
-abstract class Method {
-	
+abstract class Method {	
 	Solver m_solver;
 	Symbols m_symbols;
 	
@@ -44,10 +43,6 @@ class Method1 extends Method {
 					String s = "assigned symbol " + a.symbol().getRepresentation() + " to cell " + a.cell().getGridLocationString() + " for " + csa.getRepresentation().toLowerCase();
 					actions.add(s);
 					changedState = true;
-				}
-				// We don't expect the assignment to fail, implies some sort of logic error. 
-				else {
-					m_solver.reportAssignmentFailure(a, status);
 				}
 				break;
 			}
@@ -91,9 +86,6 @@ class Method2 extends Method {
 					actions.add(s);
 					changedState = true;
 				}
-				else {
-					m_solver.reportAssignmentFailure(a, status);
-				}
 				break;
 			}
 		}			
@@ -112,8 +104,6 @@ class Method2 extends Method {
 		}
 		return assignment;
 	}
-
-
 }
 
 

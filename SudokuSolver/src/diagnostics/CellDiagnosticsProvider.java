@@ -1,13 +1,13 @@
-package solver;
+package diagnostics;
 
 import grid.Cell;
 
-public interface CellContentProvider {
+public interface CellDiagnosticsProvider {
 
 	String getHeading();
-	String getContent(Cell c);
+	String getCellDiagnostics(Cell c);
 	String getBasicCellClass();
 	
-	boolean staticContent();
+	boolean hasStaticContent();
 	boolean changedThisStep(Cell cell, int stepNumber);
 }
