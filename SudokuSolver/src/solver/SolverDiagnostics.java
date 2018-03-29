@@ -176,7 +176,7 @@ class SolverDiagnostics {
 		m_htmlDiagnostics += sb.toString();
 	}
 	
-	void collectDiagnosticsAfterStep(int stepNumber, List<CellSetAssessment> cellSetAssessments, List<String> actions, List<String> stepObservations) {
+	void collectDiagnosticsAfterStep(int stepNumber, List<String> actions, List<String> stepObservations) {
 		if(!m_produceHtmlDiagnostics) return;		
 		
 		String nl = System.lineSeparator();
@@ -238,7 +238,7 @@ class SolverDiagnostics {
 			}
 			sb.append("</tr>").append(nl);
 			for(int cellSet = 1; cellSet <= 3; cellSet++) {
-				for(CellSetAssessment cellset : cellSetAssessments) {
+				for(CellSetAssessment cellset : m_solver.cellSetAssessments()) {
 					if((cellSet == 1) && !(cellset instanceof RowAssessment)) continue;
 					if((cellSet == 2) && !(cellset instanceof ColumnAssessment)) continue;
 					if((cellSet == 3) && !(cellset instanceof BoxAssessment)) continue;
@@ -252,7 +252,7 @@ class SolverDiagnostics {
 					sb.append("<td  class=" + cls + ">").append(cellset.getRepresentation()).append("</td>").append(nl);					
 					for(Symbol symbol : symbols) {
 						cls = "cellsetcell";
-						List<Cell> lc = new ArrayList<>(cellset.getCouldBeCellsForSymbol(symbol));
+						List<Cell> lc = new ArrayList<>(cellset.couldBeCellsForSymbol(symbol));
 						String slc = Cell.cellCollectionRepresentation(lc);
 						boolean highlight = false; // provider.changedThisStep(cell,  stepNumberToHighlight);
 						highlight = (cellset.stepNumberOfLatestChangeForSymbol(symbol) == stepNumber);

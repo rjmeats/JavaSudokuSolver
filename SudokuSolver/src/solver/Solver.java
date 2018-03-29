@@ -37,15 +37,11 @@ public class Solver {
 	private HashMap<CellSet, CellSetAssessment> m_cellSetAssessmentsMap;
 
 	// 'Method' objects which perform different types of deductions.
-	private Method1 m_method1;
-	private Method2 m_method2;
-	private Method3 m_method3;
-	private Method4 m_method4;
+	private List<Method> m_methods;
 	
-	// Lists of unexpected events recorded while trying to solve a puzzle, indicating some sort of
+	// List of unexpected events recorded while trying to solve a puzzle, indicating some sort of
 	// logic error has arisen.
 	private List<String> m_unexpectedEvents;		// For the entire attempt
-	private List<String> m_stepUnexpectedEvents;	// For the current processing step
 
 	// Object to produce detailed diagnostic output, including an HTML page.
 	private SolverDiagnostics m_diagnostics;
@@ -84,13 +80,13 @@ public class Solver {
 			setUpCellAssessment(cell);
 		}		
 
-		m_method1 = new Method1(this, m_symbols);
-		m_method2 = new Method2(this, m_symbols);
-		m_method3 = new Method3(this, m_symbols);
-		m_method4 = new Method4(this, m_symbols);
+		m_methods = new ArrayList<>();
+		m_methods.add(new Method1(this));
+		m_methods.add(new Method2(this));
+		m_methods.add(new Method3(this));
+		m_methods.add(new Method4(this));
 
 		m_unexpectedEvents = new ArrayList<>();
-		m_stepUnexpectedEvents = new ArrayList<>();
 		m_diagnostics = new SolverDiagnostics(this, m_grid, m_symbols);
 
 		// The grid already has 'given' assignments in place. We need to go through these propagate this information to the assessment objects that we just set up to get
@@ -106,8 +102,10 @@ public class Solver {
 		List<String> actions = new ArrayList<>();
 		actions.add("assigned 'given' values for " + initialAssignmentCount + " cells");
 		
-		// Produce initial diagnostics recording what assessments we've got from applying the 'given' cell assignments. 
-		m_diagnostics.collectDiagnosticsAfterStep(-1, m_lCellSetAssessments, actions, m_stepUnexpectedEvents);		
+		// Produce initial diagnostics recording what assessments we've got from applying the 'given' cell assignments.
+		int stepNumber = -1;
+		List<String> unexpectedEvents = new ArrayList<>();
+		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, actions, unexpectedEvents);		
 	}
 
 	private void setUpCellAssessment(Cell cell) {
@@ -128,6 +126,18 @@ public class Solver {
 		return m_cellSetAssessmentsMap.get(cellSet);
 	}
 	
+	List<CellAssessment> cellAssessments() {
+		return m_lCellAssessments;
+	}
+	
+	List<CellSetAssessment> cellSetAssessments() {
+		return m_lCellSetAssessments;
+	}
+
+	Symbols symbols() {
+		return m_symbols;
+	}
+	
 	// -----------------------------------------------------------------------------------------
 
 	/**
@@ -140,27 +150,23 @@ public class Solver {
 	public boolean nextStep(int stepNumber) {
 		boolean changedState = false;
 		List<String> actions = new ArrayList<>();
-		m_stepUnexpectedEvents = new ArrayList<>();
+		List<String> unexpectedEvents = new ArrayList<>();
 		
-		// Try each deduction method in turn until we find one that has made progress.
-		if(!changedState) {
-			changedState = m_method1.tryMethod(m_lCellSetAssessments, stepNumber, actions);
+		// Try the available methods until one of them deduces something.
+		for(Method method : m_methods) {
+			if(!changedState) {
+				try {
+					changedState = method.applyMethod(stepNumber, actions);
+				} 
+				catch(IllegalAssignmentException e) {
+					unexpectedEvents.add(e.getMessage());
+					System.err.println(e.getMessage());
+				}				
+			}			
 		}
 		
-		if(!changedState) {
-			changedState = m_method2.tryMethod(m_lCellAssessments, stepNumber, actions);
-		}
-		
-		if(!changedState) {
-			changedState = m_method3.tryMethod(m_lCellSetAssessments, stepNumber, actions);
-		}
-		
-		if(!changedState) {
-			changedState = m_method4.tryMethod(m_lCellSetAssessments, stepNumber, actions);
-		}
-		
-		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, m_lCellSetAssessments, actions, m_stepUnexpectedEvents);		
-		m_unexpectedEvents.addAll(m_stepUnexpectedEvents);
+		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, actions, unexpectedEvents);		
+		m_unexpectedEvents.addAll(unexpectedEvents);
 		return changedState;
 	}
 
@@ -212,7 +218,7 @@ public class Solver {
 	 * @param assignment Detailed of the assignment being made.
 	 * @return Returns AssignmentMade if successful, otherwise an error status value is returned.
 	 */
-	CellAssignmentStatus performAssignment(Assignment assignment) {
+	CellAssignmentStatus performAssignment(Assignment assignment) throws IllegalAssignmentException {
 		CellAssessment ca = assessmentForCell(assignment.cell());
 		CellAssignmentStatus status = checkCellCanBeAssigned(ca, assignment);
 		if(status == CellAssignmentStatus.AssignmentAllowed) {
@@ -221,7 +227,8 @@ public class Solver {
 			status = CellAssignmentStatus.AssignmentMade;
 		}
 		else {
-			recordAssignmentFailure(assignment, status);
+			String s = "Unexpected assignment failure at step " + assignment.stepNumber() + " : " + status.name() + " : " + assignment.description();
+			throw new IllegalAssignmentException(s, status);
 		}
 		
 		return status;
@@ -305,14 +312,6 @@ public class Solver {
 	
 	// -----------------------------------------------------------------------------------------
 
-	private void recordAssignmentFailure(Assignment a, CellAssignmentStatus status) {
-		String o = "Unexpected assignment failure at step " + a.stepNumber() + " : " + status.name() + " : " + a.toString();
-		m_stepUnexpectedEvents.add(o);
-		System.err.println(o);		
-	}
-
-	// -----------------------------------------------------------------------------------------
-
 	// Complete production of diagnostics 	
 	public void finaliseDiagnostics(int stepNumber, long took) {
 		m_diagnostics.finaliseDiagnostics(stepNumber, took, m_unexpectedEvents);
@@ -325,11 +324,31 @@ public class Solver {
 	public String getHtmlDiagnostics() { 
 		return m_diagnostics.getHtmlDiagnostics(); 
 	}
+
 }
+
+// -----------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------
 
 /**
  * Possible results of trying to assign a symbol to a cell.
  */
 enum CellAssignmentStatus {
 	AssignmentAllowed, AssignmentMade, CellAlreadyAssigned, SymbolAlreadyRuledOutForCell, SymbolAlreadyAssignedInRow, SymbolAlreadyAssignedInColumn, SymbolAlreadyAssignedInBox;
+}
+
+// -----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+/**
+ * Exception thrown when we try to make an invalid assignment to a cell.
+ */
+@SuppressWarnings("serial")
+class IllegalAssignmentException extends Exception {
+	
+	CellAssignmentStatus m_badStatus;
+	IllegalAssignmentException(String s, CellAssignmentStatus badStatus) {
+		super(s);
+		m_badStatus = badStatus;
+	}
 }

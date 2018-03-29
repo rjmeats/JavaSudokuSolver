@@ -30,8 +30,7 @@ public class Assignment {
 	public String detail() 				{ return m_assignmentDetail; }
 	public int stepNumber() 			{ return m_stepNumber; }
 	
-	// For the debugger
-	public String toString() {
+	public String description() {
 		return "Assignment: cell=" + m_cell.getGridLocationString() + ", symbol=" + m_symbol.toString() + ", method=" + m_method.toString() + ", detail=" + m_assignmentDetail + ", step=" + m_stepNumber; 
 	}
 }

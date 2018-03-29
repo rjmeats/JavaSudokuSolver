@@ -55,7 +55,7 @@ public abstract class CellSet implements Comparable<CellSet> {
 	}
 
 	public String getRepresentation() {
-		return m_typeName + " " + getNumberOnlyRepresentation(); 
+		return m_typeName.toLowerCase() + " " + getNumberOnlyRepresentation(); 
 	}
 
 	// For debuggers only

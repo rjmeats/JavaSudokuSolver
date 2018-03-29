@@ -1,10 +1,11 @@
 package solver;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.TreeSet;
+import java.util.Collection;
 
 import grid.Assignment;
 import grid.AssignmentMethod;
@@ -14,110 +15,148 @@ import grid.CellSet;
 import grid.Column;
 import grid.Row;
 import grid.Symbol;
-import grid.Symbols;
 
 abstract class Method {	
 	Solver m_solver;
-	Symbols m_symbols;
 	
-	Method(Solver solver, Symbols symbols) {
+	Method(Solver solver) {
 		m_solver = solver;
-		m_symbols = symbols;
 	}
-}
-	
-class Method1 extends Method {
-	
-	Method1(Solver solver, Symbols symbols) {
-		super(solver, symbols);
-	}
-	
-	// Look through each cell-set (row, column, and box) in turn for an unassigned symbol which can now go in only one of the cells in the cell-set
-	boolean tryMethod(List<CellSetAssessment> cellSetAssessments, int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		for(CellSetAssessment csa : cellSetAssessments) {
-			Assignment a = hasSymbolAssignmentAvailable(csa, stepNumber);
-			if(a != null) {
-				CellAssignmentStatus status = m_solver.performAssignment(a);
-				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "assigned symbol " + a.symbol().getRepresentation() + " to cell " + a.cell().getGridLocationString() + " for " + csa.getRepresentation().toLowerCase();
-					actions.add(s);
-					changedState = true;
-				}
-				break;
-			}
-		}
-		return changedState;
-	}
-	
-	// Does a cell-set (box, row, column) have a symbol which is not yet assigned but can only be assigned to one of the cells ? If so, we can make an assignment.
-	Assignment hasSymbolAssignmentAvailable(CellSetAssessment csa, int stepNumber) {
-		Assignment assignment = null;
-		for(Symbol symbol : m_symbols.getSymbolSet()) {
-			if(!csa.symbolAlreadyAssigned(symbol)) {
-				Cell onlyCell = csa.getOnlyCouldBeCellForSymbol(symbol);
-				if(onlyCell != null) {
-					String detail = "Only cell available for symbol" + csa.getRepresentation();
-					assignment = new Assignment(onlyCell, symbol, AssignmentMethod.AutomatedDeduction, detail,  stepNumber);
-					break;
-				}
-			}
-		}
-		
-		return assignment;
-	}
+
+	/**
+	 * Every class extending the Method class provides applyMethod to try to make some progress on solving the Sudoku.
+	 *  
+	 * @param stepNumber
+	 * @param actions
+	 * @return
+	 * @throws IllegalAssignmentException
+	 */
+	abstract boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException;
 }
 
-class Method2 extends Method {
+// -----------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------
+
+/**
+ * Class which tries to find symbols which can be assigned only to one specific cell in a cellset (column, row or box) now.
+ */
+class Method1 extends Method {
 	
-	Method2(Solver solver, Symbols symbols) {
-		super(solver, symbols);
+	Method1(Solver solver) {
+		super(solver);
 	}
 	
-	// Look through unassigned cells for cases where only one symbol is now left as a possible assignment for the cell.
-	boolean tryMethod(List<CellAssessment> lCellAssessments, int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		for(CellAssessment ca : lCellAssessments) {
-			Assignment a = hasSymbolAssignmentAvailable(ca, stepNumber);
-			if(a != null) {
-				CellAssignmentStatus status = m_solver.performAssignment(a);
-				if(status == CellAssignmentStatus.AssignmentMade) {
-					String s = "assigned only possible symbol " + a.symbol().getRepresentation() + " to cell " + ca.cell().getGridLocationString();
-					actions.add(s);
-					changedState = true;
-				}
-				break;
+	// Look for and assign the first case found of a symbol which can only be applied to one specific cell in a cellset.
+	//
+	// For example:
+	//                                    	
+	// x	x	x		x	x	x		3	=1	.	
+	// x	x	x		x	x	1		.	.	.	
+	// 1	x	x		x	x	x		.	.	5	
+	//
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	1
+	//
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		1	x	x
+	// x	x	x		x	x	x		x	x	x
+	//
+	// For the top-right box (Box 3), the symbol 1 can only be in the middle cell of the top row, shown as '=1' above.
+	
+	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
+		boolean changedState = false;		
+		// Try each cellset in turn until we've performed an assignment.
+		for(CellSetAssessment csa : m_solver.cellSetAssessments()) {			
+			// Functional approach to finding an unassigned symbol with only one possible cell left		
+			Symbol symbol = csa.symbols().stream()
+								.filter(s -> !csa.symbolAlreadyAssigned(s))
+								.filter(s -> csa.couldBeCellCount(s) == 1)
+								.findFirst().orElse(null);	// Returns null if no such symbol found.
+
+			// If we've found a symbol that can be assigned. Extract the cell it can be assigned to and make the assignment.
+			if(symbol != null) {
+				Cell onlyAvailableCell = csa.couldBeCellsForSymbol(symbol).get(0);
+				String detail = "Only cell available for this symbol in " + csa.getRepresentation();
+				Assignment assignment = new Assignment(onlyAvailableCell, symbol, AssignmentMethod.AutomatedDeduction, detail,  stepNumber);
+				m_solver.performAssignment(assignment);
+				changedState = true;
+				String s = "Assigned symbol " + symbol.getRepresentation() + 
+						   " to cell " + onlyAvailableCell.getGridLocationString() + 
+						   " for " + csa.getRepresentation() + 
+						   " - no other cell is available for this symbol";
+				actions.add(s);
 			}
+			if(changedState) break;		// Only make one assignment for each attempt to apply the method.
+		}
+		return changedState;
+	}	
+}
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+/**
+ * Class which tries to find cells which can only have one specific symbol assigned to them now.
+ */
+class Method2 extends Method {
+	
+	Method2(Solver solver) {
+		super(solver);
+	}
+	
+	// Look for and apply the first case found where only one symbol is now left as a possible assignment for the cell. 
+	//
+	// For example:
+	//                                    	
+	// 4	.	.		x	x	x		x	x	x	
+	// =2	6	3		5	x	x		x	x	x	
+	// 1	7	.		x	x	x		x	x	x	
+	//
+	// x	x	x		x	x	x		x	x	x
+	// 9	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	//
+	// x	x	x		x	x	x		x	x	x
+	// x	x	x		x	x	x		x	x	x
+	// 8	x	x		x	x	x		x	x	x
+	//
+	// For the top-left box (Box 1), the middle cell of the first column can only be a '2', shown as =2, all the other
+	// symbols have been ruled out.
+	
+	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
+		boolean changedState = false;
+		for(CellAssessment ca : m_solver.cellAssessments()) {
+			if(!ca.isAssigned() && (ca.couldBeCount() == 1)) {
+				Symbol onlyAvailableSymbol = ca.couldBeSymbols().get(0);
+				Assignment assignment = new Assignment(ca.cell(), onlyAvailableSymbol, 
+								AssignmentMethod.AutomatedDeduction, "Only symbol still available for this cell", stepNumber);
+				m_solver.performAssignment(assignment);
+				changedState = true;
+				String s = "assigned symbol " + onlyAvailableSymbol.getRepresentation() +  
+						   " to cell " + ca.cell().getGridLocationString() +
+						   " - no other symbol can be assigned to this cell";
+				actions.add(s);
+			}
+			if(changedState) break;		// Only make one assignment for each attempt to apply the method.			
 		}			
 		return changedState;
 	}
-
-	// If there is only one symbol which can still be assigned to this cell, then we have an assignment 
-	Assignment hasSymbolAssignmentAvailable(CellAssessment ca, int stepNumber) {
-		Assignment assignment = null;
-		if(!ca.isAssigned())
-		{
-			Symbol onlySymbol = ca.getOnlyCouldBeSymbolForCell();
-			if(onlySymbol != null) {
-				assignment = new Assignment(ca.cell(), onlySymbol, AssignmentMethod.AutomatedDeduction, "Only symbol available for cell", stepNumber);
-			}
-		}
-		return assignment;
-	}
 }
 
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 
 class Method3 extends Method {
 	
-	Method3(Solver solver, Symbols symbols) {
-		super(solver, symbols);
+	Method3(Solver solver) {
+		super(solver);
 	}
 	
 	// Look through each box to see where a particular unresolved symbol can only appear in a specific row or column of the box.
 	// Where this arises, we can rule-out the symbol from the other cells in the row or column which are not in the box.
 	//
 	// For example (x or * can be a known or unknown value)
-	//
 	//                                  C7  C8  C9	
 	// x	x	x		x	x	x		3	1	.	R1
 	// *	*	*		*	*	*		.	.	.	R2
@@ -131,13 +170,13 @@ class Method3 extends Method {
 	// x	x	x		x	x	x		x	x	x
 	// x	x	x		x	x	x		x	x	7
 	//
-	// For the top-right box (Box 3), the 7 can only be in Row 2. 
+	// For the top-right box (Box 3), the 7 must only be in Row 2. 
 	// Consequently we can rule out 7 from being any of the cells in Row 2 which are outside Box 3
-	// So the cells marked with a * cannot be a 7, and we can apply this 7-is-ruled-out restriction to those cells.	
+	// So the cells marked with a * cannot be a 7, and we can apply this 7-is-ruled-out restriction to those cells.
 	
-	boolean tryMethod(List<CellSetAssessment> cellSetAssessments, int stepNumber, List<String> actions) {
+	boolean applyMethod(int stepNumber, List<String> actions) {
 		boolean changedState = false;
-		for(CellSetAssessment csa : cellSetAssessments) {
+		for(CellSetAssessment csa : m_solver.cellSetAssessments()) {
 			List<Method3Restriction> lRestrictions = findMethod3Restrictions(csa);
 			changedState = applyMethod3Restrictions(lRestrictions, stepNumber, actions);			
 			if(changedState) break;
@@ -170,7 +209,7 @@ class Method3 extends Method {
 		List<Method3Restriction> lRestrictions = new ArrayList<>();		
 		
 		for(Symbol symbol : csa.symbols()) {
-			List<Cell> lCells = new ArrayList<>(csa.getCouldBeCellsForSymbol(symbol));
+			List<Cell> lCells = new ArrayList<>(csa.couldBeCellsForSymbol(symbol));
 			if(lCells.size() > 1) {
 				Set<Box> boxSet = new HashSet<>();
 				Set<Row> rowSet = new HashSet<>();
@@ -231,17 +270,20 @@ class Method3 extends Method {
 	}
 }
 
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
 class Method4 extends Method {
 	
-	Method4(Solver solver, Symbols symbols) {
-		super(solver, symbols);
+	Method4(Solver solver) {
+		super(solver);
 	}
 	
 	// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
-	boolean tryMethod(List<CellSetAssessment> cellSetAssessments, int stepNumber, List<String> actions) {
+	boolean applyMethod(int stepNumber, List<String> actions) {
 		boolean changedState = false;
 		int stateChanges = 0;
-		for(CellSetAssessment set : cellSetAssessments) {
+		for(CellSetAssessment set : m_solver.cellSetAssessments()) {
 			List<SymbolSetRestriction> lRestrictedSymbolSets = findRestrictedSymbolSets(set);
 			if(lRestrictedSymbolSets != null) {
 				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
@@ -297,7 +339,7 @@ class Method4 extends Method {
 	}
 	
 	// Goes up to combinations of 4 - how to generalise to n ?
-	List<SymbolSetRestriction> findRestrictedSymbolSets(CellSetAssessment csa) {
+	private List<SymbolSetRestriction> findRestrictedSymbolSets(CellSetAssessment csa) {
 		List<SymbolSetRestriction> l = new ArrayList<>();
 		// Generate combinations of 2, 3 and 4 unassigned symbols. If the combination has n symbols and between them these can only
 		// be placed in n cells, then we have a restricted symbol set.
@@ -305,12 +347,12 @@ class Method4 extends Method {
 		List<List<Symbol>> lCombinations = new ArrayList<>();
 		
 		for(Symbol symbol1 : csa.symbols()) {
-			Set<Cell> lCells1 = csa.getCouldBeCellsForSymbol(symbol1);
+			Collection<Cell> lCells1 = csa.couldBeCellsForSymbol(symbol1);
 			if(lCells1.size() > 1) {
 
 				for(Symbol symbol2 : csa.symbols()) {
 					if(symbol2.ordinal() > symbol1.ordinal()) {
-						Set<Cell> lCells2 = csa.getCouldBeCellsForSymbol(symbol2);
+						Collection<Cell> lCells2 = csa.couldBeCellsForSymbol(symbol2);
 						if(lCells2.size() > 1) {
 							// We have a combination of two symbols to investigate ...
 							List<Symbol> l2 = new ArrayList<>();
@@ -319,7 +361,7 @@ class Method4 extends Method {
 							
 							for(Symbol symbol3 : csa.symbols()) {
 								if(symbol3.ordinal() > symbol2.ordinal()) {
-									Set<Cell> lCells3 = csa.getCouldBeCellsForSymbol(symbol3);
+									Collection<Cell> lCells3 = csa.couldBeCellsForSymbol(symbol3);
 									if(lCells3.size() > 1) {
 										// We have a combination of three symbols to investigate ...
 										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
@@ -327,7 +369,7 @@ class Method4 extends Method {
 
 										for(Symbol symbol4 : csa.symbols()) {
 											if(symbol4.ordinal() > symbol3.ordinal()) {
-												Set<Cell> lCells4 = csa.getCouldBeCellsForSymbol(symbol4);
+												Collection<Cell> lCells4 = csa.couldBeCellsForSymbol(symbol4);
 												if(lCells4.size() > 1) {
 													// We have a combination of four symbols to investigate ...
 													List<Symbol> l4 = new ArrayList<>(l3); l4.add(symbol4); 
@@ -361,7 +403,7 @@ class Method4 extends Method {
 	private List<Cell> getSymbolCombinationCells(CellSetAssessment csa, List<Symbol> lCombination) {
 		Set<Cell> cells = new TreeSet<>();
 		for(Symbol symbol : lCombination) {
-			Set<Cell> l = csa.getCouldBeCellsForSymbol(symbol);
+			Collection<Cell> l = csa.couldBeCellsForSymbol(symbol);
 			for(Cell cell : l) {
 				cells.add(cell);
 			}

@@ -111,7 +111,7 @@ public class GridFormatter {
 
 				String toolTip = cell.getGridLocationString() + " = " + cell.getRepresentation();
 				if(cell.isAssigned()) {
-					toolTip += " : " + cell.assignment().toString();
+					toolTip += " : " + cell.assignment().description();
 				}
 				
 				boolean staticContent = provider.hasStaticContent();

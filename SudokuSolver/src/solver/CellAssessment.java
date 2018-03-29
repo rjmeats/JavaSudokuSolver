@@ -2,6 +2,8 @@ package solver;
 
 import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -79,20 +81,8 @@ class CellAssessment {
 		return m_couldBeSymbolsSet.size();
 	}
 
-	Set<Symbol> couldBeSymbols() {
-		return new LinkedHashSet<>(m_couldBeSymbolsSet);
-	}
-
-	/**
-	 * Is there only one symbol possible for this cell now ? If so return it
-	 * @return The only possible symbol for the cell, if we've reached that point, otherwise null, indicating multiple possibilities still exist. 
-	 */	
-	Symbol getOnlyCouldBeSymbolForCell() {
-		if (couldBeCount() == 1) {
-			return m_couldBeSymbolsSet.stream().findFirst().get();	// Functional way of getting first (only) item in a set
-		}
-		else
-			return null;
+	List<Symbol> couldBeSymbols() {
+		return new ArrayList<>(m_couldBeSymbolsSet);
 	}
 
 	// -----------------------------------------------------------------------------------------
