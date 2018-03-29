@@ -217,6 +217,7 @@ public class Solver {
 	 *  
 	 * @param assignment Detailed of the assignment being made.
 	 * @return Returns AssignmentMade if successful, otherwise an error status value is returned.
+	 * @throws IllegalAssignmentException A cell-to-symbol assignment failed.
 	 */
 	CellAssignmentStatus performAssignment(Assignment assignment) throws IllegalAssignmentException {
 		CellAssessment ca = assessmentForCell(assignment.cell());
@@ -298,7 +299,7 @@ public class Solver {
 		}		
 	}	
 
-	// Also called from within Method class, so not private, and returns an indication of if any of the ruling out was 
+	// Also called from within a Method class, so not private, and returns an indication of if any of the ruling out was 
 	// new.
 	int spreadRulingOutImpact(Cell cell, Symbol symbol, int stepNumber) {
 		int changeCount = 0;

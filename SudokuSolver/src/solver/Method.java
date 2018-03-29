@@ -1,11 +1,12 @@
 package solver;
 
 import java.util.List;
+
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.TreeSet;
-import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 import grid.Assignment;
 import grid.AssignmentMethod;
@@ -24,12 +25,12 @@ abstract class Method {
 	}
 
 	/**
-	 * Every class extending the Method class provides applyMethod to try to make some progress on solving the Sudoku.
+	 * Every class extending the Method class provides an applyMethod method to try to make some progress on solving the Sudoku.
 	 *  
-	 * @param stepNumber
-	 * @param actions
-	 * @return
-	 * @throws IllegalAssignmentException
+	 * @param stepNumber What is the current step number ?
+	 * @param actions List to add diagnostic strings to, recording actions performed 
+	 * @return True if progress has been made.
+	 * @throws IllegalAssignmentException A cell-to-symbol assignment failed.
 	 */
 	abstract boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException;
 }
@@ -38,7 +39,7 @@ abstract class Method {
 // -----------------------------------------------------------------------------------------
 
 /**
- * Class which tries to find symbols which can be assigned only to one specific cell in a cellset (column, row or box) now.
+ * Class which tries to find symbols which are now limited to being assignable to only one specific cell in a cellset (column, row or box).
  */
 class Method1 extends Method {
 	
@@ -97,7 +98,7 @@ class Method1 extends Method {
 //-----------------------------------------------------------------------------------------
 
 /**
- * Class which tries to find cells which can only have one specific symbol assigned to them now.
+ * Class which tries to find cells which are now limited to being assignable to only one specific symbol.
  */
 class Method2 extends Method {
 	
@@ -147,6 +148,10 @@ class Method2 extends Method {
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 
+/**
+ * Class which tries to rule out cell/symbol combinations based on how the available cells for symbols in one cellset (box, row, column) 
+ * restrict the possibilities in the cellsets that intersect with them.  
+ */
 class Method3 extends Method {
 	
 	Method3(Solver solver) {
@@ -170,102 +175,106 @@ class Method3 extends Method {
 	// x	x	x		x	x	x		x	x	x
 	// x	x	x		x	x	x		x	x	7
 	//
-	// For the top-right box (Box 3), the 7 must only be in Row 2. 
-	// Consequently we can rule out 7 from being any of the cells in Row 2 which are outside Box 3
-	// So the cells marked with a * cannot be a 7, and we can apply this 7-is-ruled-out restriction to those cells.
+	// For the top-right box (Box 3), we can see that the 7 must only be in Row 2. 
+	// Consequently we can rule out 7 from being any of the cells in Row 2 which do not intersect with Box 3 - the 
+	// cells marked with a * cannot be a 7, and we can apply this 7-is-ruled-out restriction to those cells.
+	//
+	// The example above shows the situation in a box restricting cells in a row which intersects with it. Similar
+	// logic also applies to other intersections between boxes and rows/columns:
+	// - a box can restrict cells in a column which intersects with it
+	// - a row can restrict cells in a box which intersects with it
+	// - a column can restrict cells in a box which intersects with it
 	
-	boolean applyMethod(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		for(CellSetAssessment csa : m_solver.cellSetAssessments()) {
-			List<Method3Restriction> lRestrictions = findMethod3Restrictions(csa);
-			changedState = applyMethod3Restrictions(lRestrictions, stepNumber, actions);			
-			if(changedState) break;
-		}
-		return changedState;
-	}
-	
-	private static class Method3Restriction {
+	//-----------------------------------------------------------------------------------------
+
+	// Sub-class to record details of a particular restriction found for a symbol. In the restricted cellset, the symbol 
+	// must be in a cell which intersects with the restrictor cellset
+	private static class Restriction {
 		Symbol m_symbol;
-		CellSet m_restrictorCellSet;
-		CellSet m_restrictedCellSet;
-		Set<Cell> m_restrictedCells;
+		CellSet m_restrictorCellSet; 	
+		CellSet m_restrictedCellSet;	  
 		
-		Method3Restriction(Symbol symbol, CellSet restrictor, CellSet restricted) {
+		Restriction(Symbol symbol, CellSet restrictor, CellSet restricted) {
 			m_symbol = symbol;
 			m_restrictorCellSet = restrictor;
 			m_restrictedCellSet = restricted;
-			m_restrictedCells = m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
+		}
+		
+		// Which cells cannot be assigned to our symbol as a result of these restrictions ?
+		Set<Cell> ruledOutCells() {
+			return m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
 		}
 		
 		String getRepresentation() {
 			return "Symbol " + m_symbol.getRepresentation() + " in " + m_restrictedCellSet.getRepresentation() + 
-						" must be in " + m_restrictorCellSet.getRepresentation();
+						" must be in a cell which intersects with " + m_restrictorCellSet.getRepresentation();
 		}
 	}
 
-	private List<Method3Restriction> findMethod3Restrictions(CellSetAssessment csa) {
-		
-		CellSet thisCellSet = csa.cellSet();
-		List<Method3Restriction> lRestrictions = new ArrayList<>();		
+	//-----------------------------------------------------------------------------------------
+
+	// See how the possible cells which a symbol may be assigned to within a 'restrictor' cellset can restrict what is possible in
+	// other cellsets which intersect with this one. 
+	private List<Restriction> findRestrictions(CellSetAssessment csa) {
+		List<Restriction> lRestrictions = new ArrayList<>();		
+		CellSet restrictorCellSet = csa.cellSet();
 		
 		for(Symbol symbol : csa.symbols()) {
 			List<Cell> lCells = new ArrayList<>(csa.couldBeCellsForSymbol(symbol));
 			if(lCells.size() > 1) {
-				Set<Box> boxSet = new HashSet<>();
-				Set<Row> rowSet = new HashSet<>();
-				Set<Column> columnSet = new HashSet<>();
+				// We have a choice of cells that a symbol could appear in with this cell set. Work out how many separate intersecting columns, rows 
+				// and boxes these cells appear in, other than our original cellset.
+				Set<Box> intersectingBoxes = new HashSet<>();
+				Set<Row> intersectingRows = new HashSet<>();
+				Set<Column> intersectingColumns = new HashSet<>();
 				for(Cell cell : lCells) {
-					boxSet.add(cell.box());
-					rowSet.add(cell.row());
-					columnSet.add(cell.column());
+					if(cell.box() != restrictorCellSet) intersectingBoxes.add(cell.box());
+					if(cell.row() != restrictorCellSet) intersectingRows.add(cell.row());
+					if(cell.column() != restrictorCellSet) intersectingColumns.add(cell.column());
 				}
 
+				// If the cells are all in the same intersecting column, row or box, then we've found a restriction we can apply to that 
+				// intersecting cellset - the symbol cannot be in any of the cells in the intersecting column/row/box which are not also in our original cellset. 
 				CellSet restrictedCellSet = null;
-				if(boxSet.size() == 1) {
-					Box box = lCells.get(0).box();
-					if(box != thisCellSet) {
-						restrictedCellSet = box;
-					}
-				}
-				
-				if(rowSet.size() == 1) {
-					Row row = lCells.get(0).row();
-					if(row != thisCellSet) {
-						restrictedCellSet = row;
-					}
-				}
-				
-				if(columnSet.size() == 1) {
-					Column column = lCells.get(0).column();
-					if(column != thisCellSet) {
-						restrictedCellSet = column;
-					}
+				if(intersectingBoxes.size() == 1) {
+					restrictedCellSet = lCells.get(0).box();
 				}				
-
+				else if(intersectingRows.size() == 1) {
+					restrictedCellSet = lCells.get(0).row();
+				}
+				else if(intersectingColumns.size() == 1) {
+					restrictedCellSet = lCells.get(0).column();
+				}
+				
 				if(restrictedCellSet != null) {
-					lRestrictions.add(new Method3Restriction(symbol, thisCellSet, restrictedCellSet));
+					lRestrictions.add(new Restriction(symbol, restrictorCellSet, restrictedCellSet));
 				}
 			}
 		}
 		
 		return lRestrictions;
 	}	
-		
-	private boolean applyMethod3Restrictions(List<Method3Restriction> lRestrictions, int stepNumber, List<String> actions) {
+
+	boolean applyMethod(int stepNumber, List<String> actions) {
 		boolean changedState = false;
-		for(Method3Restriction restriction : lRestrictions) {
-			int changeCount = 0;
-			for(Cell cell : restriction.m_restrictedCells) {
-				changeCount += m_solver.spreadRulingOutImpact(cell, restriction.m_symbol, stepNumber);								
-			}
+		// Look for restrictions generated from each cellset (column, row, box) in turn. Apply them in turn to rule out
+		// out cells until we've caused some sort of change (some restrictions may repeat rulings-out that have already 
+		// been noted, so may not cause a state change). 
+		for(CellSetAssessment csa : m_solver.cellSetAssessments()) {
+			for(Restriction restriction : findRestrictions(csa)) {
+				int changeCount = 0;
+				for(Cell cell : restriction.ruledOutCells()) {
+					changeCount += m_solver.spreadRulingOutImpact(cell, restriction.m_symbol, stepNumber);								
+				}
 
-			if(changeCount > 0) {
-				changedState = true;
-				actions.add(restriction.getRepresentation());
-				break;
+				if(changeCount > 0) {
+					changedState = true;
+					actions.add(restriction.getRepresentation());
+				}
+				if(changedState) break;		// Only apply one restriction for each call of this method.			
 			}
+			if(changedState) break;		// Only apply one set restriction for each call of this method.			
 		}
-
 		return changedState;
 	}
 }
@@ -273,107 +282,92 @@ class Method3 extends Method {
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 
+/**
+ * Class which tries to find a subset of unassigned cells in a cellset which can only be assigned to a subset of the unassigned symbols,
+ * allowing some other possibilities to be ruled out.
+ */
 class Method4 extends Method {
 	
 	Method4(Solver solver) {
 		super(solver);
 	}
+
+	// We can sometimes work out that a subset of unassigned cells in a cellset must relate to a subset of the unsassigned symbols, they form a self-contained
+	// unit. 
+	//
+	// For example, in working through a puzzle, we have reached a point where the cells in a column can have the following possible values:
+	//
+	//			Could be symbols		Notes
+	// Row 1 	5 8 9
+	// Row 2 	6						Already assigned
+	// Row 3	7						Already assigned
+	// Row 4	2 4
+	// Row 5	3						Already assigned
+	// Row 6	2 4 8
+	// Row 7	2 4
+	// Row 8	5 9
+	// Row 9	1						Already assigned
+	//
+	// We can see from this that the symbols 5, 8 and 9 can only appear in the cells in rows 1, 6, and 8. So we have 3 symbols which can only appear in just 3 cells.
+	// This means that those three cells must only contain 5, 8, and 9, and no other symbols. In particular, the cell in row 6 cannot be assigned to 2 or 4 (otherwise
+	// we would be left with only two cells to assign three symbols to), so we can do some ruling out based on this (resulting in row 6 being assignable to the symbol 8).
+	// 	
+	// So in general, if we find that a set of n symbols can only appear in n cells in a cell set, we can rule out any other symbol from being assigned to any of those n cells.
+	//
+	// This method finds these corresponding sets of n symbols and cells in a cellset, and applies the restrictions they imply.
 	
-	// Where n symbols in a row/column/box can only be assigned to the same n cells, then these cells can't be assigned to any other symbols.
-	boolean applyMethod(int stepNumber, List<String> actions) {
-		boolean changedState = false;
-		int stateChanges = 0;
-		for(CellSetAssessment set : m_solver.cellSetAssessments()) {
-			List<SymbolSetRestriction> lRestrictedSymbolSets = findRestrictedSymbolSets(set);
-			if(lRestrictedSymbolSets != null) {
-				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {						
-					for(Cell cell : symbolSetRestriction.m_lCells) {
-						CellAssessment ca = m_solver.assessmentForCell(cell);
-						boolean causedStateChange = (ca.ruleOutAllSymbolsExcept(symbolSetRestriction.m_lSymbols, stepNumber) > 0);
-						if(causedStateChange) {
-							stateChanges++;
-							String s = "Restriction1: " + symbolSetRestriction.getRepresentation();
-							actions.add(s);
-							break;
-						}
-					}
-					if(stateChanges > 0) break;
-				}
-	
-				if(stateChanges > 0) break;
-				for(SymbolSetRestriction symbolSetRestriction : lRestrictedSymbolSets) {
-					for(Symbol symbol : symbolSetRestriction.m_lSymbols) {
-						CellSetAssessment cseta = m_solver.assessmentForCellSet(symbolSetRestriction.m_cellSet);
-						int causedChange = cseta.ruleOutAllOtherCellsForSymbol(symbolSetRestriction.m_lCells, symbol, stepNumber);
-						if(causedChange > 0) {
-							stateChanges++;
-							String s = "Restriction2: " + symbolSetRestriction.getRepresentation();
-							actions.add(s);
-//							break;
-						}
-					}
-					
-//					if(stateChanges > 0) break;
-					List<CellSet> lAffectedCellSets = symbolSetRestriction.getAffectedCellSets();
-					for(CellSet cset : lAffectedCellSets) {
-						CellSetAssessment cseta = m_solver.assessmentForCellSet(cset);
-						for(Cell cell : symbolSetRestriction.m_lCells) {
-							int causedChange = cseta.ruleOutCellFromOtherSymbols(cell, symbolSetRestriction.m_lSymbols, stepNumber);
-							if(causedChange > 0) {
-								stateChanges++;
-								String s = "Restriction3: " + symbolSetRestriction.getRepresentation();
-								actions.add(s);
-//								break;
-							}
-						}
-					}
-//					if(stateChanges > 0) break;
-				}
-//				if(stateChanges > 0) break;
-			}
-			if(stateChanges > 0) break;
+	//-----------------------------------------------------------------------------------------
+
+	// Sub-class to record details of a particular restriction found in a cellset. In the restriction, the set of symbols can only be assigned to the 
+	// cells in the set of cells.
+	private static class Restriction {
+		CellSet m_cellSet;	
+		Set<Symbol> m_symbols;
+		Set<Cell> m_cells;
+		
+		Restriction(CellSet cellSet, Set<Symbol> symbols, Set<Cell> cells) {
+			m_cellSet = cellSet;	
+			m_symbols = symbols;
+			m_cells = cells;		
 		}
 		
-		changedState = (stateChanges > 0);
-		return changedState;
+		String getRepresentation() {
+			return "Restriction for " + m_cellSet.getRepresentation() + ":" + 
+						" the " + m_symbols.size() + " symbols {" + Symbol.symbolCollectionRepresentation(m_symbols) + "} are restricted to " + 
+						" the " + m_cells.size() + " cells {" + Cell.cellCollectionRepresentation(m_cells) + "}"; 
+		}
 	}
-	
-	// Goes up to combinations of 4 - how to generalise to n ?
-	private List<SymbolSetRestriction> findRestrictedSymbolSets(CellSetAssessment csa) {
-		List<SymbolSetRestriction> l = new ArrayList<>();
-		// Generate combinations of 2, 3 and 4 unassigned symbols. If the combination has n symbols and between them these can only
-		// be placed in n cells, then we have a restricted symbol set.
-		
-		List<List<Symbol>> lCombinations = new ArrayList<>();
-		
-		for(Symbol symbol1 : csa.symbols()) {
-			Collection<Cell> lCells1 = csa.couldBeCellsForSymbol(symbol1);
-			if(lCells1.size() > 1) {
 
+	//-----------------------------------------------------------------------------------------
+
+	// Find the restrictions for a particular cellset, where a set of n unassigned symbols can only be assigned to a set of n unassigned cells.
+	// NB The code below looks for restrictions comprised of 2, 3 or 4 cells/symbols. Maybe look for a way to extend to more, probably by
+	// recursion.	
+	private List<Restriction> findRestrictions(CellSetAssessment csa) {
+		// Find all the combinations of 2, 3 or 4 unassigned symbols in the cellset (using the ordinal method to avoid duplicates combinations
+		// with a different cell ordering).
+		List<Set<Symbol>> symbolCombinations = new ArrayList<>();		
+		for(Symbol symbol1 : csa.symbols()) {
+			if(csa.couldBeCellCount(symbol1) > 1) {
+				Set<Symbol> combo1 = new LinkedHashSet<>(); combo1.add(symbol1);
 				for(Symbol symbol2 : csa.symbols()) {
 					if(symbol2.ordinal() > symbol1.ordinal()) {
-						Collection<Cell> lCells2 = csa.couldBeCellsForSymbol(symbol2);
-						if(lCells2.size() > 1) {
+						if(csa.couldBeCellCount(symbol2) > 1) {
 							// We have a combination of two symbols to investigate ...
-							List<Symbol> l2 = new ArrayList<>();
-							l2.add(symbol1); l2.add(symbol2);
-							lCombinations.add(l2);
-							
+							Set<Symbol> combo2 = new LinkedHashSet<>(combo1); combo2.add(symbol2);
+							symbolCombinations.add(combo2);							
 							for(Symbol symbol3 : csa.symbols()) {
 								if(symbol3.ordinal() > symbol2.ordinal()) {
-									Collection<Cell> lCells3 = csa.couldBeCellsForSymbol(symbol3);
-									if(lCells3.size() > 1) {
+									if(csa.couldBeCellCount(symbol3) > 1) {
 										// We have a combination of three symbols to investigate ...
-										List<Symbol> l3 = new ArrayList<>(l2); l3.add(symbol3); 
-										lCombinations.add(l3);
-
+										Set<Symbol> combo3 = new LinkedHashSet<>(combo2); combo3.add(symbol3); 
+										symbolCombinations.add(combo3);
 										for(Symbol symbol4 : csa.symbols()) {
 											if(symbol4.ordinal() > symbol3.ordinal()) {
-												Collection<Cell> lCells4 = csa.couldBeCellsForSymbol(symbol4);
-												if(lCells4.size() > 1) {
+												if(csa.couldBeCellCount(symbol4) > 1) {
 													// We have a combination of four symbols to investigate ...
-													List<Symbol> l4 = new ArrayList<>(l3); l4.add(symbol4); 
-													lCombinations.add(l4);													
+													Set<Symbol> combo4 = new LinkedHashSet<>(combo3); combo4.add(symbol4); 
+													symbolCombinations.add(combo4);
 												}
 											}
 										}
@@ -386,56 +380,77 @@ class Method4 extends Method {
 			}			
 		}
 
-//		System.err.println("Found " + lCombinations.size() + " symbol combinations for " + csa.getCellSet().getRepresentation());
-		for(List<Symbol> lCombination : lCombinations) {
-			List<Cell> lCellsForCombination = getSymbolCombinationCells(csa, lCombination);
-			boolean foundSet = (lCombination.size() == lCellsForCombination.size());
-			if(foundSet) {
-//				System.err.println((foundSet ? "** " : "   ") + "Symbol combination: " + Symbol.symbolCollectionToString(lCombination) + " covers cells " +  Cell.cellCollectionToString(lCellsForCombination));				
-				SymbolSetRestriction restriction = new SymbolSetRestriction(csa.cellSet(), lCombination, lCellsForCombination);
-				l.add(restriction);
+		// For each unassigned symbol combination we've found, see how many cells these symbols can still potentially be
+		// assigned to. If it's the same as the number of symbols in the combination, we've found a restriction.
+		// NB Incorporating this in the loops above would be more efficient.
+		List<Restriction> restrictions = new ArrayList<>();
+		for(Set<Symbol> symbolCombination : symbolCombinations) {
+			Set<Cell> cells = getSymbolCombinationCells(csa, symbolCombination);
+			if(symbolCombination.size() == cells.size()) {
+				Restriction r = new Restriction(csa.cellSet(), symbolCombination, cells);
+				restrictions.add(r);
+				//System.err.println("Found restriction: " + r.getRepresentation());
 			}
 		}		
 		
-		return l;
+		return restrictions;
 	}
 
-	private List<Cell> getSymbolCombinationCells(CellSetAssessment csa, List<Symbol> lCombination) {
-		Set<Cell> cells = new TreeSet<>();
-		for(Symbol symbol : lCombination) {
-			Collection<Cell> l = csa.couldBeCellsForSymbol(symbol);
-			for(Cell cell : l) {
+	// Get the set of cells which can still be assigned to this set of symbols.
+	private Set<Cell> getSymbolCombinationCells(CellSetAssessment csa, Set<Symbol> symbolCombination) {
+		Set<Cell> cells = new LinkedHashSet<>();	// Must be a set, only want to record each cell once.
+		for(Symbol symbol : symbolCombination) {
+			for(Cell cell : csa.couldBeCellsForSymbol(symbol)) {
 				cells.add(cell);
 			}
 		}
 				
-		return new ArrayList<Cell>(cells);
+		return cells;
 	}
 
-	//Paired symbols in a cell set which can only exist in a subset of cells. The two lists will be the same length.  
-	private class SymbolSetRestriction {
-		CellSet m_cellSet;	
-		List<Symbol> m_lSymbols;
-		List<Cell> m_lCells;
-		
-		SymbolSetRestriction(CellSet cellSet, List<Symbol> lSymbols, List<Cell> lCells) {
-			m_cellSet = cellSet;	
-			m_lSymbols = lSymbols;
-			m_lCells = lCells;		
-		}
-		
-		List<CellSet> getAffectedCellSets() {
-			Set<CellSet> set = new TreeSet<>();		// Tree set maintains sorting order, LinkedHashSet maintains insertion order ????	
-			for(Cell cell : m_lCells) {
-				set.add(cell.box());			// Invokes compare, so box, row, column need to implement comparable to do the ordering of CellSets  
-				set.add(cell.row());
-				set.add(cell.column());
+	boolean applyMethod(int stepNumber, List<String> actions) {
+		boolean changedState = false;
+		// Look for restricted sets of cells/symbols in each cellset, and apply them until one of them
+		// causes a state change.
+		for(CellSetAssessment csa : m_solver.cellSetAssessments()) {
+			List<Restriction> lRestrictions = findRestrictions(csa);
+			for(Restriction restriction : lRestrictions) {						
+				changedState = processRestriction(csa, restriction, stepNumber);
+				if(changedState) {
+					actions.add(restriction.getRepresentation());
+					break;
+				}
 			}
-			return new ArrayList<CellSet>(set);		
+			if(changedState) break;
+		}
+		return changedState;
+	}
+
+	// Handle the processing of a specific restriction, rule out cell/symbol combinations not covered by the restriction
+	private boolean processRestriction(CellSetAssessment csa, Restriction restriction, int stepNumber) {
+		int stateChanges = 0;
+		
+		// Rule out other symbols for these cells
+		for(Cell cell : restriction.m_cells) {
+			Set<Symbol> ruledOutSymbols = csa.symbols().stream()
+						.filter(s -> !restriction.m_symbols.contains(s))
+						.collect(Collectors.toSet());
+			for(Symbol symbol : ruledOutSymbols) {
+				stateChanges += m_solver.spreadRulingOutImpact(cell, symbol, stepNumber);
+			}
 		}
 		
-		String getRepresentation() {
-			return "SymbolSetRestriction for " + m_cellSet.getRepresentation() + " Symbols: " + Symbol.symbolCollectionRepresentation(m_lSymbols) + ", Cells : " + Cell.cellCollectionRepresentation(m_lCells); 
+		// Rule out other cells for these symbols
+		for(Symbol symbol : restriction.m_symbols) {
+			Set<Cell> ruledOutCells = csa.cellSet().cells().stream()
+						.filter(c -> !restriction.m_cells.contains(c))
+						.collect(Collectors.toSet());
+			for(Cell cell : ruledOutCells) {
+				stateChanges += m_solver.spreadRulingOutImpact(cell, symbol, stepNumber);
+			}
 		}
+
+		boolean changedState = (stateChanges > 0);
+		return changedState;
 	}
 }	

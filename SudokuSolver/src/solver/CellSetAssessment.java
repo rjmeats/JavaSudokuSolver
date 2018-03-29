@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 import grid.Cell;
@@ -153,47 +152,6 @@ class CellSetAssessment implements Comparable<CellSetAssessment> {
 		return changed;
 	}
 
-	/**
-	 * Records that only the specified cells are possible for the symbol, no others.
-	 *  
-	 * @param stillPossibleCells Cells which could still be assigned to the symbol
-	 * @param symbol Symbol which the cells can be assigned to
-	 * @param stepNumber What is the current step number ?
-	 * @return A count of how many cells have been ruled out by this call which weren't already ruled out.
-	 */
-	int ruleOutAllOtherCellsForSymbol(Collection<Cell> stillPossibleCells, Symbol symbol, int stepNumber) {
-		int changed = 0;
-		
-		// See which cells are no longer possible, not being in the collection passed in. Functional approach.
-		Set<Cell> noLongerPossibleCells = couldBeCellsForSymbol(symbol).stream()
-				.filter(couldBeCell -> !stillPossibleCells.contains(couldBeCell))
-				.collect(Collectors.toSet());
-				
-		for(Cell notThisCell : noLongerPossibleCells) {
-			changed += ruleOutCellForSymbol(notThisCell, symbol, stepNumber);
-		}
-		
-		return changed;
-	}
-
-	/**
-	 * Records that only the cell can only be assigned to one of the specified symbols, no others.
-	 *  
-	 * @param cell Cell which the symbols can be assigned to
-	 * @param stillPossibleSymbols Symbols which the cell could still be assigned to
-	 * @param stepNumber What is the current step number ?
-	 * @return A count of how many cells have been ruled out by this call which weren't already ruled out.
-	 */
-	int ruleOutCellFromOtherSymbols(Cell cell, Collection<Symbol> stillPossibleSymbols, int stepNumber) {
-		int changed = 0;
-		for(Symbol symbol : symbols()) {
-			if(!stillPossibleSymbols.contains(symbol)) {
-				changed += ruleOutCellForSymbol(cell, symbol, stepNumber);
-			}
-		}
-		return changed;
-	}
-	
 	/**
 	 * To be called when a cell assignment has been made for a symbol.
 	 *   
