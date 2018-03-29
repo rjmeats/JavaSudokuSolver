@@ -1,10 +1,8 @@
 package solver;
 
 import java.util.List;
-
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
@@ -224,9 +222,9 @@ class Method3 extends Method {
 			if(lCells.size() > 1) {
 				// We have a choice of cells that a symbol could appear in with this cell set. Work out how many separate intersecting columns, rows 
 				// and boxes these cells appear in, other than our original cellset.
-				Set<Box> intersectingBoxes = new HashSet<>();
-				Set<Row> intersectingRows = new HashSet<>();
-				Set<Column> intersectingColumns = new HashSet<>();
+				Set<Box> intersectingBoxes = new LinkedHashSet<>();
+				Set<Row> intersectingRows = new LinkedHashSet<>();
+				Set<Column> intersectingColumns = new LinkedHashSet<>();
 				for(Cell cell : lCells) {
 					if(cell.box() != restrictorCellSet) intersectingBoxes.add(cell.box());
 					if(cell.row() != restrictorCellSet) intersectingRows.add(cell.row());
@@ -344,42 +342,9 @@ class Method4 extends Method {
 	// NB The code below looks for restrictions comprised of 2, 3 or 4 cells/symbols. Maybe look for a way to extend to more, probably by
 	// recursion.	
 	private List<Restriction> findRestrictions(CellSetAssessment csa) {
-		// Find all the combinations of 2, 3 or 4 unassigned symbols in the cellset (using the ordinal method to avoid duplicates combinations
-		// with a different cell ordering).
-		List<Set<Symbol>> symbolCombinations = new ArrayList<>();		
-		for(Symbol symbol1 : csa.symbols()) {
-			if(csa.couldBeCellCount(symbol1) > 1) {
-				Set<Symbol> combo1 = new LinkedHashSet<>(); combo1.add(symbol1);
-				for(Symbol symbol2 : csa.symbols()) {
-					if(symbol2.ordinal() > symbol1.ordinal()) {
-						if(csa.couldBeCellCount(symbol2) > 1) {
-							// We have a combination of two symbols to investigate ...
-							Set<Symbol> combo2 = new LinkedHashSet<>(combo1); combo2.add(symbol2);
-							symbolCombinations.add(combo2);							
-							for(Symbol symbol3 : csa.symbols()) {
-								if(symbol3.ordinal() > symbol2.ordinal()) {
-									if(csa.couldBeCellCount(symbol3) > 1) {
-										// We have a combination of three symbols to investigate ...
-										Set<Symbol> combo3 = new LinkedHashSet<>(combo2); combo3.add(symbol3); 
-										symbolCombinations.add(combo3);
-										for(Symbol symbol4 : csa.symbols()) {
-											if(symbol4.ordinal() > symbol3.ordinal()) {
-												if(csa.couldBeCellCount(symbol4) > 1) {
-													// We have a combination of four symbols to investigate ...
-													Set<Symbol> combo4 = new LinkedHashSet<>(combo3); combo4.add(symbol4); 
-													symbolCombinations.add(combo4);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}			
-		}
-
+		// Find all the combinations of 2, 3 or 4, etc unassigned symbols in the cellset.
+		List<Set<Symbol>> symbolCombinations = generateSymbolCombinations(csa);		
+		
 		// For each unassigned symbol combination we've found, see how many cells these symbols can still potentially be
 		// assigned to. If it's the same as the number of symbols in the combination, we've found a restriction.
 		// NB Incorporating this in the loops above would be more efficient.
@@ -396,6 +361,45 @@ class Method4 extends Method {
 		return restrictions;
 	}
 
+	// Find the combinations of 2,3,4,... unassigned synmbols in the cellset - 
+	private List<Set<Symbol>> generateSymbolCombinations(CellSetAssessment csa) {
+		List<Set<Symbol>> symbolCombinations = new ArrayList<>();
+		Set<Symbol> combos = new LinkedHashSet<>();
+		Symbol reached = null;		// Symbols are processed in order, to avoid producing duplicate combinations.
+		int maxSymbols = 4;			// Stop recursing after producing combinations of 4 symbols.
+		addCombinations(symbolCombinations, csa, maxSymbols, combos, reached);
+		
+		if(symbolCombinations.size() > 0) {
+			// System.err.println("Found .. " + symbolCombinations.size() + " possible restriction combination(s)");
+		}
+		
+		return symbolCombinations;
+	}
+	
+	// Recursively-called method to add another level of symbol combinations, by adding the next unassigned symbol after 
+	// the one we just reached.
+	private void addCombinations(List<Set<Symbol>> symbolCombinations, CellSetAssessment csa, int maxSymbols, Set<Symbol> comboSoFar, Symbol reached) {
+		for(Symbol symbol : csa.symbols()) {
+			// symbols() is ordered by ordinal(), only look at higher ordinal symbols to avoid duplicating combinations.
+			if((reached == null) || (symbol.ordinal() > reached.ordinal())) {	
+				if(csa.couldBeCellCount(symbol) > 1) {
+					// This symbol is not already assigned, so use it generate another combinations by adding it to a copy
+					// of the previous combination.
+					Set<Symbol> combo = new LinkedHashSet<>(comboSoFar); 
+					combo.add(symbol);
+					if(combo.size() > 1) {				// Not interested in recording combinations of just a single symbol
+						symbolCombinations.add(combo);
+					}
+					
+					// Add another level of combinations if we've not reached our maximum size yet.
+					if(combo.size() < maxSymbols) {
+						addCombinations(symbolCombinations, csa, maxSymbols, combo, symbol);
+					}
+				}
+			}
+		}		
+	}
+	
 	// Get the set of cells which can still be assigned to this set of symbols.
 	private Set<Cell> getSymbolCombinationCells(CellSetAssessment csa, Set<Symbol> symbolCombination) {
 		Set<Cell> cells = new LinkedHashSet<>();	// Must be a set, only want to record each cell once.
