@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
 import java.util.List;
+import java.util.Set;
 
 import grid.GridLayout;
 import grid.Symbol;
@@ -18,125 +19,168 @@ import grid.GridDiagnostics;
 import solver.*;
 import diagnostics.*;
 
+/**
+ * Main entry point for solving a Sudoku puzzle.
+ * 
+ *  The main method allows Sudokus to be read from a text file. Or the solvePuzzle method can be invoked.
+ */
+
 public class Puzzle {
 	
 	public static void main(String args[]) {
 				
 		InitialGridContentProvider contentProvider = null;
 		
-		// Read a list of initial grid entries from a file name parameter or from a static variable.
+		// Read the initial grid entries from the named file provided as a parameter 
 		if(args.length > 0 && !args[0].equals("-")) {
 			String puzzleFileName = args[0];
-			System.out.println("Reading initial grid from file " + puzzleFileName);
+			System.out.println(".. reading initial grid from file " + puzzleFileName);
 			contentProvider = InitialGridContentProvider.fromFile(puzzleFileName);
 			if(contentProvider == null) {
 				System.err.println("Failed to read initial grid from file " + puzzleFileName);
 			}
 		}
+		// .. or from a static variable if no file name parameter given.
 		else {
-			System.out.println("Reading initial grid from hard-coded puzzle");
-			String[] sa = SampleSudokus.s_initialValuesLeMondeHard;
-			//String[] sa = SampleSudokus.s_times9688;
+			System.out.println(".. reading initial grid from hard-coded sample puzzle");
+			String[] sa = SampleSudokus.SAMPLE1;
 			contentProvider = InitialGridContentProvider.fromArray(sa);
 		}
 		
 		if(contentProvider == null) return;
 
-		// Only work with basic symbols 1 to 9 for now, expecting a standard 9x9 grid
-		Symbols symbolsToUse = Symbols.SYMBOLS_1_TO_9;
-		GridLayout layout = GridLayout.GRID9x9;
-
-		//symbolsToUse = Symbols.SYMBOLS_1_TO_6;
-		//layout = GridLayout.GRID6x6;
-
-		//symbolsToUse = Symbols.SYMBOLS_A_TO_Y;
-		//layout = GridLayout.GRID25x25;
-
-		System.out.println("Using initial grid values:");
+		// Work out what layout and symbol set are being used for the puzzle.
+		int gridRows = contentProvider.m_dataLines.size();
+		GridLayout layout = GridLayout.getGridLayoutOfSize(gridRows);
+		if(layout == null) {
+			System.err.println("Grid layout not recognised rows=" + gridRows);
+			return;
+		}
+		else {
+			// Check that each row has the expected number of columns for a square grid
+			int rowNumber = 0;
+			for(String row : contentProvider.m_dataLines) {
+				if(row.length() != gridRows) {
+					System.err.println("Grid layout - number of columns (" + row.length()+ ") not equal to number of rows (" + gridRows + ") on row " + (rowNumber+1) + ": [" + row + "]");
+					return;					
+				}
+				rowNumber++;
+			}
+		}
+		
+		// And the number of symbols used must be no more than the number of rows (or columns)
+		Set<String> symbolsUsed = contentProvider.m_symbolsUsed;
+		if(contentProvider.m_symbolsUsed.size() > gridRows) {
+			System.err.println("Too many different symbols used (" + symbolsUsed.size() + ") for grid size (" + gridRows + ")");
+			System.err.println("Symbols used: " + symbolsUsed.toString());
+			return;								
+		}
+		
+		// And the symbols used must belong to one of our known sets of the appropriate size.
+		Symbols symbolsToUse = Symbols.matchSymbolSet(gridRows, symbolsUsed);
+		if(symbolsToUse == null) {
+			System.err.println("Symbols used not from a recognised set for this grid size: " + symbolsUsed.toString());
+			return;
+		}
+				
+		System.out.println(".. using a " + layout.description() + " grid layout and " + symbolsToUse.getRepresentation());
+		System.out.println(".. using initial grid values:");
 		System.out.println();
 		for(String s : contentProvider.m_dataLines) {
 			System.out.println("  " + s);
 		}		
-		System.out.println();		
-		System.out.println("Symbols to use: " + symbolsToUse.getRepresentation());
 		System.out.println();
-				
-		Puzzle puzzle = new Puzzle(symbolsToUse, layout);
-		InitialGridStatus status = puzzle.loadGivenCells(contentProvider);
-		
-		if(!status.m_isOK) {
-			System.err.println("Error in initial grid values: " + status.m_errorMessage);
+	
+		// We can now kick off solving of the puzzle.
+		Puzzle.Status status = Puzzle.solvePuzzle(symbolsToUse, layout, contentProvider);
+
+		// Report what happened
+		if(!status.m_initialGridOK) {
+			System.err.println("Error in initial grid values: " + status.m_invalidDetails);			
 		}
-		else {
-			puzzle.solve();
-			
-			Puzzle.Status finalStatus = puzzle.getStatus();
-			
+		else {		
 			System.out.println();
 			System.out.println("*******************************************************************");
 			System.out.println();
-			System.out.println("Puzzle was " + (finalStatus.m_solved ? "" : "not ") + "completed:");
+			System.out.println("The puzzle was " + (status.m_solved ? "" : "not ") + "completed.");
 			System.out.println();
-			System.out.println(finalStatus.m_initialGrid);
+			System.out.println("Initial grid:");
 			System.out.println();
-			System.out.println(finalStatus.m_finalGrid);
+			System.out.println(status.m_initialGrid);
 			System.out.println();
-			System.out.println("Final grid is " + (finalStatus.m_valid ? "valid" : "not valid : " + finalStatus.m_invalidDetails));
+			System.out.println("Final grid:");
+			System.out.println();
+			System.out.println(status.m_finalGrid);
+			System.out.println();
+			System.out.println("The final grid is " + (status.m_valid ? "valid" : "not valid : " + status.m_invalidDetails));
 		}
 	}	
+
+	public static Puzzle.Status solvePuzzle(Symbols symbols, GridLayout layout, InitialGridContentProvider contentProvider) {
+		Puzzle puzzle = new Puzzle(symbols, layout, contentProvider);
+		puzzle.solve();
+		return puzzle.getStatus();
+	}
 	
 	// ================================================================================================
 	// ================================================================================================
 	
-//	static int s_expectedSymbolCount = 9;	// Only handle a standard 9x9 grid
-	Symbols m_symbolsToUse;
-	Grid m_grid;		// The Grid we want to solve
-	Solver m_solver;
-	Status m_status;
+	private Symbols m_symbolsToUse;
+	private Grid m_grid;		
+	private Solver m_solver;
+	private InitialGridContentProvider m_contentProvider;
+	private Status m_status;
 	
-	public Puzzle(Symbols symbols, GridLayout layout) {
+	// Create a new puzzle from a combination of the set of symbols being used, the grid layout info (e.g. 9x9)
+	// and the initial 'given' cells.
+	private Puzzle(Symbols symbols, GridLayout layout, InitialGridContentProvider contentProvider) {
 		m_symbolsToUse = symbols;
 		m_grid = new Grid(layout);
+		m_contentProvider = contentProvider;
 		m_solver = null;
+		m_status = new Status();
+		loadGivenCells();
 	}
+
+	// --------------------------------------------------------------------------------------
 	
-	public InitialGridStatus loadGivenCells(InitialGridContentProvider contentProvider) {
-		InitialGridStatus status = new InitialGridStatus();
+	// Look at the 'given' cells we've been provided with and check that they a) tie in with the symbol/grid info 
+	// and b) are a valid combination, e.g. they don't have two copies of the same symbol in the same column/row/box.
+	private void loadGivenCells() {
+		m_status.setInitialGridOK();
 		
 		if(m_symbolsToUse.size() != m_grid.layout().m_rows) {
-			status.setError("Unexpected number of symbols: " + m_symbolsToUse.size() + " instead of " + m_grid.layout().m_rows);
-			return status;
-		}
-		
-		if(contentProvider.m_dataLines.size() != m_grid.layout().m_columns) {
-			status.setError("Unexpected number of rows in initial grid: " + contentProvider.m_dataLines.size() + " instead of " + m_grid.layout().m_rows);
+			m_status.setInitialGridError("Unexpected number of symbols: " + m_symbolsToUse.size() + " instead of " + m_grid.layout().m_rows);
+		}		
+		else if(m_contentProvider.m_dataLines.size() != m_grid.layout().m_columns) {
+			m_status.setInitialGridError("Unexpected number of rows in initial grid: " + m_contentProvider.m_dataLines.size() + " instead of " + m_grid.layout().m_rows);
 		}
 		else {
-			for(int rowNumber = 0; rowNumber < contentProvider.m_dataLines.size(); rowNumber ++) {
-				String rowString = contentProvider.m_dataLines.get(rowNumber);
+			for(int rowNumber = 0; rowNumber < m_contentProvider.m_dataLines.size(); rowNumber ++) {
+				String rowString = m_contentProvider.m_dataLines.get(rowNumber);
 				if(rowString.length() != m_grid.layout().m_columns) {
-					status.setError("Unexpected number of column values: " + rowString.length() +  " instead of " + m_grid.layout().m_columns + " : [" + rowString + "]");	// Not showing the raw input
+					m_status.setInitialGridError("Unexpected number of column values: " + rowString.length() +  " instead of " + m_grid.layout().m_columns + " : [" + rowString + "]");	// Not showing the raw input
 				}
 				else {
-					processInitialGridRow(rowNumber, rowString, status);
+					processInitialGridRow(rowNumber, rowString);
 				}
 			}
 		}
-				
-		// Now check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
-		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
-		if(badCells.size() > 0) {
-			String badCellString = "";
-			for(Cell cell : badCells) {
-				badCellString += (cell.getGridLocationString() + " ");
-			}
-			status.setError("Invalid initial grid : see cells " + badCellString);			
+
+		// Keep a formatted copy of the initial grid for dumping out at the end.
+		GridFormatter gf = new GridFormatter(m_grid);
+		m_status.m_initialGrid = gf.formatCompactGrid(new GridDiagnostics.AssignedValueDisplay());
+		
+		if(m_status.m_initialGridOK) {
+			checkValidStartingPosition();
 		}
 		
-		return status;
+		return;
 	}
 	
-	private void processInitialGridRow(int rowNumber, String rowString, InitialGridStatus status) {
+	// Look at the symbols provided for the row, and apply them to the grid as 'given' values unless
+	// they indicate an unknown value (by a '.')
+	private void processInitialGridRow(int rowNumber, String rowString) {
 		for(int columnNumber = 0; columnNumber < rowString.length(); columnNumber ++) {
 			char c = rowString.charAt(columnNumber);
 			if(c == '.') {
@@ -145,95 +189,89 @@ public class Puzzle {
 			else {
 				Symbol symbol = m_symbolsToUse.isKnownSymbol(c + "");
 				if(symbol != null) {
-					applyGivenValueToCell(m_grid, columnNumber, rowNumber, symbol);
+					Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
+					cell.assign(new Assignment(cell, symbol, AssignmentMethod.Given, "", 0));
 				}
 				else {
-					status.setError("Unknown symbol in initial grid: " + c);
+					m_status.setInitialGridError("Unknown symbol in initial grid: " + c);
 				}
 			}
 		}		
 	}
 
-	private void applyGivenValueToCell(Grid grid, int columnNumber, int rowNumber, Symbol symbol)
-	{
-		Cell cell = grid.getCellFromGridPosition(columnNumber, rowNumber);
-		Assignment assignment = new Assignment(cell, symbol, AssignmentMethod.Given, "", 0);
-		cell.assign(assignment);
+	// Check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
+	private void checkValidStartingPosition() {
+		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
+		if(badCells.size() > 0) {
+			String badCellString = "";
+			for(Cell cell : badCells) {
+				badCellString += (cell.getGridLocationString() + " ");
+			}
+			m_status.setInitialGridError("Invalid initial grid : see cells " + badCellString);			
+		}
 	}
-
+	
 	// --------------------------------------------------------------------------------------
 	
-	public void solve() {
+	// Main puzzle solution loop, invoking the Solver object a step at a time to try to deduce
+	// what the rest of the Sudoku grid should contain.
+	
+	private void solve() {
 		
-		long startTime = new java.util.Date().getTime();
-		
-		m_solver = new Solver(m_grid, m_symbolsToUse);
-				
-//		m_solver.printGrid(new Solver.CellNumberDisplayer());
-//		m_solver.printGrid(new Solver.BoxNumberDisplayer());
-//		m_solver.printGrid(new Solver.AssignedValueDisplay());
-		
-//		m_solver.printGrid(m_solver.new CouldBeValueCountDisplay(), 0);
-//		m_solver.printGrid(m_solver.new CouldBeValueDisplay(), 0);
-//		m_solver.printCellSets();
-//		m_solver.printGrid(new Solver.AssignedValueDisplay(), 0);
+		if(!m_status.m_initialGridOK) return;
 		
 		boolean complete = false;
 		boolean changed = true;
-		int stepNumber = 0;
-		
-		GridFormatter gf = new GridFormatter(m_grid);
-		String initialGrid = gf.formatCompactGrid(new GridDiagnostics.AssignedValueDisplay());
-		
-		while(changed && !complete && stepNumber <= 1000)
+		int stepNumber = 0;		
+		int maxSteps = 1000;
+		Solver.SolutionStepStatus stepStatus = null;
+		m_solver = new Solver(m_grid, m_symbolsToUse);
+
+		// Get the solver to take another deduction step until we've finished or got stuck or gone on too long. 
+		while(changed && !complete && stepNumber < maxSteps)
 		{
 			stepNumber++;
 			
 			System.out.println("==================================================================================================");
-			System.out.println("==================================================================================================");
 			System.out.println();
-			System.out.println("Assignment step: " + stepNumber);
+			System.out.println("Assignment step: " + stepNumber + " ... ");
+			System.out.println();
 
-			changed = m_solver.nextStep(stepNumber);
-			Grid.Stats stats = m_grid.getStats();
-			complete = (stats.m_unassignedCellCount == 0);
+			stepStatus = m_solver.nextStep(stepNumber);
+			for(String action : stepStatus.m_actions) {
+				System.out.println("- " + action);
+			}
+
+			for(String event : stepStatus.m_unexpectedEvents) {
+				System.err.println("- " + event);
+			}
 			
-			printGrid(new GridDiagnostics.AssignedValueDisplay(), stepNumber);
-			if(complete)
-			{
+			if(stepStatus.m_isComplete) {
+				printGridAssignments(stepNumber);
+				System.out.println();
 				System.out.println("Puzzle is complete");
-//				m_solver.printGrid(new Solver.AssignedValueDisplay());
+				complete = true;
 			}
-			else if(stepNumber > 1000)
-			{
-				System.err.println("Puzzle abandoned, too many steps");
+			else if(!stepStatus.m_changedState) {
+				System.out.println();
+				System.err.println("Puzzle abandoned, no more possible changes identified during step " + stepNumber);
+				changed = false;
 			}
-			else if(!changed)
-			{
-				System.err.println("Puzzle abandoned, no more possible changes identified");
+			else {
+				printGridAssignments(stepNumber);
 			}
-			else
-			{
-//				System.out.println("Progress made, continuing puzzle ..");
+
+			if(stepNumber == maxSteps) {
+				System.out.println();
+				System.err.println("Puzzle abandoned after " + stepNumber + " steps");
 			}
-//			System.out.println();
 		}
 
-		// Check we've not made any invalid assignments
-		
-
-		long endTime = new java.util.Date().getTime();
-		
-		long took = endTime - startTime;
-		
-		m_status = new Status();
-		m_status.m_initialGridStatus = new InitialGridStatus(); 
-		m_status.m_solved = complete;
-		
-		m_status.m_initialGrid = initialGrid;
+		// Format the final grid for display
 		GridFormatter gf2 = new GridFormatter(m_grid);
 		m_status.m_finalGrid = gf2.formatCompactGrid(new GridDiagnostics.AssignedValueDisplay());
 		
+		// Check we've not made any invalid assignments		
 		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
@@ -246,86 +284,64 @@ public class Puzzle {
 		else {
 			m_status.m_valid = true;
 		}			
+
+		// Record whether we've completed the puzzle or not.
+		m_status.m_solved = complete;
 		
-		m_solver.finaliseDiagnostics(stepNumber, took);
-		String htmlbody = m_solver.getHtmlDiagnostics();
-		writeHTMLFile("logs/diagnostics.html", htmlbody);		
+		// Dump the solver's very detailed diagnostics out as HTML
+		writeHTMLFile("logs/diagnostics.html", stepStatus.m_htmlDiagnosticsStyles, stepStatus.m_htmlDiagnostics);		
 	}
 
-	public Status getStatus() {
+	// Produce a simple dump of the assignments made to the grid so far
+	private void printGridAssignments(int stepNumber) {
+		CellDiagnosticsProvider ccd = new GridDiagnostics.AssignedValueDisplay();
+		GridFormatter gf = new GridFormatter(m_grid);
+		System.out.println();
+		System.out.println(gf.formatGrid(ccd, stepNumber));
+	}
+
+	private Status getStatus() {
 		return m_status;		
 	}
 
+	// --------------------------------------------------------------------------------------
+	
+	// Class to record status info about how we got on trying to solve the puzzle.
+	
 	public static class Status {
-		public InitialGridStatus m_initialGridStatus;
-		public boolean m_solved;
-		public String m_initialGrid;
-		public String m_finalGrid;
-		public boolean m_valid;
-		public String m_invalidDetails;
+		public boolean m_initialGridOK;		// Was the initial Grid valid ?
+		public boolean m_solved;			// Did we manage to fill in all the missing cells ? 
+		public boolean m_valid;				// Are the assignments to final grid non-contradictory (even if not complete) ?
+		public String m_initialGrid;		// Shows the initial grid assignments
+		public String m_finalGrid;			// Shows the final grid assignments
+		public String m_invalidDetails;		// Records details of errors in the initial or final grid
 		
 		Status() {
-			
+			m_initialGridOK = false;
+			m_solved = false;
+			m_initialGrid = "";
+			m_finalGrid = "";
+			m_valid = false;
+			m_invalidDetails = "";		
+		}
+		
+		void setInitialGridError(String message) {
+			m_initialGridOK = false;
+			m_invalidDetails = message;
+		}
+		
+		void setInitialGridOK() {
+			m_initialGridOK = true;
+			m_invalidDetails = "";			
 		}
 	}
 
-	public class InitialGridStatus {
-		public boolean m_isOK;
-		public String m_errorMessage;
-		
-		InitialGridStatus() {
-			m_isOK = true;
-			m_errorMessage = "";
-		}
-		
-		void setError(String message) {
-			m_isOK = false;
-			m_errorMessage = message;
-		}
-	}
-	
-	public static Puzzle.Status solve9x9Puzzle(String content) {
-		InitialGridContentProvider contentProvider = InitialGridContentProvider.from9x9String(content);
-		Puzzle puzzle = new Puzzle(Symbols.SYMBOLS_1_TO_9, GridLayout.GRID9x9);
-		InitialGridStatus initialStatus = puzzle.loadGivenCells(contentProvider);
-		if(initialStatus.m_isOK) {
-			puzzle.solve();
-			return puzzle.getStatus();
-		}
-		else {
-			Status status = new Status();
-			status.m_initialGridStatus = initialStatus;
-			status.m_solved = false;
-			status.m_valid = false;
-			status.m_invalidDetails = initialStatus.m_errorMessage;
-//			status.m_initialGrid = puzzle.m_solver.formatCompactGrid(new CellAssessment.AssignedValueDisplay());	// null pointer error
-			status.m_finalGrid = null;
-			return status;
-		}		
-	}
-	
-	private static String s_divider = "-----------------------------------";
-
-	public void printGrid(CellDiagnosticsProvider ccd, int stepNumber) {
-		StringBuilder sb1 = new StringBuilder();
-		
-		String stepInfo = stepNumber < 0 ? "" : " - step " + stepNumber;
-		
-		sb1.append("\r\n").append(s_divider).append("\r\n\r\n");
-		sb1.append(ccd.getHeading() + stepInfo);
-		sb1.append("\r\n");
-
-		GridFormatter gf = new GridFormatter(m_grid);
-		sb1.append(gf.formatGrid(ccd, stepNumber));
-		System.out.println(sb1.toString());
-	}
-
-	void writeHTMLFile(String filename, String htmlbody) {
+	void writeHTMLFile(String filename, String styles, String htmlbody) {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>").append(nl);
 		sb.append("<head>").append(nl);
-		sb.append(m_solver.getHtmlDiagnosticsStyles()).append(nl);
+		sb.append(styles).append(nl);
 		sb.append("</head>").append(nl);
 		sb.append("<body>").append(nl);
 		sb.append(htmlbody);
@@ -335,26 +351,22 @@ public class Puzzle {
 		writeFileAsUTF8(filename, sb.toString(), false);
 	}
 
-	public static boolean writeFileAsUTF8(String filename, String s, boolean append)
-	{
-	    try
-	    {
+	public static boolean writeFileAsUTF8(String filename, String s, boolean append) {
+	    try {
 			FileOutputStream	fos = new FileOutputStream (filename, append);
 			OutputStreamWriter	osw = new OutputStreamWriter (fos, "UTF-8");
 			BufferedWriter		bw = new BufferedWriter (osw);
 	
-			bw.write (s, 0, s.length ());
-			bw.newLine ();
+			bw.write(s, 0, s.length ());
+			bw.newLine();
 			
-			bw.flush ();		// Flush the file contents to disk
-			bw.close ();		// And close it
+			bw.flush();		// Flush the file contents to disk
+			bw.close();		// And close it
 			return true;
 	    }
-	    catch(Exception e)
-	    {
+	    catch(Exception e) {
 	        System.err.println("Failed to write to: " + filename + " " + e.getMessage());
 	        return false;
 	    }
 	}	
 }
-

@@ -25,6 +25,12 @@ public class Solver {
 	private Grid m_grid;	
 	private Symbols m_symbols;
 	
+	private java.util.Date m_startTime;
+	private long m_combinedTookTime;				// Milliseconds
+	
+	// If we've completed the grid, don't do any more work if invoked again.
+	private boolean m_completed;
+	
 	// Keep track of 'assessments' relating to the grid, recording what is ruled in/out as we
 	// make deductions:
 	// - assessment info for each cell in the grid
@@ -49,6 +55,8 @@ public class Solver {
 	public Solver(Grid grid, Symbols symbols) {
 		m_grid = grid;
 		m_symbols = symbols;
+
+		m_completed = false;
 
 		m_lCellAssessments = new ArrayList<>();
 		m_lCellSetAssessments = new ArrayList<>();
@@ -87,6 +95,9 @@ public class Solver {
 		m_methods.add(new Method4(this));
 
 		m_unexpectedEvents = new ArrayList<>();
+		m_startTime = new java.util.Date();
+		m_combinedTookTime = 0;
+		
 		m_diagnostics = new SolverDiagnostics(this, m_grid, m_symbols);
 
 		// The grid already has 'given' assignments in place. We need to go through these propagate this information to the assessment objects that we just set up to get
@@ -104,8 +115,10 @@ public class Solver {
 		
 		// Produce initial diagnostics recording what assessments we've got from applying the 'given' cell assignments.
 		int stepNumber = -1;
+		boolean changedState = true;
 		List<String> unexpectedEvents = new ArrayList<>();
-		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, actions, unexpectedEvents);		
+		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, changedState, actions, unexpectedEvents);
+		
 	}
 
 	private void setUpCellAssessment(Cell cell) {
@@ -137,7 +150,10 @@ public class Solver {
 	Symbols symbols() {
 		return m_symbols;
 	}
-	
+
+	java.util.Date startTime() {
+		return this.m_startTime;
+	}
 	// -----------------------------------------------------------------------------------------
 
 	/**
@@ -147,27 +163,49 @@ public class Solver {
 	 * @return True if a further deduction (assignment or ruling out) has been made; false if no
 	 * 		   further progress has been made and we're effectively stuck (or finished). 
 	 */
-	public boolean nextStep(int stepNumber) {
-		boolean changedState = false;
-		List<String> actions = new ArrayList<>();
-		List<String> unexpectedEvents = new ArrayList<>();
+	public SolutionStepStatus nextStep(int stepNumber) {
+		long stepStartTime = new java.util.Date().getTime();
+		SolutionStepStatus status = new SolutionStepStatus(stepNumber);
+		status.m_changedState = false;
 		
-		// Try the available methods until one of them deduces something.
-		for(Method method : m_methods) {
-			if(!changedState) {
-				try {
-					changedState = method.applyMethod(stepNumber, actions);
-				} 
-				catch(IllegalAssignmentException e) {
-					unexpectedEvents.add(e.getMessage());
-					System.err.println(e.getMessage());
-				}				
+		// Don't do any more if this grid was completed already before this step started.
+		if(!m_completed) {
+				
+			// Try the available methods until one of them deduces something.
+			for(Method method : m_methods) {
+				if(!status.m_changedState) {
+					try {
+						status.m_changedState = method.applyMethod(stepNumber, status.m_actions);
+					} 
+					catch(IllegalAssignmentException e) {
+						status.m_unexpectedEvents.add(e.getMessage());
+						System.err.println(e.getMessage());
+					}				
+				}			
 			}			
+			m_diagnostics.collectDiagnosticsAfterStep(status.m_stepNumber, status.m_changedState, status.m_actions, status.m_unexpectedEvents);		
+			m_unexpectedEvents.addAll(status.m_unexpectedEvents);
+			
+			long stepEndTime = new java.util.Date().getTime();
+			status.m_stepTookTime = stepEndTime - stepStartTime;
+		} 
+		else {
+			status.m_stepTookTime = 0;			
 		}
-		
-		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, actions, unexpectedEvents);		
-		m_unexpectedEvents.addAll(unexpectedEvents);
-		return changedState;
+
+		m_combinedTookTime += status.m_stepTookTime;
+		status.m_gridStats = m_grid.getStats();
+		status.m_isComplete = (status.m_gridStats.m_unassignedCellCount == 0);
+
+		if(!m_completed && status.m_isComplete) {
+			// Just completed the puzzle.
+			m_diagnostics.finaliseDiagnostics(stepNumber, m_combinedTookTime, m_unexpectedEvents);
+		}
+
+		status.m_htmlDiagnosticsStyles = m_diagnostics.getDiagnosticStyles(); 
+		status.m_htmlDiagnostics = m_diagnostics.getHtmlDiagnostics(); 
+
+		return status;
 	}
 
 	// -----------------------------------------------------------------------------------------
@@ -312,20 +350,30 @@ public class Solver {
 	}
 	
 	// -----------------------------------------------------------------------------------------
-
-	// Complete production of diagnostics 	
-	public void finaliseDiagnostics(int stepNumber, long took) {
-		m_diagnostics.finaliseDiagnostics(stepNumber, took, m_unexpectedEvents);
-	}	
 	
-	public String getHtmlDiagnosticsStyles() {
-		return m_diagnostics.getDiagnosticStyles();
+	/**
+	 * Class to return the state of the solution process after each step
+	 */
+	public static class SolutionStepStatus {
+		public int m_stepNumber;
+		public boolean m_isComplete;
+		public boolean m_changedState;
+		public Grid.Stats m_gridStats;
+		public List<String> m_actions = new ArrayList<>();
+		public List<String> m_unexpectedEvents = new ArrayList<>();
+		public long m_stepTookTime;
+		
+		public String m_htmlDiagnosticsStyles;
+		public String m_htmlDiagnostics;
+		
+		SolutionStepStatus(int stepNumber) {
+			m_stepNumber = stepNumber;
+			m_actions = new ArrayList<>();
+			m_unexpectedEvents = new ArrayList<>();
+			m_htmlDiagnosticsStyles = "";
+			m_htmlDiagnostics = "";
+		}
 	}
-	
-	public String getHtmlDiagnostics() { 
-		return m_diagnostics.getHtmlDiagnostics(); 
-	}
-
 }
 
 // -----------------------------------------------------------------------------------------
@@ -353,3 +401,4 @@ class IllegalAssignmentException extends Exception {
 		m_badStatus = badStatus;
 	}
 }
+

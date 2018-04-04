@@ -1,5 +1,8 @@
 package solver;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
@@ -130,6 +133,9 @@ class SolverDiagnostics {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		sb.append(dateFormat.format(m_solver.startTime())).append(nl);
+		
 		sb.append("<h2>Shading key" + "</h2>").append(nl);			
 		sb.append("<table>").append(nl);
 		sb.append("<tr>").append(nl);
@@ -176,7 +182,7 @@ class SolverDiagnostics {
 		m_htmlDiagnostics += sb.toString();
 	}
 	
-	void collectDiagnosticsAfterStep(int stepNumber, List<String> actions, List<String> stepObservations) {
+	void collectDiagnosticsAfterStep(int stepNumber, boolean changedState, List<String> actions, List<String> stepObservations) {
 		if(!m_produceHtmlDiagnostics) return;		
 		
 		String nl = System.lineSeparator();
@@ -198,8 +204,12 @@ class SolverDiagnostics {
 			sb.append("<li>").append(a).append("</li>").append(nl);
 		}
 		sb.append("</ul>");
-		
-		if(stepNumber % m_diagnosticsFrequency != 0 && stepNumber != -1) {
+
+		if(!changedState) {
+			sb.append("No state changes caused by this step").append("<p/>");
+		}		
+		else if(stepNumber % m_diagnosticsFrequency != 0 && stepNumber != -1) {
+			// Stop output volume becoming excessive for larger grid sizes 
 		}
 		else {
 			GridFormatter formatter = new GridFormatter(m_grid);
@@ -312,7 +322,6 @@ class SolverDiagnostics {
 		sb.append("</ul>").append(nl);
 		
 		sb.append("<p/>Took " + ms + " ms, " + steps + " steps<p/>").append(nl);
-System.out.println("Took " + ms + " ms.");		
 		// ???? Stats ????
 		// Show initial and final grids, whether complete, whether invalid ????
 

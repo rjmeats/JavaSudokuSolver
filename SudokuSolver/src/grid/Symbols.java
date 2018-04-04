@@ -66,4 +66,35 @@ public class Symbols {
 	public String toString() {
 		return getRepresentation();
 	}
+	
+	/**
+	 * Match a set of symbols used in an initial grid to one of our know symbol sets.
+	 *  
+	 * @param totalSymbolsInSet Number of symbols in the known symbol set
+	 * @param symbolsUsed Which symbols are provided
+	 * @return The set of symbols matching the criteria, or null if no match found
+	 */
+	public static Symbols matchSymbolSet(int totalSymbolsInSet, Set<String> symbolsUsed) {
+
+		if(SYMBOLS_1_TO_6.matchesSymbolSet(totalSymbolsInSet, symbolsUsed)) return SYMBOLS_1_TO_6; 
+		if(SYMBOLS_1_TO_9.matchesSymbolSet(totalSymbolsInSet, symbolsUsed)) return SYMBOLS_1_TO_9; 
+		if(SYMBOLS_A_TO_I.matchesSymbolSet(totalSymbolsInSet, symbolsUsed)) return SYMBOLS_A_TO_I; 
+		if(SYMBOLS_A_TO_P.matchesSymbolSet(totalSymbolsInSet, symbolsUsed)) return SYMBOLS_A_TO_P; 
+		if(SYMBOLS_A_TO_Y.matchesSymbolSet(totalSymbolsInSet, symbolsUsed)) return SYMBOLS_A_TO_Y;
+		
+		return null;
+	}
+
+	private boolean matchesSymbolSet(int totalSymbolsInSet, Set<String> symbolsUsed) {
+		boolean matches = totalSymbolsInSet == m_symbolRepresentationMap.size();
+		if(matches) {
+			for(String s : symbolsUsed) {
+				if(isKnownSymbol(s) == null) {
+					matches = false;
+				}
+			}
+		}
+		
+		return matches;
+	}
 }
