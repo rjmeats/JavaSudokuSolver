@@ -64,33 +64,7 @@ class SolverDiagnostics {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("<style>").append(nl);
-		sb.append("body {").append(nl);
-		sb.append("    font-family: Tahoma, Geneva, sans-serif;").append(nl);			// https://www.w3schools.com/cssref/css_websafe_fonts.asp
-		sb.append("}").append(nl);
-		sb.append(".gridouter {").append(nl);
-		sb.append("    border: 6px solid gray;").append(nl);
-		sb.append("    border-collapse: collapse;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".gridseparatorrow {").append(nl);
-		sb.append("    border-top: 4px solid grey;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".gridseparatorcolumn {").append(nl);
-		sb.append("    border-left: 4px solid grey;").append(nl);
-		sb.append("    border-right: 1px solid grey;").append(nl);
-		sb.append("    border-top: 1px solid grey;").append(nl);
-		sb.append("    border-bottom: 1px solid grey;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".gridnonseparatorcolumn {").append(nl);
-		sb.append("    border-left: 1px solid grey;").append(nl);
-		sb.append("    border-right: 1px solid grey;").append(nl);
-		sb.append("    border-top: 1px solid grey;").append(nl);
-		sb.append("    border-bottom: 1px solid grey;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".gridcell {").append(nl);
-		sb.append("    width: 20px;").append(nl);
-		sb.append("    height: 20px;").append(nl);
-		sb.append("    text-align: center;").append(nl);
-		sb.append("}").append(nl);
+		sb.append(GridFormatter.getCSSStyles());
 		sb.append(".couldbevaluecountcell {").append(nl);
 		sb.append("    width: 20px;").append(nl);
 		sb.append("    height: 20px;").append(nl);
@@ -101,15 +75,15 @@ class SolverDiagnostics {
 		sb.append("    height: 20px;").append(nl);
 		sb.append("    text-align: center;").append(nl);
 		sb.append("}").append(nl);
-		sb.append(".highlight {").append(nl);
-		sb.append("    background-color: yellow;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".given {").append(nl);
-		sb.append("    background-color: lightsteelblue;").append(nl);
-		sb.append("}").append(nl);
-		sb.append(".previouslyassigned {").append(nl);
-		sb.append("    background-color: aquamarine;").append(nl);
-		sb.append("}").append(nl);
+//		sb.append(".changed {").append(nl);
+//		sb.append("    background-color: yellow;").append(nl);
+//		sb.append("}").append(nl);
+//		sb.append(".given {").append(nl);
+//		sb.append("    background-color: lightsteelblue;").append(nl);
+//		sb.append("}").append(nl);
+//		sb.append(".solved {").append(nl);
+//		sb.append("    background-color: aquamarine;").append(nl);
+//		sb.append("}").append(nl);
 		sb.append(".cellsettable {").append(nl);
 		sb.append("    border: 6px solid gray;").append(nl);
 		sb.append("    border-collapse: collapse;").append(nl);
@@ -129,13 +103,7 @@ class SolverDiagnostics {
 		sb.append("    border-top: 1px solid grey;").append(nl);
 		sb.append("    border-bottom: 1px solid grey;").append(nl);
 		sb.append("    height: 20px;").append(nl);
-		sb.append("}").append(nl);
-		
-
-		
-		
-//		sb.append("table { border-collapse: collapse;}").append(nl);
-//		sb.append("table, th, td { border: 1px solid black; }").append(nl);
+		sb.append("}").append(nl);		
 		sb.append(".observation { color: red; }").append(nl);
 		sb.append("</style>").append(nl);
 		
@@ -163,8 +131,8 @@ class SolverDiagnostics {
 		sb.append("<table>").append(nl);
 		sb.append("<tr>").append(nl);
 		sb.append("<td class=given>Given</td>").append(nl);
-		sb.append("<td class=highlight>Changed</td>").append(nl);
-		sb.append("<td class=previouslyassigned>Solved</td>").append(nl);
+		sb.append("<td class=changed>Changed</td>").append(nl);
+		sb.append("<td class=solved>Solved</td>").append(nl);
 		sb.append("</tr>").append(nl);
 		sb.append("</table>").append(nl);
 		
@@ -280,7 +248,7 @@ class SolverDiagnostics {
 					if((cellSet == 3) && !(cellset instanceof BoxAssessment)) continue;
 					String cls = "cellsetcell cellsettablerowtitle";
 					if(cellset.stepNumberOfLatestChange() == stepNumber) {
-						cls += " highlight";
+						cls += " changed";
 					}
 					
 					cls = "\"" + cls + "\"";
@@ -290,28 +258,21 @@ class SolverDiagnostics {
 						cls = "cellsetcell";
 						List<Cell> lc = new ArrayList<>(cellset.couldBeCellsForSymbol(symbol));
 						String slc = Cell.cellCollectionRepresentation(lc);
-						boolean highlight = false; // provider.changedThisStep(cell,  stepNumberToHighlight);
-						highlight = (cellset.stepNumberOfLatestChangeForSymbol(symbol) == stepNumber);
-						if(highlight) {
-							cls += " highlight";
+						boolean changed = (cellset.stepNumberOfLatestChangeForSymbol(symbol) == stepNumber);
+						if(changed) {
+							cls += " changed";
 						}
 						if(lc.size() == 1) {
 							Cell cell = lc.get(0);
-							//CellAssessment ca = ;
-							//highlight = (assessmentForCell(cell).stepNumberOfLatestChange() == stepNumber);
 							boolean given = cell.isAssigned() && cell.assignment().method() == AssignmentMethod.Given;
-							if(highlight) {
-	//							cls += " highlight";
+							if(changed) {
 							}
 							else if(given) {
 								cls += " given";					
 							}
 							else if(cell.isAssigned()) {
-								cls += " previouslyassigned";
+								cls += " solved";
 							}
-	
-							//if(cell.assignment().method() == )
-							//cls += " previouslyassigned";		// Handle Given, and assigned-during-this-step
 						}
 						cls = "\"" + cls + "\"";
 						String title = "lastchange=" + cellset.stepNumberOfLatestChangeForSymbol(symbol);

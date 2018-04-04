@@ -109,8 +109,12 @@ public class Puzzle {
 	 * Programmatic entry point for solving a puzzle
 	 * 
 	 *  The main method allows Sudokus to be read from a text file. Or the solvePuzzle method can be invoked.
+	 *  
+	 * @param symbols Which set of symbols is being used for the puzzle ?
+	 * @param layout What grid layout is being used for the puzzle ?
+	 * @param contentProvider Provides the initial grid values for the puzzle.
+	 * @return Status information about how solution processing worked.
 	 */
-
 	public static Puzzle.Status solvePuzzle(Symbols symbols, GridLayout layout, InitialGridContentProvider contentProvider) {
 		Puzzle puzzle = new Puzzle(symbols, layout, contentProvider);
 		puzzle.solve();
@@ -295,7 +299,7 @@ public class Puzzle {
 		CellDiagnosticsProvider ccd = new GridDiagnostics.AssignedValueDisplay();
 		GridFormatter gf = new GridFormatter(m_grid);
 		System.out.println();
-		System.out.println(gf.formatGrid(ccd, stepNumber));
+		System.out.println(gf.formatGrid(ccd));
 	}
 
 	// --------------------------------------------------------------------------------------
