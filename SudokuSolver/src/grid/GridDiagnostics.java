@@ -7,8 +7,6 @@ public class GridDiagnostics {
 
 	public static class CellNumberDisplayer implements CellDiagnosticsProvider {
 		
-		public String getHeading() { return "Cell numbering"; }
-		
 		public String getCellDiagnostics(Cell cell) {
 			return(FormatUtils.padRight(cell.getNumberOnlyRepresentation(), 5));
 		}
@@ -21,8 +19,6 @@ public class GridDiagnostics {
 	}
 
 	public static class CellLocationDisplayer implements CellDiagnosticsProvider {
-		
-		public String getHeading() { return "Cell locations"; }
 		
 		public String getCellDiagnostics(Cell cell) {
 			return(FormatUtils.padRight(cell.getGridLocationString(), 5));
@@ -37,8 +33,6 @@ public class GridDiagnostics {
 
 	public static class BoxNumberDisplayer implements CellDiagnosticsProvider {
 		
-		public String getHeading() { return "Box numbering"; }
-		
 		public String getCellDiagnostics(Cell cell) {
 			return(FormatUtils.padRight(cell.box().getNumberOnlyRepresentation(), 5));
 		}
@@ -52,8 +46,6 @@ public class GridDiagnostics {
 	}
 	
 	public static class AssignedValueDisplay implements CellDiagnosticsProvider {
-		
-		public String getHeading() { return "Assigned value"; }
 		
 		public String getCellDiagnostics(Cell cell) {
 			String representation = ".";

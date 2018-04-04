@@ -43,10 +43,21 @@ class SolverDiagnostics {
 	}
 
 	String getHtmlDiagnostics() {
-		return m_htmlDiagnostics;
+		String nl = System.lineSeparator();
+		StringBuilder sb = new StringBuilder();
+		sb.append("<html>").append(nl);
+		sb.append("<head>").append(nl);
+		sb.append(getDiagnosticStyles()).append(nl);
+		sb.append("</head>").append(nl);
+		sb.append("<body>").append(nl);
+		sb.append(m_htmlDiagnostics);
+		sb.append("</body>").append(nl);
+		sb.append("</html>").append(nl);
+
+		return sb.toString();
 	}
 	
-	String getDiagnosticStyles() {
+	private String getDiagnosticStyles() {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		
@@ -335,8 +346,6 @@ class SolverDiagnostics {
 
 	class CouldBeValueCountDisplay implements CellDiagnosticsProvider {
 		
-		public String getHeading() { return "Cell 'Could-be-value' count: ~ => Given  = => Assigned  * => Could be assigned"; }
-		
 		public String getCellDiagnostics(Cell cell) {
 			CellAssessment ca = m_solver.assessmentForCell(cell);
 			String representation = "" + ca.couldBeCount();
@@ -361,8 +370,6 @@ class SolverDiagnostics {
 	}
 
 	class CouldBeValueDisplay implements CellDiagnosticsProvider {
-		
-		public String getHeading() { return "Cell 'Could-be' values"; }
 		
 		public String getCellDiagnostics(Cell cell) {
 			CellAssessment ca = m_solver.assessmentForCell(cell);

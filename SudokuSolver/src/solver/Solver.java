@@ -202,7 +202,6 @@ public class Solver {
 			m_diagnostics.finaliseDiagnostics(stepNumber, m_combinedTookTime, m_unexpectedEvents);
 		}
 
-		status.m_htmlDiagnosticsStyles = m_diagnostics.getDiagnosticStyles(); 
 		status.m_htmlDiagnostics = m_diagnostics.getHtmlDiagnostics(); 
 
 		return status;
@@ -363,14 +362,12 @@ public class Solver {
 		public List<String> m_unexpectedEvents = new ArrayList<>();
 		public long m_stepTookTime;
 		
-		public String m_htmlDiagnosticsStyles;
 		public String m_htmlDiagnostics;
 		
 		SolutionStepStatus(int stepNumber) {
 			m_stepNumber = stepNumber;
 			m_actions = new ArrayList<>();
 			m_unexpectedEvents = new ArrayList<>();
-			m_htmlDiagnosticsStyles = "";
 			m_htmlDiagnostics = "";
 		}
 	}

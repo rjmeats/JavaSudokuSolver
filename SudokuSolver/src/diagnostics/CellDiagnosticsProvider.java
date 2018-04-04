@@ -4,7 +4,6 @@ import grid.Cell;
 
 public interface CellDiagnosticsProvider {
 
-	String getHeading();
 	String getCellDiagnostics(Cell c);
 	String getBasicCellClass();
 	

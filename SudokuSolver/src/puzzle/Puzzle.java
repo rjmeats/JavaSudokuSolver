@@ -1,21 +1,13 @@
 package puzzle;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-
 import java.util.List;
-import java.util.Set;
 
-import grid.GridLayout;
-import grid.Symbol;
-import grid.Symbols;
-import grid.Grid;
-import grid.Cell;
-import grid.Assignment;
-import grid.AssignmentMethod;
-import grid.GridDiagnostics;
+import java.io.BufferedWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.io.File;
 
+import grid.*;
 import solver.*;
 import diagnostics.*;
 
@@ -49,52 +41,23 @@ public class Puzzle {
 		
 		if(contentProvider == null) return;
 
-		// Work out what layout and symbol set are being used for the puzzle.
-		int gridRows = contentProvider.m_dataLines.size();
-		GridLayout layout = GridLayout.getGridLayoutOfSize(gridRows);
-		if(layout == null) {
-			System.err.println("Grid layout not recognised rows=" + gridRows);
-			return;
-		}
-		else {
-			// Check that each row has the expected number of columns for a square grid
-			int rowNumber = 0;
-			for(String row : contentProvider.m_dataLines) {
-				if(row.length() != gridRows) {
-					System.err.println("Grid layout - number of columns (" + row.length()+ ") not equal to number of rows (" + gridRows + ") on row " + (rowNumber+1) + ": [" + row + "]");
-					return;					
-				}
-				rowNumber++;
-			}
-		}
-		
-		// And the number of symbols used must be no more than the number of rows (or columns)
-		Set<String> symbolsUsed = contentProvider.m_symbolsUsed;
-		if(contentProvider.m_symbolsUsed.size() > gridRows) {
-			System.err.println("Too many different symbols used (" + symbolsUsed.size() + ") for grid size (" + gridRows + ")");
-			System.err.println("Symbols used: " + symbolsUsed.toString());
-			return;								
-		}
-		
-		// And the symbols used must belong to one of our known sets of the appropriate size.
-		Symbols symbolsToUse = Symbols.matchSymbolSet(gridRows, symbolsUsed);
-		if(symbolsToUse == null) {
-			System.err.println("Symbols used not from a recognised set for this grid size: " + symbolsUsed.toString());
-			return;
-		}
-				
+		// Use the content to work out grid layout and the set of symbols being used.
+		GridLayout layout = contentProvider.workOutGridLayout();
+		Symbols symbolsToUse = contentProvider.workOutSymbolsToUse();
+
+		if(layout == null || symbolsToUse == null) return;
+
+		// We've got a valid puzzle to try and solve.
 		System.out.println(".. using a " + layout.description() + " grid layout and " + symbolsToUse.getRepresentation());
 		System.out.println(".. using initial grid values:");
 		System.out.println();
-		for(String s : contentProvider.m_dataLines) {
+		for(String s : contentProvider.dataLines()) {
 			System.out.println("  " + s);
 		}		
 		System.out.println();
 	
-		// We can now kick off solving of the puzzle.
 		Puzzle.Status status = Puzzle.solvePuzzle(symbolsToUse, layout, contentProvider);
 
-		// Report what happened
 		if(!status.m_initialGridOK) {
 			System.err.println("Error in initial grid values: " + status.m_invalidDetails);			
 		}
@@ -113,8 +76,40 @@ public class Puzzle {
 			System.out.println(status.m_finalGrid);
 			System.out.println();
 			System.out.println("The final grid is " + (status.m_valid ? "valid" : "not valid : " + status.m_invalidDetails));
+			System.out.println();
+			
+			// Dump the solver's very detailed diagnostics out as HTML if there's a folder called 'logs' available to put it in.
+			String logsFolderName = "logs";
+			String diagnosticsFilename = logsFolderName + "/diagnostics.html";
+			File logsFolder = new File(logsFolderName);
+			if(logsFolder.exists() && logsFolder.isDirectory() && logsFolder.canWrite()) {
+				System.out.println("Detailed diagnostics are available in HTML file: " + diagnosticsFilename);
+				writeFile(diagnosticsFilename, status.m_htmlDiagnostics);
+			}
+			else {
+				System.out.println("No detailed diagnostics produced - no " + logsFolderName + " folder present");
+			}
 		}
 	}	
+
+	private static void writeFile(String filename, String s) {
+	    try (BufferedWriter bw = Files.newBufferedWriter(new File(filename).toPath(), StandardCharsets.UTF_8)) {
+			bw.write(s, 0, s.length());
+			bw.newLine();
+	    }
+	    catch(Exception e) {
+	        System.err.println("Failed to write to: " + filename + " " + e.getMessage());
+	    }
+	}	
+
+	// ================================================================================================
+	// ================================================================================================
+
+	/**
+	 * Programmatic entry point for solving a puzzle
+	 * 
+	 *  The main method allows Sudokus to be read from a text file. Or the solvePuzzle method can be invoked.
+	 */
 
 	public static Puzzle.Status solvePuzzle(Symbols symbols, GridLayout layout, InitialGridContentProvider contentProvider) {
 		Puzzle puzzle = new Puzzle(symbols, layout, contentProvider);
@@ -142,6 +137,10 @@ public class Puzzle {
 		loadGivenCells();
 	}
 
+	private Status getStatus() {
+		return m_status;		
+	}
+
 	// --------------------------------------------------------------------------------------
 	
 	// Look at the 'given' cells we've been provided with and check that they a) tie in with the symbol/grid info 
@@ -149,15 +148,17 @@ public class Puzzle {
 	private void loadGivenCells() {
 		m_status.setInitialGridOK();
 		
+		List<String> dataLines = m_contentProvider.dataLines();
+		
 		if(m_symbolsToUse.size() != m_grid.layout().m_rows) {
 			m_status.setInitialGridError("Unexpected number of symbols: " + m_symbolsToUse.size() + " instead of " + m_grid.layout().m_rows);
-		}		
-		else if(m_contentProvider.m_dataLines.size() != m_grid.layout().m_columns) {
-			m_status.setInitialGridError("Unexpected number of rows in initial grid: " + m_contentProvider.m_dataLines.size() + " instead of " + m_grid.layout().m_rows);
+		}
+		else if(dataLines.size() != m_grid.layout().m_columns) {
+			m_status.setInitialGridError("Unexpected number of rows in initial grid: " + dataLines.size() + " instead of " + m_grid.layout().m_rows);
 		}
 		else {
-			for(int rowNumber = 0; rowNumber < m_contentProvider.m_dataLines.size(); rowNumber ++) {
-				String rowString = m_contentProvider.m_dataLines.get(rowNumber);
+			for(int rowNumber = 0; rowNumber < dataLines.size(); rowNumber ++) {
+				String rowString = dataLines.get(rowNumber);
 				if(rowString.length() != m_grid.layout().m_columns) {
 					m_status.setInitialGridError("Unexpected number of column values: " + rowString.length() +  " instead of " + m_grid.layout().m_columns + " : [" + rowString + "]");	// Not showing the raw input
 				}
@@ -183,7 +184,7 @@ public class Puzzle {
 	private void processInitialGridRow(int rowNumber, String rowString) {
 		for(int columnNumber = 0; columnNumber < rowString.length(); columnNumber ++) {
 			char c = rowString.charAt(columnNumber);
-			if(c == '.') {
+			if(c == InitialGridContentProvider.UNKNOWN_CELL_VALUE) {
 				// Indicates an unknown cell value, to be solved
 			}
 			else {
@@ -228,8 +229,7 @@ public class Puzzle {
 		m_solver = new Solver(m_grid, m_symbolsToUse);
 
 		// Get the solver to take another deduction step until we've finished or got stuck or gone on too long. 
-		while(changed && !complete && stepNumber < maxSteps)
-		{
+		while(changed && !complete && stepNumber < maxSteps) {
 			stepNumber++;
 			
 			System.out.println("==================================================================================================");
@@ -287,9 +287,7 @@ public class Puzzle {
 
 		// Record whether we've completed the puzzle or not.
 		m_status.m_solved = complete;
-		
-		// Dump the solver's very detailed diagnostics out as HTML
-		writeHTMLFile("logs/diagnostics.html", stepStatus.m_htmlDiagnosticsStyles, stepStatus.m_htmlDiagnostics);		
+		m_status.m_htmlDiagnostics = stepStatus.m_htmlDiagnostics;
 	}
 
 	// Produce a simple dump of the assignments made to the grid so far
@@ -298,10 +296,6 @@ public class Puzzle {
 		GridFormatter gf = new GridFormatter(m_grid);
 		System.out.println();
 		System.out.println(gf.formatGrid(ccd, stepNumber));
-	}
-
-	private Status getStatus() {
-		return m_status;		
 	}
 
 	// --------------------------------------------------------------------------------------
@@ -315,6 +309,7 @@ public class Puzzle {
 		public String m_initialGrid;		// Shows the initial grid assignments
 		public String m_finalGrid;			// Shows the final grid assignments
 		public String m_invalidDetails;		// Records details of errors in the initial or final grid
+		public String m_htmlDiagnostics;	// HTML page content with detailed processing info
 		
 		Status() {
 			m_initialGridOK = false;
@@ -322,12 +317,14 @@ public class Puzzle {
 			m_initialGrid = "";
 			m_finalGrid = "";
 			m_valid = false;
-			m_invalidDetails = "";		
+			m_invalidDetails = "";
+			m_htmlDiagnostics = "";
 		}
 		
 		void setInitialGridError(String message) {
 			m_initialGridOK = false;
 			m_invalidDetails = message;
+			m_valid = false;
 		}
 		
 		void setInitialGridOK() {
@@ -335,38 +332,4 @@ public class Puzzle {
 			m_invalidDetails = "";			
 		}
 	}
-
-	void writeHTMLFile(String filename, String styles, String htmlbody) {
-		String nl = System.lineSeparator();
-		StringBuilder sb = new StringBuilder();
-		sb.append("<html>").append(nl);
-		sb.append("<head>").append(nl);
-		sb.append(styles).append(nl);
-		sb.append("</head>").append(nl);
-		sb.append("<body>").append(nl);
-		sb.append(htmlbody);
-		sb.append("</body>").append(nl);
-		sb.append("</html>").append(nl);
-		
-		writeFileAsUTF8(filename, sb.toString(), false);
-	}
-
-	public static boolean writeFileAsUTF8(String filename, String s, boolean append) {
-	    try {
-			FileOutputStream	fos = new FileOutputStream (filename, append);
-			OutputStreamWriter	osw = new OutputStreamWriter (fos, "UTF-8");
-			BufferedWriter		bw = new BufferedWriter (osw);
-	
-			bw.write(s, 0, s.length ());
-			bw.newLine();
-			
-			bw.flush();		// Flush the file contents to disk
-			bw.close();		// And close it
-			return true;
-	    }
-	    catch(Exception e) {
-	        System.err.println("Failed to write to: " + filename + " " + e.getMessage());
-	        return false;
-	    }
-	}	
 }

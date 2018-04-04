@@ -38,7 +38,7 @@ public class PuzzleTest {
 	}
 
 	private static Puzzle.Status invokePuzzle(Symbols symbols, GridLayout layout, String content) {
-		InitialGridContentProvider contentProvider = InitialGridContentProvider.fromString(layout, content);
+		InitialGridContentProvider contentProvider = InitialGridContentProvider.fromString(layout.m_rows, content);
 		return Puzzle.solvePuzzle(symbols, layout, contentProvider);		
 	}
 

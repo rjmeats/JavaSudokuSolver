@@ -12,10 +12,6 @@ public class GridFormatter {
 		m_grid = grid;
 	}
 	
-	public String formatGrid(CellDiagnosticsProvider ccd) {
-		return formatGrid(ccd, -1);
-	}
-	
 	public String formatCompactGrid(CellDiagnosticsProvider ccd) {
 		boolean compact = true;
 		return formatGrid(ccd, -1, compact);
@@ -72,10 +68,6 @@ public class GridFormatter {
 		return sb1.toString();
 	}
 
-	public String formatGridAsHTML(CellDiagnosticsProvider provider) {
-		return formatGridAsHTML(provider, -1);
-	}
-	
 	public String formatGridAsHTML(CellDiagnosticsProvider provider, int stepNumberToHighlight) {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
