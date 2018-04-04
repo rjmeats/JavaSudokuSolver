@@ -352,7 +352,7 @@ class SolverDiagnostics {
 			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
 				representation = "*"+ representation;
 			}
-			return(FormatUtils.padRight(representation, 5));
+			return(GridDiagnostics.padRight(representation, 5));
 		}
 		
 		public String getBasicCellClass() {
@@ -377,7 +377,7 @@ class SolverDiagnostics {
 			if(!cell.isAssigned() && ca.couldBeCount() == 1) {
 				representation = "*"+ representation;
 			}
-			return(FormatUtils.padRight(representation, 17));
+			return(GridDiagnostics.padRight(representation, 17));
 		}
 		
 		public String getBasicCellClass() {

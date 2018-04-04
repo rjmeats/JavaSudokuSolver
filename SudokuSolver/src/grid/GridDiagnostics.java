@@ -1,14 +1,13 @@
 package grid;
 
 import diagnostics.CellDiagnosticsProvider;
-import diagnostics.FormatUtils;
 
 public class GridDiagnostics {
 
 	public static class CellNumberDisplayer implements CellDiagnosticsProvider {
 		
 		public String getCellDiagnostics(Cell cell) {
-			return(FormatUtils.padRight(cell.getNumberOnlyRepresentation(), 5));
+			return(GridDiagnostics.padRight(cell.getNumberOnlyRepresentation(), 5));
 		}
 		public String getBasicCellClass() {
 			return "";
@@ -21,7 +20,7 @@ public class GridDiagnostics {
 	public static class CellLocationDisplayer implements CellDiagnosticsProvider {
 		
 		public String getCellDiagnostics(Cell cell) {
-			return(FormatUtils.padRight(cell.getGridLocationString(), 5));
+			return(GridDiagnostics.padRight(cell.getGridLocationString(), 5));
 		}
 		public String getBasicCellClass() {
 			return "";
@@ -34,7 +33,7 @@ public class GridDiagnostics {
 	public static class BoxNumberDisplayer implements CellDiagnosticsProvider {
 		
 		public String getCellDiagnostics(Cell cell) {
-			return(FormatUtils.padRight(cell.box().getNumberOnlyRepresentation(), 5));
+			return(GridDiagnostics.padRight(cell.box().getNumberOnlyRepresentation(), 5));
 		}
 
 		public String getBasicCellClass() {
@@ -54,7 +53,7 @@ public class GridDiagnostics {
 				Symbol symbol = cell.assignment().symbol();
 				representation = symbol.getRepresentation();
 			}
-			return(FormatUtils.padRight(representation, 5));
+			return(GridDiagnostics.padRight(representation, 5));
 		}
 		
 		public boolean changedThisStep(Cell cell, int stepNumber) {
@@ -70,6 +69,30 @@ public class GridDiagnostics {
 //			return "gridcell";
 		}
 	}
-	
 
+	public static String padRight(String s, int width, char padChar)
+	{	
+		StringBuilder sb = new StringBuilder();
+		sb.append((s == null) ? "" : s);
+		
+		while(sb.length() < width)
+		{
+			sb.append(padChar);
+		}
+		
+		return sb.toString();
+	}
+
+	public static String padRight(String s, int width)
+	{
+		return padRight(s, width, ' ');
+	}
+
+	public static String padRight(int n, int width)
+	{
+		String s = Integer.toString(n);
+		return padRight(s, width, ' ');
+	}
 }
+
+
