@@ -17,9 +17,15 @@ import grid.Symbol;
 
 abstract class Method {	
 	Solver m_solver;
+	int m_calledCount;
+	int m_usefulCount;
+	int m_firstUsefulStepNumber;
 	
 	Method(Solver solver) {
 		m_solver = solver;
+		m_calledCount = 0;
+		m_usefulCount = 0;
+		m_firstUsefulStepNumber = -1;
 	}
 
 	/**
@@ -31,6 +37,11 @@ abstract class Method {
 	 * @throws IllegalAssignmentException A cell-to-symbol assignment failed.
 	 */
 	abstract boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException;
+	
+	// For diagnostics
+	abstract String getName();				 
+	abstract String getApproachSummary();
+	abstract boolean isComplexApproach();			// Forces diagnostics to be produced even for very large grids.
 }
 
 // -----------------------------------------------------------------------------------------
@@ -44,7 +55,7 @@ class Method1 extends Method {
 	Method1(Solver solver) {
 		super(solver);
 	}
-	
+		
 	// Look for and assign the first case found of a symbol which can only be applied to one specific cell in a cellset.
 	//
 	// For example:
@@ -62,6 +73,10 @@ class Method1 extends Method {
 	// x	x	x		x	x	x		x	x	x
 	//
 	// For the top-right box (Box 3), the symbol 1 can only be in the middle cell of the top row, shown as '=1' above.
+	
+	String getName() { return "Method 1"; }
+	String getApproachSummary() { return "No other cell is available for this symbol in a cellset"; }
+	boolean isComplexApproach() { return false; }
 	
 	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
 		boolean changedState = false;		
@@ -123,6 +138,10 @@ class Method2 extends Method {
 	// For the top-left box (Box 1), the middle cell of the first column can only be a '2', shown as =2, all the other
 	// symbols have been ruled out.
 	
+	String getName() { return "Method 2"; }
+	String getApproachSummary() { return "No other symbol can be assigned to this cell"; }
+	boolean isComplexApproach() { return false; }
+	
 	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
 		boolean changedState = false;
 		for(CellAssessment ca : m_solver.cellAssessments()) {
@@ -182,6 +201,10 @@ class Method3 extends Method {
 	// - a box can restrict cells in a column which intersects with it
 	// - a row can restrict cells in a box which intersects with it
 	// - a column can restrict cells in a box which intersects with it
+
+	String getName() { return "Method 3"; }
+	String getApproachSummary() { return "Rule out cells in one cellset which don't intersect with a second cellset"; }
+	boolean isComplexApproach() { return false; }
 	
 	//-----------------------------------------------------------------------------------------
 
@@ -313,6 +336,10 @@ class Method4 extends Method {
 	// So in general, if we find that a set of n symbols can only appear in n cells in a cell set, we can rule out any other symbol from being assigned to any of those n cells.
 	//
 	// This method finds these corresponding sets of n symbols and cells in a cellset, and applies the restrictions they imply.
+	
+	String getName() { return "Method 4"; }
+	String getApproachSummary() { return "Rule out symbols based on restricted symbol/cell combinations in a cellset"; }
+	boolean isComplexApproach() { return true; }		// Force diagnostics to be produced
 	
 	//-----------------------------------------------------------------------------------------
 

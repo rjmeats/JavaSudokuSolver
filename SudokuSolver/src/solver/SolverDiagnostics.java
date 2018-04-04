@@ -21,15 +21,17 @@ class SolverDiagnostics {
 	private Solver m_solver;
 	private Grid m_grid;
 	private Symbols m_symbols;
+	private String m_puzzleSource;
 	
 	private boolean m_produceHtmlDiagnostics;
 	private int m_diagnosticsFrequency;
 	private String m_htmlDiagnostics;	
 
-	SolverDiagnostics(Solver solver, Grid grid, Symbols symbols) {
+	SolverDiagnostics(Solver solver, Grid grid, Symbols symbols, String puzzleSource) {
 		m_solver = solver;
 		m_grid = grid;
 		m_symbols = symbols;
+		m_puzzleSource = puzzleSource;
 		
 		m_produceHtmlDiagnostics = true;
 		m_diagnosticsFrequency = 1;
@@ -144,18 +146,31 @@ class SolverDiagnostics {
 		String nl = System.lineSeparator();
 		StringBuilder sb = new StringBuilder();
 		
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		sb.append(dateFormat.format(m_solver.startTime())).append(nl);
+		sb.append("<table>").append(nl);
+
+		sb.append("<tr>").append(nl);
+		sb.append("<td width=200>Sudoku source:</td><td>").append(m_puzzleSource).append("</td>").append(nl);
+		sb.append("</tr>").append(nl);
+
+		sb.append("<tr>").append(nl);
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
+		sb.append("<td>Run at:</td><td>").append(dateFormat.format(m_solver.startTime())).append("</td>").append(nl);
+		sb.append("</tr>").append(nl);
+
+		sb.append("<tr>").append(nl);
+		sb.append("<td>Shading key:</td><td>").append(nl);
 		
-		sb.append("<h2>Shading key" + "</h2>").append(nl);			
 		sb.append("<table>").append(nl);
 		sb.append("<tr>").append(nl);
 		sb.append("<td class=given>Given</td>").append(nl);
-		sb.append("<td class=highlight>Just changed</td>").append(nl);
-		sb.append("<td class=previouslyassigned>Assigned</td>").append(nl);
+		sb.append("<td class=highlight>Changed</td>").append(nl);
+		sb.append("<td class=previouslyassigned>Solved</td>").append(nl);
 		sb.append("</tr>").append(nl);
 		sb.append("</table>").append(nl);
 		
+		sb.append("</td></tr>").append(nl);
+		sb.append("</table>").append(nl);
+
 		sb.append("<p/><hr/><p/>").append(nl);
 
 		sb.append("<h2>Starting Grid" + "</h2>").append(nl);			
@@ -193,7 +208,7 @@ class SolverDiagnostics {
 		m_htmlDiagnostics += sb.toString();
 	}
 	
-	void collectDiagnosticsAfterStep(int stepNumber, boolean changedState, List<String> actions, List<String> stepObservations) {
+	void collectDiagnosticsAfterStep(int stepNumber, boolean changedState, List<String> actions, List<String> stepObservations, boolean forceDiagnostics) {
 		if(!m_produceHtmlDiagnostics) return;		
 		
 		String nl = System.lineSeparator();
@@ -219,7 +234,7 @@ class SolverDiagnostics {
 		if(!changedState) {
 			sb.append("No state changes caused by this step").append("<p/>");
 		}		
-		else if(stepNumber % m_diagnosticsFrequency != 0 && stepNumber != -1) {
+		else if(stepNumber % m_diagnosticsFrequency != 0 && stepNumber != -1 && (!forceDiagnostics)) {
 			// Stop output volume becoming excessive for larger grid sizes 
 		}
 		else {
@@ -333,11 +348,26 @@ class SolverDiagnostics {
 		sb.append("</ul>").append(nl);
 		
 		sb.append("<p/>Took " + ms + " ms, " + steps + " steps<p/>").append(nl);
-		// ???? Stats ????
-		// Show initial and final grids, whether complete, whether invalid ????
-
+		
 		GridFormatter formatter = new GridFormatter(m_grid);		
 		sb.append(formatter.formatGridAsHTML(new GridDiagnostics.AssignedValueDisplay(), -1));
+
+		sb.append("<p/>");
+		
+		sb.append("<table>").append(nl);
+		sb.append("<tr><th align=left width=100>Method</th><th align=left width=500>Approach</th><th align=right width=100>");
+		sb.append("Tried</th><th align=right width=100>Useful</th><th align=right width=200>First useful step</th></tr>");
+		for(Method m : m_solver.methods()) {
+			sb.append("<tr>");
+			sb.append("<td>").append(m.getName()).append("</td>");
+			sb.append("<td>").append(m.getApproachSummary()).append("</td>");
+			sb.append("<td align=right>").append(m.m_calledCount).append("</td>");
+			sb.append("<td align=right>").append(m.m_usefulCount).append("</td>");
+			String firstUsefulStep = (m.m_firstUsefulStepNumber==-1) ? "" : m.m_firstUsefulStepNumber + ""; 
+			sb.append("<td align=right>").append(firstUsefulStep).append("</td>");
+			sb.append("</tr>").append(nl);
+		}
+		sb.append("</table>").append(nl);
 
 		sb.append("<p/><hr/><p/>").append(nl);
 

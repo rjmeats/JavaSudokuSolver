@@ -25,6 +25,7 @@ public class Solver {
 	private Grid m_grid;	
 	private Symbols m_symbols;
 	
+	private String m_puzzleSource;					// Identifies the puzzle being solved.
 	private java.util.Date m_startTime;
 	private long m_combinedTookTime;				// Milliseconds
 	
@@ -52,9 +53,10 @@ public class Solver {
 	// Object to produce detailed diagnostic output, including an HTML page.
 	private SolverDiagnostics m_diagnostics;
 	
-	public Solver(Grid grid, Symbols symbols) {
+	public Solver(Grid grid, Symbols symbols, String puzzleSource) {
 		m_grid = grid;
 		m_symbols = symbols;
+		m_puzzleSource = puzzleSource;
 
 		m_completed = false;
 
@@ -98,7 +100,7 @@ public class Solver {
 		m_startTime = new java.util.Date();
 		m_combinedTookTime = 0;
 		
-		m_diagnostics = new SolverDiagnostics(this, m_grid, m_symbols);
+		m_diagnostics = new SolverDiagnostics(this, m_grid, m_symbols, m_puzzleSource);
 
 		// The grid already has 'given' assignments in place. We need to go through these propagate this information to the assessment objects that we just set up to get
 		// to a full starting position.
@@ -117,7 +119,7 @@ public class Solver {
 		int stepNumber = -1;
 		boolean changedState = true;
 		List<String> unexpectedEvents = new ArrayList<>();
-		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, changedState, actions, unexpectedEvents);
+		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, changedState, actions, unexpectedEvents, false);
 		
 	}
 
@@ -151,8 +153,12 @@ public class Solver {
 		return m_symbols;
 	}
 
+	List<Method> methods() {
+		return m_methods;
+	}
+
 	java.util.Date startTime() {
-		return this.m_startTime;
+		return m_startTime;
 	}
 	// -----------------------------------------------------------------------------------------
 
@@ -172,10 +178,19 @@ public class Solver {
 		if(!m_completed) {
 				
 			// Try the available methods until one of them deduces something.
+			boolean forceDiagnostics = false;
 			for(Method method : m_methods) {
 				if(!status.m_changedState) {
 					try {
+						method.m_calledCount++;
 						status.m_changedState = method.applyMethod(stepNumber, status.m_actions);
+						if(status.m_changedState) {
+							forceDiagnostics = method.isComplexApproach();
+							method.m_usefulCount++;
+							if(method.m_firstUsefulStepNumber == -1) {
+								method.m_firstUsefulStepNumber = stepNumber;
+							}
+						}
 					} 
 					catch(IllegalAssignmentException e) {
 						status.m_unexpectedEvents.add(e.getMessage());
@@ -183,7 +198,7 @@ public class Solver {
 					}				
 				}			
 			}			
-			m_diagnostics.collectDiagnosticsAfterStep(status.m_stepNumber, status.m_changedState, status.m_actions, status.m_unexpectedEvents);		
+			m_diagnostics.collectDiagnosticsAfterStep(status.m_stepNumber, status.m_changedState, status.m_actions, status.m_unexpectedEvents, forceDiagnostics);		
 			m_unexpectedEvents.addAll(status.m_unexpectedEvents);
 			
 			long stepEndTime = new java.util.Date().getTime();

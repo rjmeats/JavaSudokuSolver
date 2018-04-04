@@ -121,7 +121,7 @@ public class Puzzle {
 	// ================================================================================================
 	
 	private Symbols m_symbolsToUse;
-	private Grid m_grid;		
+	private Grid m_grid;
 	private Solver m_solver;
 	private InitialGridContentProvider m_contentProvider;
 	private Status m_status;
@@ -226,7 +226,7 @@ public class Puzzle {
 		int stepNumber = 0;		
 		int maxSteps = 1000;
 		Solver.SolutionStepStatus stepStatus = null;
-		m_solver = new Solver(m_grid, m_symbolsToUse);
+		m_solver = new Solver(m_grid, m_symbolsToUse, m_contentProvider.sourceInfo());
 
 		// Get the solver to take another deduction step until we've finished or got stuck or gone on too long. 
 		while(changed && !complete && stepNumber < maxSteps) {
