@@ -54,12 +54,12 @@ public class Symbols {
 		return m_symbolRepresentationMap.size();
 	}
 	
-	public Set<Symbol> getSymbolSet() {
+	public Set<Symbol> symbolSet() {
 		return new LinkedHashSet<>(m_symbolRepresentationMap.values());
 	}
 	
 	public String getRepresentation() {		
-		return "Symbols (" + size() + ") in set '" + m_setName + "' : " + Symbol.symbolCollectionRepresentation(getSymbolSet());
+		return "Symbols (" + size() + ") in set '" + m_setName + "' : " + Symbol.symbolCollectionRepresentation(symbolSet());
 	}
 	
 	// For debugger only

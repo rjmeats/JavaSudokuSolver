@@ -56,7 +56,7 @@ public class Grid {
 	private void addCell(int cellNumber, int columnNum, int rowNum) {
 		Column column = m_lColumns.get(columnNum);
 		Row row = m_lRows.get(rowNum);
-		int boxNum = getBoxNumberFromGridPosition(columnNum, rowNum);
+		int boxNum = boxNumberFromGridPosition(columnNum, rowNum);
 		Box box = m_lBoxes.get(boxNum);
 		
 		Cell cell = new Cell(cellNumber, column, row, box);
@@ -94,7 +94,7 @@ public class Grid {
 	 * @return A list of the cells in the grid which are not compatible, because a symbol appears more than once in a column, row or box. 
 	 * If the grid is valid, an empty list will be returned.
 	 */
-	public List<Cell> getListOfIncompatibleCells() {
+	public List<Cell> listOfIncompatibleCells() {
 		
 		// Get a list of all the cellsets in the grid 
 		List<CellSet> lCellSets = new ArrayList<>(m_lColumns);
@@ -103,7 +103,7 @@ public class Grid {
 		
 		Set<Cell> s = new LinkedHashSet<>();	// Use a set for colecting the clashing cells, to prevent cells being listed more than once. 
 		for(CellSet cellSet : lCellSets) {
-			s.addAll(cellSet.getListOfIncompatibleCells());
+			s.addAll(cellSet.listOfIncompatibleCells());
 		}
 		
 		return new ArrayList<>(s);
@@ -118,12 +118,12 @@ public class Grid {
 	// ..
 	// 72 73 ... 80
 	
-	private int getCellNumberFromGridPosition(int columnNumber, int rowNumber) {
+	private int cellNumberFromGridPosition(int columnNumber, int rowNumber) {
 		return (rowNumber * m_layout.m_columns) + columnNumber;
 	}
 	
-	public Cell getCellFromGridPosition(int columnNumber, int rowNumber) {		
-		return m_lCells.get(getCellNumberFromGridPosition(columnNumber, rowNumber));
+	public Cell cellFromGridPosition(int columnNumber, int rowNumber) {		
+		return m_lCells.get(cellNumberFromGridPosition(columnNumber, rowNumber));
 	}
 	
 	// Example 9x9 grid box numbering
@@ -131,13 +131,13 @@ public class Grid {
 	// 3 4 5
 	// 6 7 8
 	
-	private int getBoxNumberFromGridPosition(int columnNumber, int rowNumber) {
+	private int boxNumberFromGridPosition(int columnNumber, int rowNumber) {
 		return ((rowNumber/m_layout.m_rowsPerBox) * m_layout.m_rowsPerBox) + 
 			   (columnNumber / m_layout.m_columnsPerBox);
 	}
 
-	public Box getBoxFromGridPosition(int columnNumber, int rowNumber) {
-		return m_lBoxes.get(getBoxNumberFromGridPosition(columnNumber, rowNumber));
+	public Box boxFromGridPosition(int columnNumber, int rowNumber) {
+		return m_lBoxes.get(boxNumberFromGridPosition(columnNumber, rowNumber));
 	}
 	
 	// ---------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class Grid {
 		}
 	}
 		
-	public Stats getStats() {
+	public Stats stats() {
 		Stats stats = new Stats();
 		stats.m_layout = m_layout;
 		stats.m_initialAssignedCellCount = 0;

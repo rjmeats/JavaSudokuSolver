@@ -44,13 +44,13 @@ class CellSetAssessment implements Comparable<CellSetAssessment> {
 		
 		// Initially any of the cells in the cellset could be assigned to any symbol. 
 		m_couldBeCellsForSymbol = new HashMap<>();
-		for(Symbol symbol : m_symbols.getSymbolSet()) {
+		for(Symbol symbol : m_symbols.symbolSet()) {
 			m_couldBeCellsForSymbol.put(symbol, new LinkedHashSet<>(m_cellSet.cells()));
 		}
 
 		setStepNumber(-1);
 		m_stepNumberOfLatestChangeForSymbol = new HashMap<>();
-		for(Symbol symbol : m_symbols.getSymbolSet()) {
+		for(Symbol symbol : m_symbols.symbolSet()) {
 			setStepNumberOfLatestChangeForSymbol(symbol, -1);
 		}
 	}
@@ -60,7 +60,7 @@ class CellSetAssessment implements Comparable<CellSetAssessment> {
 	}
 
 	Set<Symbol> symbols() {
-		return m_symbols.getSymbolSet();
+		return m_symbols.symbolSet();
 	}
 		
 	boolean contains(Cell cell) {

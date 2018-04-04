@@ -118,7 +118,7 @@ public class Puzzle {
 	public static Puzzle.Status solvePuzzle(Symbols symbols, GridLayout layout, InitialGridContentProvider contentProvider) {
 		Puzzle puzzle = new Puzzle(symbols, layout, contentProvider);
 		puzzle.solve();
-		return puzzle.getStatus();
+		return puzzle.status();
 	}
 	
 	// ================================================================================================
@@ -141,8 +141,8 @@ public class Puzzle {
 		loadGivenCells();
 	}
 
-	private Status getStatus() {
-		return m_status;		
+	private Status status() {
+		return m_status;	
 	}
 
 	// --------------------------------------------------------------------------------------
@@ -194,7 +194,7 @@ public class Puzzle {
 			else {
 				Symbol symbol = m_symbolsToUse.isKnownSymbol(c + "");
 				if(symbol != null) {
-					Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
+					Cell cell = m_grid.cellFromGridPosition(columnNumber, rowNumber);
 					cell.assign(new Assignment(cell, symbol, AssignmentMethod.Given, "", 0));
 				}
 				else {
@@ -206,11 +206,11 @@ public class Puzzle {
 
 	// Check for invalid starting positions - a symbol supplied more than once in a particular cellset (row, column or box)
 	private void checkValidStartingPosition() {
-		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
+		List<Cell> badCells = m_grid.listOfIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getGridLocationString() + " ");
+				badCellString += (cell.gridLocation() + " ");
 			}
 			m_status.setInitialGridError("Invalid initial grid : see cells " + badCellString);			
 		}
@@ -276,11 +276,11 @@ public class Puzzle {
 		m_status.m_finalGrid = gf2.formatCompactGrid(new GridDiagnostics.AssignedValueDisplay());
 		
 		// Check we've not made any invalid assignments		
-		List<Cell> badCells = m_grid.getListOfIncompatibleCells();
+		List<Cell> badCells = m_grid.listOfIncompatibleCells();
 		if(badCells.size() > 0) {
 			String badCellString = "";
 			for(Cell cell : badCells) {
-				badCellString += (cell.getGridLocationString() + " ");
+				badCellString += (cell.gridLocation() + " ");
 			}
 			m_status.m_valid = false;
 			m_status.m_invalidDetails = "Invalid final grid : see cells " + badCellString;			

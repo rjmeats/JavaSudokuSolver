@@ -23,7 +23,7 @@ public interface CellDiagnosticsProvider {
 	 * 
 	 * @return The name of the style. Empty string if the gridcell class is OK to use.
 	 */
-	String getBasicCellClass();
+	String basicCellClass();
 	
 	/**
 	 * Specifies the diagnostic content to appear in the table representing the grid for a particular cell.
@@ -31,7 +31,7 @@ public interface CellDiagnosticsProvider {
 	 * @param cell The grid cell whose value/state is to be represented
 	 * @return A string representing the cell value/state
 	 */
-	String getCellDiagnostics(Cell cell);
+	String cellDiagnostics(Cell cell);
 	
 	/**
 	 * Has the diagnostic content to be displayed for this cell changed during the specified processing step ?

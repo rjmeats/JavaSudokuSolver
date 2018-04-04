@@ -154,7 +154,7 @@ public class InitialGridContentProvider {
 	public GridLayout workOutGridLayout() {
 		int gridRows = m_dataLines.size();
 		boolean foundError = false;
-		GridLayout layout = GridLayout.getGridLayoutOfSize(gridRows);
+		GridLayout layout = GridLayout.findGridLayoutOfSize(gridRows);
 		if(layout == null) {
 			System.err.println("Grid layout not recognised - rows=" + gridRows);
 			foundError = true;

@@ -50,12 +50,12 @@ public abstract class CellSet implements Comparable<CellSet> {
 	}
 	
 	// Use 1-based numbering for showing a cell number in external displays of grid contents.
-	public String getNumberOnlyRepresentation() {
+	public String numberOnlyRepresentation() {
 		return "" + itemNumberForDisplay();
 	}
 
 	public String getRepresentation() {
-		return m_typeName.toLowerCase() + " " + getNumberOnlyRepresentation(); 
+		return m_typeName.toLowerCase() + " " + numberOnlyRepresentation(); 
 	}
 
 	// For debuggers only
@@ -77,13 +77,13 @@ public abstract class CellSet implements Comparable<CellSet> {
 	 * @return A list of the cells in the cellset which are not compatible, because a symbol appears more than once in the cellset. 
 	 * If the cellset is valid, an empty list will be returned.
 	 */
-	public Set<Cell> getListOfIncompatibleCells() {
+	public Set<Cell> listOfIncompatibleCells() {
 		// Keep track of the symbols which are spoken for, and which cells clash with other cells in the cellset.
 		Map<Symbol, Cell> symbolsUsed = new HashMap<>();
 		Set<Cell> incompatibleCells = new LinkedHashSet<>();		// Use a set to prevent duplicates
 		
 		for(Cell cell : m_lCells) {
-			Symbol symbol = cell.getAssignedSymbol();
+			Symbol symbol = cell.assignedSymbol();
 			if(symbol != null) {
 				if(symbolsUsed.containsKey(symbol)) {
 					// We already found a cell in this cellset assigned to this symbol. Not allowed - add both
@@ -111,7 +111,7 @@ public abstract class CellSet implements Comparable<CellSet> {
 	 * @param cs2 The second cellset
 	 * @return A set containing the cells which are in this cellset but not the second one.
 	 */
-	public Set<Cell> getCellsNotIn(CellSet cs2) {
+	public Set<Cell> cellsNotIn(CellSet cs2) {
 		// Functional approach looking through each cell in the cellset
 		return cells().stream()
 				.filter(cell -> (!cs2.containsCell(cell)))		// Only keep cells which are not in the second cellset	

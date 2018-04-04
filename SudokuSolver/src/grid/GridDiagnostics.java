@@ -2,97 +2,66 @@ package grid;
 
 import diagnostics.CellDiagnosticsProvider;
 
-public class GridDiagnostics {
+/**
+ * Classes implementing the CellDiagnosticsProvider interface to provide different diagnostic grid displays.
+ */
 
-	public static class CellNumberDisplayer implements CellDiagnosticsProvider {
+public abstract class GridDiagnostics implements CellDiagnosticsProvider {
+
+	// Simple implementations for diagnostics that stay the same while a grid is being processed
+	public boolean hasStaticContent() { return true;}
+	public String basicCellClass() { return ""; }
+	public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
+	public abstract String cellDiagnostics(Cell cell);
+	
+	/**
+	 * Class to display the cell ID numbers in a grid
+	 */
+	public static class CellNumberDisplayer extends GridDiagnostics implements CellDiagnosticsProvider {
 		
-		public String getCellDiagnostics(Cell cell) {
-			return(GridDiagnostics.padRight(cell.getNumberOnlyRepresentation(), 5));
+		public String cellDiagnostics(Cell cell) {
+			return(cell.numberOnlyRepresentation());
 		}
-		public String getBasicCellClass() {
-			return "";
-		}
-		
-		public boolean hasStaticContent() { return true;}
-		public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
 	}
 
-	public static class CellLocationDisplayer implements CellDiagnosticsProvider {
+	/**
+	 * Class to display the cell location in a grid
+	 */
+	public static class CellLocationDisplayer extends GridDiagnostics implements CellDiagnosticsProvider {
 		
-		public String getCellDiagnostics(Cell cell) {
-			return(GridDiagnostics.padRight(cell.getGridLocationString(), 5));
+		public String cellDiagnostics(Cell cell) {
+			return(cell.gridLocation());
 		}
-		public String getBasicCellClass() {
-			return "";
-		}
-		
-		public boolean hasStaticContent() { return true; }
-		public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
 	}
 
-	public static class BoxNumberDisplayer implements CellDiagnosticsProvider {
+	/**
+	 * Class to display the box number of a cell in a grid
+	 */
+	public static class BoxNumberDisplayer extends GridDiagnostics implements CellDiagnosticsProvider {
 		
-		public String getCellDiagnostics(Cell cell) {
-			return(GridDiagnostics.padRight(cell.box().getNumberOnlyRepresentation(), 5));
+		public String cellDiagnostics(Cell cell) {
+			return(cell.box().numberOnlyRepresentation());
 		}
-
-		public String getBasicCellClass() {
-			return "";
-		}
-		
-		public boolean hasStaticContent() { return true; }
-		public boolean changedThisStep(Cell cell, int stepNumber) { return false; }
 	}
 	
-	public static class AssignedValueDisplay implements CellDiagnosticsProvider {
-		
-		public String getCellDiagnostics(Cell cell) {
-			String representation = ".";
-			if(cell.isAssigned())
-			{
-				Symbol symbol = cell.assignment().symbol();
-				representation = symbol.getRepresentation();
-			}
-			return(GridDiagnostics.padRight(representation, 5));
-		}
-		
-		public boolean changedThisStep(Cell cell, int stepNumber) {
-			return cell.isAssigned() && (cell.assignment().stepNumber() == stepNumber);
-		}
+	/**
+	 * Class to display the value assigned to a cell in a grid, or a '.' if nothing assigned.
+	 */
+	public static class AssignedValueDisplay extends GridDiagnostics implements CellDiagnosticsProvider {
 
+		@Override
 		public boolean hasStaticContent() {
 			return false;
 		}
 
-		public String getBasicCellClass() {
-			return "";
-//			return "gridcell";
+		@Override
+		public boolean changedThisStep(Cell cell, int stepNumber) {
+			return cell.isAssigned() && (cell.assignment().stepNumber() == stepNumber);
 		}
-	}
 
-	public static String padRight(String s, int width, char padChar)
-	{	
-		StringBuilder sb = new StringBuilder();
-		sb.append((s == null) ? "" : s);
-		
-		while(sb.length() < width)
-		{
-			sb.append(padChar);
-		}
-		
-		return sb.toString();
-	}
-
-	public static String padRight(String s, int width)
-	{
-		return padRight(s, width, ' ');
-	}
-
-	public static String padRight(int n, int width)
-	{
-		String s = Integer.toString(n);
-		return padRight(s, width, ' ');
+		// Return the value assigned to the cell, or '.' if nothing yet assigned.
+		public String cellDiagnostics(Cell cell) {
+			return cell.isAssigned() ? cell.assignment().symbol().getRepresentation() : ".";
+		}		
 	}
 }
-
-

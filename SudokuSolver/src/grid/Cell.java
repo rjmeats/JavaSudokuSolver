@@ -46,7 +46,7 @@ public class Cell implements Comparable<Cell> {
 	 * @param assignment Details of the assignment being made.
 	 */
 	public void assign(Assignment assignment) { 
-		m_assignment = assignment; 
+		m_assignment = assignment;
 	}
 	
 	public boolean isAssigned() {
@@ -56,7 +56,7 @@ public class Cell implements Comparable<Cell> {
 	/**
 	 * @return NB Returns null if no symbol assigned to the cell.
 	 */
-	public Symbol getAssignedSymbol() {
+	public Symbol assignedSymbol() {
 		return (m_assignment != null) ? m_assignment.symbol() : null;
 	}
 		
@@ -69,15 +69,15 @@ public class Cell implements Comparable<Cell> {
 		return "Cell " + cellNumberForDisplay();
 	}
 
-	public String getNumberOnlyRepresentation() {
+	public String numberOnlyRepresentation() {
 		return "" + cellNumberForDisplay();
 	}
 
 	/**
 	 * @return A string [col,row] showing where the cell is in within its grid.
 	 */
-	public String getGridLocationString() {
-		return "[" + (m_column.getNumberOnlyRepresentation()) + "," + (m_row.getNumberOnlyRepresentation()) + "]";
+	public String gridLocation() {
+		return "[" + (m_column.numberOnlyRepresentation()) + "," + (m_row.numberOnlyRepresentation()) + "]";
 	}
 
 	// For debuggers only
@@ -96,7 +96,7 @@ public class Cell implements Comparable<Cell> {
 		// Functional approach.
 		return cells.stream()
 				.sorted()
-				.map(c -> c.getNumberOnlyRepresentation())
+				.map(c -> c.numberOnlyRepresentation())
 				.collect(Collectors.joining(" "));
 	}
 }

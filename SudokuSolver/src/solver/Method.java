@@ -39,8 +39,8 @@ abstract class Method {
 	abstract boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException;
 	
 	// For diagnostics
-	abstract String getName();				 
-	abstract String getApproachSummary();
+	abstract String name();				 
+	abstract String approachSummary();
 	abstract boolean isComplexApproach();			// Forces diagnostics to be produced even for very large grids.
 }
 
@@ -74,8 +74,8 @@ class Method1 extends Method {
 	//
 	// For the top-right box (Box 3), the symbol 1 can only be in the middle cell of the top row, shown as '=1' above.
 	
-	String getName() { return "Method 1"; }
-	String getApproachSummary() { return "No other cell is available for this symbol in a cellset"; }
+	String name() { return "Method 1"; }
+	String approachSummary() { return "No other cell is available for this symbol in a cellset"; }
 	boolean isComplexApproach() { return false; }
 	
 	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
@@ -96,7 +96,7 @@ class Method1 extends Method {
 				m_solver.performAssignment(assignment);
 				changedState = true;
 				String s = "Assigned symbol " + symbol.getRepresentation() + 
-						   " to cell " + onlyAvailableCell.getGridLocationString() + 
+						   " to cell " + onlyAvailableCell.gridLocation() + 
 						   " for " + csa.getRepresentation() + 
 						   " - no other cell is available for this symbol";
 				actions.add(s);
@@ -138,8 +138,8 @@ class Method2 extends Method {
 	// For the top-left box (Box 1), the middle cell of the first column can only be a '2', shown as =2, all the other
 	// symbols have been ruled out.
 	
-	String getName() { return "Method 2"; }
-	String getApproachSummary() { return "No other symbol can be assigned to this cell"; }
+	String name() { return "Method 2"; }
+	String approachSummary() { return "No other symbol can be assigned to this cell"; }
 	boolean isComplexApproach() { return false; }
 	
 	boolean applyMethod(int stepNumber, List<String> actions) throws IllegalAssignmentException {		
@@ -152,7 +152,7 @@ class Method2 extends Method {
 				m_solver.performAssignment(assignment);
 				changedState = true;
 				String s = "assigned symbol " + onlyAvailableSymbol.getRepresentation() +  
-						   " to cell " + ca.cell().getGridLocationString() +
+						   " to cell " + ca.cell().gridLocation() +
 						   " - no other symbol can be assigned to this cell";
 				actions.add(s);
 			}
@@ -202,8 +202,8 @@ class Method3 extends Method {
 	// - a row can restrict cells in a box which intersects with it
 	// - a column can restrict cells in a box which intersects with it
 
-	String getName() { return "Method 3"; }
-	String getApproachSummary() { return "Rule out cells in one cellset which don't intersect with a second cellset"; }
+	String name() { return "Method 3"; }
+	String approachSummary() { return "Rule out cells in one cellset which don't intersect with a second cellset"; }
 	boolean isComplexApproach() { return false; }
 	
 	//-----------------------------------------------------------------------------------------
@@ -223,7 +223,7 @@ class Method3 extends Method {
 		
 		// Which cells cannot be assigned to our symbol as a result of these restrictions ?
 		Set<Cell> ruledOutCells() {
-			return m_restrictedCellSet.getCellsNotIn(m_restrictorCellSet);
+			return m_restrictedCellSet.cellsNotIn(m_restrictorCellSet);
 		}
 		
 		String getRepresentation() {
@@ -337,8 +337,8 @@ class Method4 extends Method {
 	//
 	// This method finds these corresponding sets of n symbols and cells in a cellset, and applies the restrictions they imply.
 	
-	String getName() { return "Method 4"; }
-	String getApproachSummary() { return "Rule out symbols based on restricted symbol/cell combinations in a cellset"; }
+	String name() { return "Method 4"; }
+	String approachSummary() { return "Rule out symbols based on restricted symbol/cell combinations in a cellset"; }
 	boolean isComplexApproach() { return true; }		// Force diagnostics to be produced
 	
 	//-----------------------------------------------------------------------------------------
@@ -377,7 +377,7 @@ class Method4 extends Method {
 		// NB Incorporating this in the loops above would be more efficient.
 		List<Restriction> restrictions = new ArrayList<>();
 		for(Set<Symbol> symbolCombination : symbolCombinations) {
-			Set<Cell> cells = getSymbolCombinationCells(csa, symbolCombination);
+			Set<Cell> cells = findSymbolCombinationCells(csa, symbolCombination);
 			if(symbolCombination.size() == cells.size()) {
 				Restriction r = new Restriction(csa.cellSet(), symbolCombination, cells);
 				restrictions.add(r);
@@ -428,7 +428,7 @@ class Method4 extends Method {
 	}
 	
 	// Get the set of cells which can still be assigned to this set of symbols.
-	private Set<Cell> getSymbolCombinationCells(CellSetAssessment csa, Set<Symbol> symbolCombination) {
+	private Set<Cell> findSymbolCombinationCells(CellSetAssessment csa, Set<Symbol> symbolCombination) {
 		Set<Cell> cells = new LinkedHashSet<>();	// Must be a set, only want to record each cell once.
 		for(Symbol symbol : symbolCombination) {
 			for(Cell cell : csa.couldBeCellsForSymbol(symbol)) {

@@ -34,7 +34,7 @@ public enum GridLayout {
 		return m_columns + "x" + m_rows;
 	}
 	
-	public static GridLayout getGridLayoutOfSize(int rows) {
+	public static GridLayout findGridLayoutOfSize(int rows) {
 		GridLayout matchingGrid = null;
 		for(GridLayout g : GridLayout.values()) {
 			if(g.m_rows == rows) {

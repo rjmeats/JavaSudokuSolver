@@ -46,7 +46,7 @@ class CellAssessment {
 		m_cellSetAssessments.add(rowAssessment);
 		m_cellSetAssessments.add(boxAssessment);
 
-		m_couldBeSymbolsSet = new LinkedHashSet<>(symbols.getSymbolSet());		// Everything's possible
+		m_couldBeSymbolsSet = new LinkedHashSet<>(symbols.symbolSet());		// Everything's possible
 		m_ruledOutSymbolsSet = new LinkedHashSet<>();							// Nothing ruled out yet
 		
 		m_stepNumberOfLatestChange = -1;

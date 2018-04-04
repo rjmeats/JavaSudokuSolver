@@ -92,7 +92,7 @@ public class GridFormatter {
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
 			
 			// Add blank line(s) between vertical boxes
-			Box box = m_grid.getBoxFromGridPosition(0, rowNumber);
+			Box box = m_grid.boxFromGridPosition(0, rowNumber);
 			if((currentVerticalBox != null) && (currentVerticalBox != box)) {
 				sb.append(compact ? nl : nl+nl);
 			}
@@ -100,15 +100,15 @@ public class GridFormatter {
 
 			for(int columnNumber = 0; columnNumber < m_grid.columns().size(); columnNumber++) {
 				// Add blank column(s) between horizontal boxes
-				box = m_grid.getBoxFromGridPosition(columnNumber, rowNumber);
+				box = m_grid.boxFromGridPosition(columnNumber, rowNumber);
 				if(currentHorizontalBox != box) {
 					sb.append(compact ? " " : "   ");
 				}
 				currentHorizontalBox = box;
 
 				// Put the required value for the cell into the formatted grid. 
-				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);
-				String contents = ccp.getCellDiagnostics(cell);
+				Cell cell = m_grid.cellFromGridPosition(columnNumber, rowNumber);
+				String contents = ccp.cellDiagnostics(cell);
 				if(compact) {
 					// Single space between items. Only really works if the contents provided are the same number of
 					// characters within a particular grid.
@@ -143,6 +143,10 @@ public class GridFormatter {
 	//
 	// CSS styles for use in an HTML page header are provided by the function following this
 		
+	public String formatGridAsHTML(CellDiagnosticsProvider provider) {
+		return formatGridAsHTML(provider, -1);
+	}
+	
 	public String formatGridAsHTML(CellDiagnosticsProvider provider, int stepNumberToHighlight) {
 
 		// Keep track of which box we've reached in the grid, so we can adjust the cell borders.
@@ -155,7 +159,7 @@ public class GridFormatter {
 		for(int rowNumber = 0; rowNumber < m_grid.rows().size(); rowNumber++) {
 			
 			// Set the row class to differentiate rows where a new box starts. 
-			Box box = m_grid.getBoxFromGridPosition(0, rowNumber);
+			Box box = m_grid.boxFromGridPosition(0, rowNumber);
 			String rowClass = "normalrow";
 			if(box != currentVerticalBox) {
 				if(currentVerticalBox != null) {
@@ -172,12 +176,12 @@ public class GridFormatter {
 				// - the cell border class to allow vertical borders between boxes to be shown
 				// - background colouring to indicate more details of a cell's processing
 				
-				String basicCellClass = provider.getBasicCellClass();
+				String basicCellClass = provider.basicCellClass();
 				if(basicCellClass.length() == 0) {
 					basicCellClass = "gridcell";
 				}
 				
-				box = m_grid.getBoxFromGridPosition(columnNumber, rowNumber);
+				box = m_grid.boxFromGridPosition(columnNumber, rowNumber);
 				String cellClass = basicCellClass + " gridnonseparatorcolumn";
 				if(box != currentHorizontalBox) {
 					if(columnNumber != 0) {
@@ -187,7 +191,7 @@ public class GridFormatter {
 				currentHorizontalBox = box;
 
 				// Set background colour for the cell
-				Cell cell = m_grid.getCellFromGridPosition(columnNumber, rowNumber);				
+				Cell cell = m_grid.cellFromGridPosition(columnNumber, rowNumber);				
 				if(provider.hasStaticContent()) {
 					// Values for a cell are always the same (e.g. the cell identifier), no highlighting
 				}
@@ -207,7 +211,7 @@ public class GridFormatter {
 				
 				// Also generate text to be shown in the mouse lingers over the cell, identifying the cell, 
 				// and providing assignment info.
-				String toolTip = cell.getGridLocationString() + " = " + cell.getRepresentation();
+				String toolTip = cell.gridLocation() + " = " + cell.getRepresentation();
 				if(cell.isAssigned()) {
 					toolTip += " : " + cell.assignment().description();
 				}
@@ -215,7 +219,7 @@ public class GridFormatter {
 				sb.append("<td " + fullCellClass + " title=\"" + toolTip + "\">").append(nl);
 				
 				// Get the detailed contents from the diagnostics provder and add to the HTML.
-				String contents = provider.getCellDiagnostics(cell);
+				String contents = provider.cellDiagnostics(cell);
 				sb.append(protectHTML(contents)).append(nl);
 				
 				sb.append("</td>").append(nl);
@@ -229,7 +233,7 @@ public class GridFormatter {
 		return sb.toString();
 	}
 	
-	public static String getCSSStyles() {
+	public static String CSSStyles() {
 		StringBuilder sb = new StringBuilder();
 		
 		// Font

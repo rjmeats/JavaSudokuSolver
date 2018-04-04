@@ -119,7 +119,7 @@ public class Solver {
 		int stepNumber = -1;
 		boolean changedState = true;
 		List<String> unexpectedEvents = new ArrayList<>();
-		m_diagnostics.collectDiagnosticsAfterStep(stepNumber, changedState, actions, unexpectedEvents, false);
+		m_diagnostics.produceDiagnosticsAfterStep(stepNumber, changedState, actions, unexpectedEvents, false);
 		
 	}
 
@@ -198,7 +198,7 @@ public class Solver {
 					}				
 				}			
 			}			
-			m_diagnostics.collectDiagnosticsAfterStep(status.m_stepNumber, status.m_changedState, status.m_actions, status.m_unexpectedEvents, forceDiagnostics);		
+			m_diagnostics.produceDiagnosticsAfterStep(status.m_stepNumber, status.m_changedState, status.m_actions, status.m_unexpectedEvents, forceDiagnostics);		
 			m_unexpectedEvents.addAll(status.m_unexpectedEvents);
 			
 			long stepEndTime = new java.util.Date().getTime();
@@ -209,15 +209,16 @@ public class Solver {
 		}
 
 		m_combinedTookTime += status.m_stepTookTime;
-		status.m_gridStats = m_grid.getStats();
+		status.m_gridStats = m_grid.stats();
 		status.m_isComplete = (status.m_gridStats.m_unassignedCellCount == 0);
 
-		if(!m_completed && status.m_isComplete) {
+		if(!m_completed && (status.m_isComplete || !status.m_changedState)) {
 			// Just completed the puzzle.
-			m_diagnostics.finaliseDiagnostics(stepNumber, m_combinedTookTime, m_unexpectedEvents);
+			m_completed = true;
+			m_diagnostics.produceFinalDiagnostics(status, stepNumber, m_combinedTookTime, m_unexpectedEvents);
 		}
 
-		status.m_htmlDiagnostics = m_diagnostics.getHtmlDiagnostics(); 
+		status.m_htmlDiagnostics = m_diagnostics.htmlDiagnostics(); 
 
 		return status;
 	}
