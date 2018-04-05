@@ -19,9 +19,17 @@ import diagnostics.*;
 
 public class Puzzle {
 	
+	/**
+	 * Main function for running the Puzzle application to solve a Sudoku.
+	 * 
+	 * @param args The first argument is the name of the file containing the Sudoku to be solved. The second
+	 * argument is the folder location in which to produce the detailed diagnostic HTML file.
+	 */
+	
 	public static void main(String args[]) {
 				
-		InitialGridContentProvider contentProvider = null;
+		InitialGridContentProvider contentProvider = null;		
+		String diagnosticsLocation = ".";
 		
 		// Read the initial grid entries from the named file provided as a parameter 
 		if(args.length > 0 && !args[0].equals("-")) {
@@ -31,8 +39,13 @@ public class Puzzle {
 			if(contentProvider == null) {
 				System.err.println("Failed to read initial grid from file " + puzzleFileName);
 			}
+			
+			// And if there is a second parameter, use it as the location for diagnostic output files (default current folder).
+			if(args.length > 1) {
+				diagnosticsLocation = args[1];
+			}
 		}
-		// .. or from a static variable if no file name parameter given.
+		// .. or use a built-in puzzle from a static variable if no file name parameter given.
 		else {
 			System.out.println(".. reading initial grid from hard-coded sample puzzle");
 			String[] sa = SampleSudokus.SAMPLE1;
@@ -79,7 +92,7 @@ public class Puzzle {
 			System.out.println();
 			
 			// Dump the solver's very detailed diagnostics out as HTML if there's a folder called 'logs' available to put it in.
-			String logsFolderName = "logs";
+			String logsFolderName = diagnosticsLocation;
 			String diagnosticsFilename = logsFolderName + "/diagnostics.html";
 			File logsFolder = new File(logsFolderName);
 			if(logsFolder.exists() && logsFolder.isDirectory() && logsFolder.canWrite()) {
