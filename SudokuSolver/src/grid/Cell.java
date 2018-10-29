@@ -29,7 +29,7 @@ public class Cell implements Comparable<Cell> {
 		m_assignment = null;		
 	}
 	
-	private int cellNumber() 			{ return m_cellNumber; }
+	public int cellNumber() 			{ return m_cellNumber; }
 	private int cellNumberForDisplay() 	{ return m_cellNumber+1; }
 	public Column column() 				{ return m_column; }
 	public Row row() 					{ return m_row; }

@@ -42,7 +42,7 @@ public abstract class CellSet implements Comparable<CellSet> {
 	}
 
 	public Set<Cell> cells() {
-		return new LinkedHashSet<>(m_lCells);
+		return new TreeSet<>(m_lCells);
 	}
 	
 	public int size() { 
